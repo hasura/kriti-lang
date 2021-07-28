@@ -1,11 +1,11 @@
 module GoBasic.Lexer where
 
-import Data.Char (isAlpha, isSpace)
-import Data.List (find, unfoldr)
-import Data.Scientific (Scientific, toBoundedInteger, scientificP)
+import Data.Char (isSpace)
+import Data.List (unfoldr)
+import Data.Scientific (Scientific, scientificP)
 import Data.Text (Text)
 import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
-import Text.Read (lexP, readPrec_to_P, readMaybe)
+import Text.Read (lexP, readPrec_to_P)
 
 import qualified Data.Text as T
 import qualified Text.Read.Lex as L
@@ -74,7 +74,7 @@ lexer = unfoldr go . (, Pos 0 0) -- (b -> Maybe (a, b)) -> b -> [a]
       | Just (str, matched, s) <- stringLit t  = Just ((TokenExt (StringLit str) pos), advance s pos matched)
       | Just (str, matched, s) <- identifier t = Just ((TokenExt (Identifier str) pos), advance s pos matched)
       | Just (n, matched, s) <- numberLit t    = Just ((TokenExt (NumLit (realToFrac n)) pos), advance s pos matched)
-      | otherwise = error "lexer error"
+      | otherwise = Nothing
 
     identifier :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
     identifier = fromRead (readPrec_to_P identLexeme 0) where
@@ -104,8 +104,8 @@ lexer = unfoldr go . (, Pos 0 0) -- (b -> Maybe (a, b)) -> b -> [a]
     advance t (Pos lineStart colStart) eaten =
       let (ws, rest) = T.span isSpace t
           col = colStart + T.length eaten
-          newPos = T.foldl' go (Pos lineStart col) ws
-          go (Pos l c) '\n' = Pos (l + 1) 0
-          go (Pos l c) '\r' = Pos l c
-          go (Pos l c) _ = Pos l (c + 1)
+          newPos = T.foldl' f (Pos lineStart col) ws
+          f (Pos l _) '\n' = Pos (l + 1) 0
+          f (Pos l c) '\r' = Pos l c
+          f (Pos l c) _ = Pos l (c + 1)
        in (rest, newPos)
