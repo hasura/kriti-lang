@@ -9,3 +9,4 @@ A minimal json templating language based on Go's template language.
 - What, if any, static typechecking is possible?
 - List/Object Membership Primitives
 - Write this readme
+- Port over unit tests from old project
