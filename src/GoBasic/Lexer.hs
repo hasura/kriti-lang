@@ -129,10 +129,11 @@ lexer = unfoldr go . (, initialPos "sourceName") -- (b -> Maybe (a, b)) -> b -> 
               pure (value, T.pack lit, T.pack rest)
             _ -> Nothing
 
+    -- | Choose the parse result which consumed the maximum number of bytes.
     maxParsed :: [(a, String)] -> [(a, String)]
     maxParsed xs =
       let f (a, str) = \case
-            Just (a', str') -> if length str > length str' then pure (a, str) else pure (a', str')
+            Just (a', str') -> if length str < length str' then pure (a, str) else pure (a', str')
             Nothing -> pure (a, str)
       in maybeToList $ foldr f Nothing xs
 
