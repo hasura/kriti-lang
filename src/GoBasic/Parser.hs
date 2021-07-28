@@ -223,3 +223,6 @@ end = lt <|> gt <|> eq <|> pure Nothing
     lt = match_ (== LT') *> parseJson >>= (pure . Just . (Lt, ))
     gt = match_ (== GT') *> parseJson >>= (pure . Just . (Gt, ))
     eq = match_ (== Eq') *> parseJson >>= (pure . Just . (Eq, ))
+
+parse :: [TokenExt] -> Either P.ParseError ValueExt
+parse = P.runParser parseJson mempty mempty

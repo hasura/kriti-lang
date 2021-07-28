@@ -2,8 +2,10 @@ module GoBasic.Lexer where
 
 import Data.Char (isSpace)
 import Data.List (unfoldr)
+import Data.Maybe (maybeToList)
 import Data.Scientific (Scientific, scientificP)
 import Data.Text (Text)
+import GHC.Generics
 import Text.Parsec.Pos (SourcePos, incSourceLine, incSourceColumn, initialPos, newPos, sourceColumn, sourceLine, setSourceColumn)
 import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
 import Text.Read (lexP, readPrec_to_P)
@@ -39,10 +41,37 @@ data Token =
   | ParenClose
   | Underscore
   | Assignment
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+
+serialize :: Token -> Text
+serialize = \case
+    StringLit str   -> "\"" <> str <> "\""
+    Identifier iden -> iden
+    NumLit i        -> T.pack $ show i
+    BoolLit True    -> "true"
+    BoolLit False   -> "false"
+    Bling           -> "$"
+    Colon           -> ":"
+    Dot             -> "."
+    Comma           -> ","
+    Eq'             -> "=="
+    GT'             -> ">"
+    LT'             -> "<"
+    And             -> "&&"
+    Or              -> "||"
+    CurlyOpen       -> "{"
+    CurlyClose      -> "}"
+    TemplateOpen    -> "{{"
+    TemplateClose   -> "}}"
+    SquareOpen      -> "["
+    SquareClose     -> "]"
+    ParenOpen       -> "("
+    ParenClose      -> ")"
+    Underscore      -> "_"
+    Assignment      -> ":="
 
 data TokenExt = TokenExt { teType :: Token, tePos :: SourcePos }
-  deriving Show
+  deriving (Show, Eq)
 
 lexer :: Text -> [TokenExt]
 lexer = unfoldr go . (, initialPos "sourceName") -- (b -> Maybe (a, b)) -> b -> [a]
@@ -94,18 +123,25 @@ lexer = unfoldr go . (, initialPos "sourceName") -- (b -> Maybe (a, b)) -> b -> 
 
     fromRead :: ReadP a -> Text -> Maybe (a, Text, Text) -- (value, lit, remainder)
     fromRead rp t =
-      let matchS = readP_to_S (gather rp)
+      let matchS = maxParsed <$> readP_to_S (gather rp)
        in case matchS (T.unpack t) of
             (((lit, value), rest):_) -> do
               pure (value, T.pack lit, T.pack rest)
             _ -> Nothing
+
+    maxParsed :: [(a, String)] -> [(a, String)]
+    maxParsed xs =
+      let f (a, str) = \case
+            Just (a', str') -> if length str > length str' then pure (a, str) else pure (a', str')
+            Nothing -> pure (a, str)
+      in maybeToList $ foldr f Nothing xs
 
     advance :: Text -> SourcePos -> Text -> (Text, SourcePos)
     advance t pos eaten =
       let (ws, rest) = T.span isSpace t
           col = sourceColumn pos + T.length eaten
           newSourcePos = T.foldl' f (newPos "sourceName" (sourceLine pos) col) ws
-          f pos '\n' = setSourceColumn (incSourceLine pos 1) 0
-          f pos '\r' = pos
-          f pos _ = incSourceColumn pos 1
+          f pos' '\n' = setSourceColumn (incSourceLine pos' 1) 0
+          f pos' '\r' = pos'
+          f pos' _ = incSourceColumn pos' 1
        in (rest, newSourcePos)

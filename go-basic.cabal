@@ -27,8 +27,6 @@ executable go-basic
 library
   build-depends:       base >= 2 && < 5
                      , aeson
-                     , lens
-                     , lens-aeson
                      , mtl
                      , parsec
                      , scientific
@@ -45,3 +43,27 @@ library
                        LambdaCase
                        OverloadedStrings
                        TupleSections
+                       DerivingVia
+                       DeriveGeneric
+
+test-suite go-basic-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base
+                     , go-basic
+                     , aeson
+                     , generic-arbitrary
+                     , hspec
+                     , hspec-core
+                     , parsec
+                     , QuickCheck
+                     , scientific
+                     , text
+                     , unordered-containers
+  ghc-options:         -Wall
+  default-language:    Haskell2010
+  default-extensions:  BlockArguments
+                       LambdaCase
+                       OverloadedStrings
+                       TypeApplications
