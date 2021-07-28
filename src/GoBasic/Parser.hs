@@ -4,7 +4,7 @@ import GoBasic.Lexer
 
 import Control.Applicative
 import Control.Monad.Identity
-import Data.Monoid (Alt(..), Endo (Endo))
+import Data.Monoid (Alt(..))
 import Data.Scientific (Scientific, toBoundedInteger)
 import Data.Text (Text)
 
@@ -12,7 +12,6 @@ import qualified Data.HashMap.Strict as M
 import qualified Data.Vector as V
 import qualified Text.Parsec as P
 import qualified Text.Parsec.Pos as Pos
-
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq)
@@ -34,7 +33,7 @@ data ValueExt =
   | AND ValueExt ValueExt
   | OR ValueExt ValueExt
   | Member ValueExt ValueExt
-  | Range (Maybe Text) (Maybe Text) [Accessor] ValueExt
+  | Range (Maybe Text) Text [Accessor] ValueExt
   -- ^ {{ range i, x := $.foo.bar }}
   -- ^ {{ range $.foo.bar }}
   deriving (Show, Eq)
@@ -173,8 +172,8 @@ parseRange :: Parser ValueExt
 parseRange = do
   (bndr, Path path) <- range
   body <- parseJson
-  end
-  pure $ Range Nothing (Just bndr) path body
+  end'
+  pure $ Range Nothing bndr path body
   where
     range = do
       template (ident_ "range")
@@ -184,9 +183,7 @@ parseRange = do
       assignment
       path <- parsePath
       pure (bndr, path)
-    rangeSimple = template (ident_ "range" *> parsePath)
-    end = template (ident_ "end")
-    someTill p end = liftA2 (:) p $ P.manyTill p end
+    end' = template (ident_ "end")
 
 parserIff :: Parser ValueExt
 parserIff = do

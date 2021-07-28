@@ -18,11 +18,10 @@ extra-source-files:  CHANGELOG.md
 
 executable go-basic
   main-is:             Main.hs
-  -- other-modules:
-  -- other-extensions:
   build-depends:       base >=4.14 && <4.15
                      , go-basic
   -- hs-source-dirs:
+  ghc-options:         -Wall
   default-language:    Haskell2010
 
 library
@@ -40,26 +39,9 @@ library
                      , GoBasic.Parser
                      , GoBasic.Eval
   hs-source-dirs:      src
+  ghc-options:         -Wall
   default-language:    Haskell2010
   default-extensions:  BlockArguments
                        LambdaCase
                        OverloadedStrings
                        TupleSections
---DeriveGeneric
-                       --DerivingVia
-                       --EmptyCase
-                       --GADTs
-                       --FlexibleInstances
-                       --FlexibleContexts
-                       --InstanceSigs
-                       --KindSignatures
-                       --OverloadedStrings
-                       --PolyKinds
-                       --RankNTypes
-                       --StandaloneDeriving
-                       --ScopedTypeVariables
-                       --TypeApplications
-                       --TypeFamilies
-                       --TypeSynonymInstances
-                       --TypeOperators
-                       --MultiParamTypeClasses
