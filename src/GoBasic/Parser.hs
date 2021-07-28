@@ -98,8 +98,8 @@ bool = match \case
   TokenExt (BoolLit p) _ -> Just p
   _ -> Nothing
 
-string :: Parser Text
-string = match \case
+stringLit :: Parser Text
+stringLit = match \case
   TokenExt (StringLit s) _ -> Just s
   _ -> Nothing
 
@@ -128,7 +128,7 @@ parseNull = do
   pure Null
 
 parseString :: Parser ValueExt
-parseString = String <$> string
+parseString = String <$> stringLit
 
 parseNumber :: Parser ValueExt
 parseNumber = Number <$> number
@@ -152,7 +152,7 @@ parseObject = do
   where
     parseField :: Parser (Text, ValueExt)
     parseField = do
-      key <- string
+      key <- stringLit
       colon
       value <- parseJson
       pure (key, value)
@@ -174,11 +174,11 @@ parseRange = do
   end'
   pure $ Range Nothing bndr path body
   where
-    range = do
-      template (ident_ "range")
+    range = template $ do
+      (ident_ "range")
       underscore
       comma
-      bndr <- string
+      bndr <- ident
       assignment
       path <- parsePath
       pure (bndr, path)
