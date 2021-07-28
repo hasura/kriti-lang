@@ -53,6 +53,7 @@ test-suite go-basic-test
   build-depends:       base
                      , go-basic
                      , aeson
+                     , bytestring
                      , generic-arbitrary
                      , hspec
                      , hspec-core
@@ -60,6 +61,7 @@ test-suite go-basic-test
                      , QuickCheck
                      , scientific
                      , text
+                     , vector
                      , unordered-containers
   ghc-options:         -Wall
   default-language:    Haskell2010

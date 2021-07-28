@@ -8,6 +8,7 @@ import Data.Monoid (Alt(..))
 import Data.Scientific (Scientific, toBoundedInteger)
 import Data.Text (Text)
 
+import qualified Data.Aeson as J
 import qualified Data.HashMap.Strict as M
 import qualified Data.Vector as V
 import qualified Text.Parsec as P
@@ -36,6 +37,17 @@ data ValueExt =
   -- ^ {{ range i, x := $.foo.bar }}
   -- ^ {{ range $.foo.bar }}
   deriving (Show, Eq)
+
+instance J.FromJSON ValueExt where
+  parseJSON = \case
+    J.Null       -> pure   Null
+    J.String s   -> pure $ String s
+    J.Number i   -> pure $ Number i
+    J.Bool p     -> pure $ Boolean p
+    J.Array arr  -> Array <$> traverse J.parseJSON arr
+    J.Object obj | null obj -> pure Null
+    J.Object obj -> Object <$> traverse J.parseJSON obj
+
 
 -- {{ range $index, $article := .event.author.articles }}
 

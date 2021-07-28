@@ -1,11 +1,19 @@
 module Main where
 
 import Control.Monad
+import Data.Bifunctor (first)
+import Data.Maybe (fromJust)
 import Data.Scientific (Scientific, fromFloatDigits)
 import Data.Text (Text)
+import Data.Text.Encoding (decodeUtf8)
 import Test.Hspec
+import Text.Parsec (ParseError)
 
+import qualified Data.Aeson as J
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
+import qualified Data.Vector as V
 import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 
@@ -15,7 +23,7 @@ import GoBasic.Parser
 main :: IO ()
 main = hspec $ do
   checkLexer
-  --checkParse
+  checkParse
   --checkEval
 
 checkLexer :: SpecWith ()
@@ -24,6 +32,16 @@ checkLexer = describe "Test Lexer" $
     Q.property $ \tokens ->
       let serialized = T.intercalate " " $ fmap serialize tokens
       in (fmap teType <$> lexer) serialized `shouldBe` (tokens :: [Token])
+
+checkParse :: SpecWith ()
+checkParse = describe "Test Parser" $ do
+  mapM_ (uncurry specParseYields) parseCases
+  it "Parser matches Aeson for standard JSON values" $
+    Q.property $ \value ->
+      let serialized = J.encode @J.Value value
+          tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
+          viaAeson = fromJust $ J.decode @ValueExt serialized
+      in parse tokens `shouldSatisfy` succeeds viaAeson
 
 alphabet :: String
 alphabet = ['a'..'z'] ++ ['A'..'Z']
@@ -37,17 +55,31 @@ whitespace = do
   spaces <- replicateM i $ Q.frequency [(10, pure (" " :: Text)), (1, pure "\n")]
   pure $ mconcat spaces
 
-instance Q.Arbitrary Scientific where
-  arbitrary = fromFloatDigits <$> Q.arbitrary @Float
-
 instance Q.Arbitrary Text where
   arbitrary = do
     x <- Q.listOf1 (Q.elements alphabet)
     y <- Q.listOf1 (Q.elements alphaNumerics)
     pure $ T.pack $ x <> y
 
+instance Q.Arbitrary Scientific where
+  arbitrary = ((fromRational . toRational) :: Int -> Scientific) <$> Q.arbitrary
+
 instance Q.Arbitrary Token where
   arbitrary = QAG.genericArbitrary
+
+instance Q.Arbitrary J.Value where
+  arbitrary = Q.sized sizedArbitraryValue
+    where
+      sizedArbitraryValue n
+        | n <= 0 = Q.oneof [pure J.Null, boolean, number, string]
+        | otherwise = Q.resize n' $ Q.oneof [pure J.Null, boolean, number, string, array, object']
+        where
+          n' = n `div` 2
+          boolean = J.Bool <$> Q.arbitrary
+          number = J.Number <$> Q.arbitrary
+          string = J.String <$> Q.arbitrary
+          array = J.Array . V.fromList <$> Q.arbitrary
+          object' = J.Object . M.fromList <$> Q.arbitrary
 
 --genTokenExt :: Q.Gen [TokenExt]
 --genTokenExt = do
@@ -83,3 +115,18 @@ specParseFails :: [TokenExt] -> SpecWith ()
 specParseFails s =
     it ("fails to parse " ++ show s) $
         parse s `shouldSatisfy` fails
+
+parseCases :: [([TokenExt], ValueExt)]
+parseCases = fmap (first lexer) $
+  [ ("null", Null)
+  , ("true", Boolean True)
+  , ("false", Boolean False)
+  , ("1", Number 1)
+  , ("1.5", Number 1.5)
+  , ("\"hello\"", String "hello")
+  , ("\"hello\"", String "hello")
+  , ("\"hello123\"", String "hello123")
+  , ("[1, null, true]", Array $ V.fromList [Number 1, Null, Boolean True])
+  , ("{\"foo\": 1}", Object (M.singleton "foo" (Number 1)))
+  , ("{\"foo\": [1]}", Object (M.singleton "foo" (Array $ pure $ Number 1)))
+  ]
