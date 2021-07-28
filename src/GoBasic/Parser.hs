@@ -11,7 +11,6 @@ import Data.Text (Text)
 import qualified Data.HashMap.Strict as M
 import qualified Data.Vector as V
 import qualified Text.Parsec as P
-import qualified Text.Parsec.Pos as Pos
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq)
@@ -40,13 +39,13 @@ data ValueExt =
 
 -- {{ range $index, $article := .event.author.articles }}
 
-type Parser a = P.ParsecT [Token] () Identity a
+type Parser a = P.ParsecT [TokenExt] () Identity a
 
-match :: (Token -> Maybe a) -> Parser a
-match = P.token show (const $ Pos.initialPos "foo")
+match :: (TokenExt -> Maybe a) -> Parser a
+match = P.token (show . teType) tePos
 
 match_ :: (Token -> Bool) -> Parser ()
-match_ f = match (guard . f)
+match_ f = match (guard . f . teType)
 
 colon :: Parser ()
 colon = match_ (== Colon)
@@ -86,7 +85,7 @@ assignment = match_ (== Assignment)
 
 ident :: Parser Text
 ident = match \case
-  Identifier s -> Just s
+  TokenExt (Identifier s) _ -> Just s
   _ -> Nothing
 
 ident_ :: Text -> Parser ()
@@ -96,22 +95,22 @@ ident_ s = match_ \case
 
 bool :: Parser Bool
 bool = match \case
-  BoolLit p -> Just p
+  TokenExt (BoolLit p) _ -> Just p
   _ -> Nothing
 
 string :: Parser Text
 string = match \case
-  StringLit s -> Just s
+  TokenExt (StringLit s) _ -> Just s
   _ -> Nothing
 
 number :: Fractional a => Parser a
 number = match \case
-  NumLit n -> Just (fromRational $ toRational n)
+  TokenExt (NumLit n) _ -> Just (fromRational $ toRational n)
   _ -> Nothing
 
 integer :: Parser Int
 integer = match \case
-  NumLit n -> toBoundedInteger n
+  TokenExt (NumLit n) _ -> toBoundedInteger n
   _ -> Nothing
 
 commaSep :: Parser a -> Parser [a]

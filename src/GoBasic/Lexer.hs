@@ -4,6 +4,7 @@ import Data.Char (isSpace)
 import Data.List (unfoldr)
 import Data.Scientific (Scientific, scientificP)
 import Data.Text (Text)
+import Text.Parsec.Pos (SourcePos, incSourceLine, incSourceColumn, initialPos, newPos, sourceColumn, sourceLine, setSourceColumn)
 import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
 import Text.Read (lexP, readPrec_to_P)
 
@@ -40,14 +41,13 @@ data Token =
   | Assignment
   deriving (Show, Eq)
 
-data Pos = Pos Int Int deriving Show
-data TokenExt = TokenExt { teType :: Token, tePos :: Pos }
+data TokenExt = TokenExt { teType :: Token, tePos :: SourcePos }
   deriving Show
 
 lexer :: Text -> [TokenExt]
-lexer = unfoldr go . (, Pos 0 0) -- (b -> Maybe (a, b)) -> b -> [a]
+lexer = unfoldr go . (, initialPos "sourceName") -- (b -> Maybe (a, b)) -> b -> [a]
   where
-    go :: (Text, Pos) -> Maybe (TokenExt, (Text, Pos))
+    go :: (Text, SourcePos) -> Maybe (TokenExt, (Text, SourcePos))
     go (t, pos)
       | T.null t = Nothing
       | Just s <- T.stripPrefix "true"  t = Just ((TokenExt (BoolLit True) pos), advance s pos "true")
@@ -100,12 +100,12 @@ lexer = unfoldr go . (, Pos 0 0) -- (b -> Maybe (a, b)) -> b -> [a]
               pure (value, T.pack lit, T.pack rest)
             _ -> Nothing
 
-    advance :: Text -> Pos -> Text -> (Text, Pos)
-    advance t (Pos lineStart colStart) eaten =
+    advance :: Text -> SourcePos -> Text -> (Text, SourcePos)
+    advance t pos eaten =
       let (ws, rest) = T.span isSpace t
-          col = colStart + T.length eaten
-          newPos = T.foldl' f (Pos lineStart col) ws
-          f (Pos l _) '\n' = Pos (l + 1) 0
-          f (Pos l c) '\r' = Pos l c
-          f (Pos l c) _ = Pos l (c + 1)
-       in (rest, newPos)
+          col = sourceColumn pos + T.length eaten
+          newSourcePos = T.foldl' f (newPos "sourceName" (sourceLine pos) col) ws
+          f pos '\n' = setSourceColumn (incSourceLine pos 1) 0
+          f pos '\r' = pos
+          f pos _ = incSourceColumn pos 1
+       in (rest, newSourcePos)
