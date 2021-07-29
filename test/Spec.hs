@@ -183,24 +183,21 @@ fullTemplateExAST =
       )
     ]
 
-
-goldenParseResult :: String -> Either String ValueExt -> Golden (Either String ValueExt)
-goldenParseResult name parseResult =
-  Golden
-    { output = parseResult
-    , encodePretty = show
-    , writeToFile = \path val -> BL.writeFile path (BLU.fromString $ show val)
-    , readFromFile = \path -> read @(Either String ValueExt) . BLU.toString <$> BL.readFile path
-    , goldenFile = "test/data/" <> name
-    , actualFile = Nothing
-    , failFirstTime = False
-    }
+mkGoldenSpec :: FilePath -> Spec
+mkGoldenSpec path =
+  before (TIO.readFile path)  $
+    it "trying to run a golden test" \file ->
+     Golden
+       { output = either (Left . show) Right $ parse $ lexer file
+       , encodePretty = show
+       , writeToFile = \path' val -> BL.writeFile path' (BLU.fromString $ show val)
+       , readFromFile = \path' -> read @(Either String ValueExt) . BLU.toString <$> BL.readFile path'
+       , goldenFile = path <> ".golden"
+       , actualFile = Nothing
+       , failFirstTime = False
+       }
 
 spec :: Spec
 spec =
---(BL.readFile "test/data/example1.json")
   describe "trial Golden test" $ do
-   before (TIO.readFile "test/data/example1.json")  $
-     it "trying to run a golden test" \file -> do
-      let res = either (Left . show) Right $ parse $ lexer file
-      goldenParseResult "example1" res
+   mkGoldenSpec "test/data/parser-tests/example1.json"
