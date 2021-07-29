@@ -1,0 +1,5 @@
+[
+  (| range i, x := $.events |)
+    { "name": x.name }
+  (| end |)
+]

@@ -1,0 +1,5 @@
+[
+  (| $.path |),
+  (| x.path.foo |),
+  (| x.path.foo[1] |)
+]

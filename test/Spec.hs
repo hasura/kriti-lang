@@ -4,10 +4,13 @@ import Control.Exception (throwIO)
 import Control.Monad
 import Control.Monad.IO.Class (liftIO)
 import Data.Bifunctor (first)
+import Data.Foldable (traverse_)
 import Data.Maybe (fromJust)
 import Data.Scientific (Scientific, fromFloatDigits)
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import System.Directory (listDirectory)
+import System.FilePath.Posix
 import Test.Hspec
 import Test.Hspec.Golden
 import Text.Parsec (ParseError)
@@ -28,10 +31,12 @@ import GoBasic.Lexer
 import GoBasic.Parser
 
 main :: IO ()
-main = hspec $ do
-  checkLexer
-  checkParse
-  --checkEval
+main = do
+  parseTests <- fetchTestFiles "test/data/parser-tests"
+  hspec $ do
+    checkLexer
+    checkParse parseTests
+    --checkEval
 
 checkLexer :: SpecWith ()
 checkLexer = describe "Test Lexer" $
@@ -41,11 +46,12 @@ checkLexer = describe "Test Lexer" $
       let serialized = T.intercalate " " $ fmap serialize tokens
       in (fmap teType <$> lexer) serialized `shouldBe` (tokens :: [Token])
 
-checkParse :: SpecWith ()
-checkParse = describe "Test Parser" $ do
-  describe "Explicit Parser Tests" $
-    mapM_ (uncurry specParseYields) parseCases
-  spec
+checkParse :: [FilePath] -> SpecWith ()
+checkParse paths = describe "Test Parser" $ do
+  --describe "Explicit Parser Tests" $
+  --  mapM_ (uncurry specParseYields) parseCases
+  describe "Golden Tests" $ do
+    traverse_ mkGoldenSpec paths
   describe "QuickCheck Parser Tests" $
     it "Parser matches Aeson for standard JSON values" $
       Q.property $ \value ->
@@ -53,6 +59,25 @@ checkParse = describe "Test Parser" $ do
             tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
             viaAeson = fromJust $ J.decode @ValueExt serialized
         in parse tokens `shouldSatisfy` succeeds viaAeson
+
+fetchTestFiles :: FilePath -> IO [FilePath]
+fetchTestFiles folder = do
+  parseTests <- filter (/= "golden-files") <$> listDirectory folder
+  pure $ fmap (folder </>) parseTests
+
+mkGoldenSpec :: FilePath -> Spec
+mkGoldenSpec path =
+  before (TIO.readFile path) $
+    it path \file ->
+     Golden
+       { output = either (Left . show) Right $ parse $ lexer file
+       , encodePretty = show
+       , writeToFile = \path' val -> BL.writeFile path' (BLU.fromString $ show val)
+       , readFromFile = \path' -> read @(Either String ValueExt) . BLU.toString <$> BL.readFile path'
+       , goldenFile = let (path', name) = splitFileName path in path' <> "/golden-files/" <> name <> ".golden"
+       , actualFile = Nothing
+       , failFirstTime = False
+       }
 
 alphabet :: String
 alphabet = ['a'..'z'] ++ ['A'..'Z']
@@ -92,18 +117,6 @@ instance Q.Arbitrary J.Value where
           array' = J.Array . V.fromList <$> Q.arbitrary
           object' = J.Object . M.fromList <$> Q.arbitrary
 
---genTokenExt :: Q.Gen [TokenExt]
---genTokenExt = do
---    numTokens <- Q.chooseInt (1, 100)
---    tokens <- sequence $ replicate numTokens (Q.arbitrary :: Q.Gen Token)
---    spaces <- sequence $ replicate numTokens whitespace
---    let f (toks, pos) (tok, spc) =
---          let (_, pos') = advance spc pos (prettyPrint tok)
---              tokenExt = TokenExt tok pos
---          in pure (toks <> [tokenExt], pos')
---
---    fmap fst $ foldM f ([], initialPos "src") $ zip tokens spaces
-
 succeeds :: Eq a => a -> Either e a -> Bool
 succeeds s (Right s') = s == s'
 succeeds _ _ = False
@@ -111,93 +124,3 @@ succeeds _ _ = False
 fails :: Either e a -> Bool
 fails (Right _) = False
 fails _ = True
-
-specLexerYields :: Text -> [TokenExt] -> SpecWith ()
-specLexerYields s expected =
-    it ("lex " ++ show s ++ " as " ++ show expected) $
-        lexer s `shouldSatisfy` (== expected)
-
-specParseYields :: [TokenExt] -> ValueExt -> SpecWith ()
-specParseYields s expected =
-    it ("parses " ++ show s ++ " as " ++ show expected) $
-        parse s `shouldSatisfy` succeeds expected
-
-specParseFails :: [TokenExt] -> SpecWith ()
-specParseFails s =
-    it ("fails to parse " ++ show s) $
-        parse s `shouldSatisfy` fails
-
-parseCases :: [([TokenExt], ValueExt)]
-parseCases = fmap (first lexer) $
-  [ ("null", Null)
-  , ("true", Boolean True)
-  , ("false", Boolean False)
-  , ("1", Number 1)
-  , ("1.5", Number 1.5)
-  , ("\"hello\"", String "hello")
-  , ("\"hello\"", String "hello")
-  , ("\"hello123\"", String "hello123")
-  , ("[1, null, true]", Array $ V.fromList [Number 1, Null, Boolean True])
-  , ("{\"foo\": 1}", Object (M.singleton "foo" (Number 1)))
-  , ("{\"foo\": [1]}", Object (M.singleton "foo" (Array $ pure $ Number 1)))
-  , ("(| $.foo.bar[1] |)", Path [Obj "$", Obj "foo", Obj "bar", Arr 1])
-  , ("(| x.foo.bar[1] |)", Path [Obj "x", Obj "foo", Obj "bar", Arr 1])
-  , ("(| if $.foo |) 1 (| else |) null (|end |)", Iff (Path [Obj "$", Obj "foo"]) (Number 1) Null)
-  -- , (fullTemplateEx, fullTemplateExAST)
-  ]
-
-
-fullTemplateEx :: Text
-fullTemplateEx = [r|{
-  "author": {
-    "name": (|$.event.name|),
-    "age": (|$.event.age|),
-    "articles": [
-(| range _, x := $.event.author.articles |)
-      {
-        "id": (|x.id|),
-        "title": (|x.title|)
-      }
-(| end |)
-    ]
-  }
-}
-|]
-
-fullTemplateExAST :: ValueExt
-fullTemplateExAST =
-  Object $ M.fromList
-    [ ("author"
-      , Object $ M.fromList
-        [ ("name", Path [Obj "$", Obj "event", Obj "name"])
-        , ("age", Path [Obj "$", Obj "event", Obj "age"])
-        , ("articles"
-          , Range Nothing "x" [Obj "$", Obj "event", Obj "author", Obj "articles"]
-              (Object $ M.fromList
-                 [ ("id", Path [Obj "x", Obj "id"])
-                 , ("title", Path [Obj "x", Obj "title"])
-                 ]
-              )
-          )
-        ]
-      )
-    ]
-
-mkGoldenSpec :: FilePath -> Spec
-mkGoldenSpec path =
-  before (TIO.readFile path)  $
-    it "trying to run a golden test" \file ->
-     Golden
-       { output = either (Left . show) Right $ parse $ lexer file
-       , encodePretty = show
-       , writeToFile = \path' val -> BL.writeFile path' (BLU.fromString $ show val)
-       , readFromFile = \path' -> read @(Either String ValueExt) . BLU.toString <$> BL.readFile path'
-       , goldenFile = path <> ".golden"
-       , actualFile = Nothing
-       , failFirstTime = False
-       }
-
-spec :: Spec
-spec =
-  describe "trial Golden test" $ do
-   mkGoldenSpec "test/data/parser-tests/example1.json"

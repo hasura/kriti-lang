@@ -54,6 +54,8 @@ test-suite go-basic-test
                      , go-basic
                      , aeson
                      , bytestring
+                     , directory
+                     , filepath
                      , generic-arbitrary
                      , hspec
                      , hspec-core
