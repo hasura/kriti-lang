@@ -192,13 +192,15 @@ goldenParseResult name parseResult =
     , writeToFile = \path val -> BL.writeFile path (BLU.fromString $ show val)
     , readFromFile = \path -> read @(Either String ValueExt) . BLU.toString <$> BL.readFile path
     , goldenFile = "test/data/" <> name
-    , actualFile = Nothing -- Just ("test/data/" <> name <> ".json")
+    , actualFile = Nothing
     , failFirstTime = False
     }
 
 spec :: Spec
 spec =
+--(BL.readFile "test/data/example1.json")
   describe "trial Golden test" $ do
-   it "trying to run a golden test" $
-    let res = either (Left . show) Right $ parse $ lexer fullTemplateEx
-    in goldenParseResult "example1" res
+   before (TIO.readFile "test/data/example1.json")  $
+     it "trying to run a golden test" \file -> do
+      let res = either (Left . show) Right $ parse $ lexer file
+      goldenParseResult "example1" res
