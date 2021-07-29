@@ -1,0 +1,1 @@
+Right (Object (fromList [("author",Object (fromList [("name",Path [Obj "$",Obj "event",Obj "name"]),("articles",Array [Range Nothing "x" [Obj "$",Obj "event",Obj "author",Obj "articles"] (Object (fromList [("title",Path [Obj "x",Obj "title"]),("id",Path [Obj "x",Obj "id"])]))]),("age",Path [Obj "$",Obj "event",Obj "age"])]))]))

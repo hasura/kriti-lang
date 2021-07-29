@@ -14,7 +14,7 @@ import qualified Data.Vector as V
 import qualified Text.Parsec as P
 
 data Accessor = Obj Text | Arr Int
-  deriving (Show, Eq)
+  deriving (Show, Eq, Read)
 
 data ValueExt =
   -- Core Aeson Terms
@@ -36,7 +36,7 @@ data ValueExt =
   | Range (Maybe Text) Text [Accessor] ValueExt
   -- ^ {{ range i, x := $.foo.bar }}
   -- ^ {{ range $.foo.bar }}
-  deriving (Show, Eq)
+  deriving (Show, Eq, Read)
 
 instance J.FromJSON ValueExt where
   parseJSON = \case
@@ -171,13 +171,13 @@ parseObject = do
 
 parsePath :: Parser ValueExt
 parsePath = do
-  bling
-  x <- P.try obj <|> arr
+  x <- P.try bling' <|> fmap Obj ident
   xs <- many (obj <|> arr)
   pure $ Path (x:xs)
   where
+    bling' = Obj "$" <$ bling
     arr = squareOpen *> (Arr <$> integer) <* squareClose
-    obj = dot *> fmap Obj ident
+    obj = dot *> (fmap Obj ident)
 
 parseRange :: Parser ValueExt
 parseRange = do

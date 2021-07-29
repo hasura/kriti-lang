@@ -5,14 +5,19 @@ import Data.Bifunctor (first)
 import Data.Maybe (fromJust)
 import Data.Scientific (Scientific, fromFloatDigits)
 import Data.Text (Text)
-import Data.Text.Encoding (decodeUtf8)
+import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Test.Hspec
+import Test.Hspec.Golden
 import Text.Parsec (ParseError)
+import Text.Parsec.Error (errorMessages)
+import Text.RawString.QQ
 
 import qualified Data.Aeson as J
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import qualified Data.Vector as V
 import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
@@ -28,6 +33,7 @@ main = hspec $ do
 
 checkLexer :: SpecWith ()
 checkLexer = describe "Test Lexer" $
+  describe "QuickCheck Lexer Tests" $
   it "lexing serialized tokens yields those tokens" $
     Q.property $ \tokens ->
       let serialized = T.intercalate " " $ fmap serialize tokens
@@ -35,13 +41,16 @@ checkLexer = describe "Test Lexer" $
 
 checkParse :: SpecWith ()
 checkParse = describe "Test Parser" $ do
-  mapM_ (uncurry specParseYields) parseCases
-  it "Parser matches Aeson for standard JSON values" $
-    Q.property $ \value ->
-      let serialized = J.encode @J.Value value
-          tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
-          viaAeson = fromJust $ J.decode @ValueExt serialized
-      in parse tokens `shouldSatisfy` succeeds viaAeson
+  describe "Explicit Parser Tests" $
+    mapM_ (uncurry specParseYields) parseCases
+  spec
+  describe "QuickCheck Parser Tests" $
+    it "Parser matches Aeson for standard JSON values" $
+      Q.property $ \value ->
+        let serialized = J.encode @J.Value value
+            tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
+            viaAeson = fromJust $ J.decode @ValueExt serialized
+        in parse tokens `shouldSatisfy` succeeds viaAeson
 
 alphabet :: String
 alphabet = ['a'..'z'] ++ ['A'..'Z']
@@ -71,14 +80,14 @@ instance Q.Arbitrary J.Value where
   arbitrary = Q.sized sizedArbitraryValue
     where
       sizedArbitraryValue n
-        | n <= 0 = Q.oneof [pure J.Null, boolean, number, string]
-        | otherwise = Q.resize n' $ Q.oneof [pure J.Null, boolean, number, string, array, object']
+        | n <= 0 = Q.oneof [pure J.Null, boolean', number', string']
+        | otherwise = Q.resize n' $ Q.oneof [pure J.Null, boolean', number', string', array', object']
         where
           n' = n `div` 2
-          boolean = J.Bool <$> Q.arbitrary
-          number = J.Number <$> Q.arbitrary
-          string = J.String <$> Q.arbitrary
-          array = J.Array . V.fromList <$> Q.arbitrary
+          boolean' = J.Bool <$> Q.arbitrary
+          number' = J.Number <$> Q.arbitrary
+          string' = J.String <$> Q.arbitrary
+          array' = J.Array . V.fromList <$> Q.arbitrary
           object' = J.Object . M.fromList <$> Q.arbitrary
 
 --genTokenExt :: Q.Gen [TokenExt]
@@ -129,4 +138,69 @@ parseCases = fmap (first lexer) $
   , ("[1, null, true]", Array $ V.fromList [Number 1, Null, Boolean True])
   , ("{\"foo\": 1}", Object (M.singleton "foo" (Number 1)))
   , ("{\"foo\": [1]}", Object (M.singleton "foo" (Array $ pure $ Number 1)))
+  , ("(| $.foo.bar[1] |)", Path [Obj "$", Obj "foo", Obj "bar", Arr 1])
+  , ("(| x.foo.bar[1] |)", Path [Obj "x", Obj "foo", Obj "bar", Arr 1])
+  , ("(| if $.foo |) 1 (| else |) null (|end |)", Iff (Path [Obj "$", Obj "foo"]) (Number 1) Null)
+  -- , (fullTemplateEx, fullTemplateExAST)
   ]
+
+
+fullTemplateEx :: Text
+fullTemplateEx = [r|{
+  "author": {
+    "name": (|$.event.name|),
+    "age": (|$.event.age|),
+    "articles": [
+(| range _, x := $.event.author.articles |)
+      {
+        "id": (|x.id|),
+        "title": (|x.title|)
+      }
+(| end |)
+    ]
+  }
+}
+|]
+
+fullTemplateExAST :: ValueExt
+fullTemplateExAST =
+  Object $ M.fromList
+    [ ("author"
+      , Object $ M.fromList
+        [ ("name", Path [Obj "$", Obj "event", Obj "name"])
+        , ("age", Path [Obj "$", Obj "event", Obj "age"])
+        , ("articles"
+          , Range Nothing "x" [Obj "$", Obj "event", Obj "author", Obj "articles"]
+              (Object $ M.fromList
+                 [ ("id", Path [Obj "x", Obj "id"])
+                 , ("title", Path [Obj "x", Obj "title"])
+                 ]
+              )
+          )
+        ]
+      )
+    ]
+
+
+goldenParseResult :: String -> ValueExt -> Golden ValueExt
+goldenParseResult name parseResult =
+  Golden
+    { output = either (Left . show) Right parseResult
+    , encodePretty = show
+    , writeToFile = \path val -> BL.writeFile path (BLU.fromString $ show val)
+    , readFromFile = \path -> read . show <$> BL.readFile path
+    , goldenFile = "test/data/" <> name
+    , actualFile = Nothing -- Just ("test/data/" <> name <> ".json")
+    , failFirstTime = False
+    }
+
+spec :: Spec
+spec =
+  describe "trial Golden test" $ do
+   it "trying to run a golden test" $ do
+    let res = either (Left . show) Right $ parse $ lexer fullTemplateEx
+    case res of
+      Left _ -> throwIO "bad parse"
+      Right ast -> pure ast
+
+ --       goldenParseResult "example1" ast

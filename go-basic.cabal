@@ -57,10 +57,13 @@ test-suite go-basic-test
                      , generic-arbitrary
                      , hspec
                      , hspec-core
+                     , hspec-golden
                      , parsec
                      , QuickCheck
                      , scientific
+                     , raw-strings-qq
                      , text
+                     , utf8-string
                      , vector
                      , unordered-containers
   ghc-options:         -Wall
@@ -68,4 +71,5 @@ test-suite go-basic-test
   default-extensions:  BlockArguments
                        LambdaCase
                        OverloadedStrings
+                       QuasiQuotes
                        TypeApplications

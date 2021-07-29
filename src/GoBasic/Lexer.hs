@@ -61,8 +61,8 @@ serialize = \case
     Or              -> "||"
     CurlyOpen       -> "{"
     CurlyClose      -> "}"
-    TemplateOpen    -> "{{"
-    TemplateClose   -> "}}"
+    TemplateOpen    -> "(|"
+    TemplateClose   -> "|)"
     SquareOpen      -> "["
     SquareClose     -> "]"
     ParenOpen       -> "("
@@ -79,31 +79,34 @@ lexer = unfoldr go . (, initialPos "sourceName") -- (b -> Maybe (a, b)) -> b -> 
     go :: (Text, SourcePos) -> Maybe (TokenExt, (Text, SourcePos))
     go (t, pos)
       | T.null t = Nothing
-      | Just s <- T.stripPrefix "true"  t = Just ((TokenExt (BoolLit True) pos), advance s pos "true")
-      | Just s <- T.stripPrefix "false" t = Just ((TokenExt (BoolLit False) pos), advance s pos "false")
-      | Just s <- T.stripPrefix "_"     t = Just ((TokenExt (Underscore) pos), advance s pos "_")
-      | Just s <- T.stripPrefix "."     t = Just ((TokenExt (Dot) pos), advance s pos ".")
-      | Just s <- T.stripPrefix ","     t = Just ((TokenExt (Comma) pos), advance s pos ",")
-      | Just s <- T.stripPrefix "$"     t = Just ((TokenExt (Bling) pos), advance s pos "$")
-      | Just s <- T.stripPrefix ":="    t = Just ((TokenExt (Assignment) pos), advance s pos ":=")
-      | Just s <- T.stripPrefix ":"     t = Just ((TokenExt (Colon) pos), advance s pos ":")
-      | Just s <- T.stripPrefix "=="    t = Just ((TokenExt (Eq') pos), advance s pos "==")
-      | Just s <- T.stripPrefix ">"     t = Just ((TokenExt (GT') pos), advance s pos ">")
-      | Just s <- T.stripPrefix "<"     t = Just ((TokenExt (LT') pos), advance s pos "<")
-      | Just s <- T.stripPrefix "&&"    t = Just ((TokenExt (And) pos), advance s pos "&&")
-      | Just s <- T.stripPrefix "||"    t = Just ((TokenExt (Or) pos), advance s pos "||")
-      | Just s <- T.stripPrefix "{{"    t = Just ((TokenExt (TemplateOpen) pos), advance s pos "{{")
-      | Just s <- T.stripPrefix "}}"    t = Just ((TokenExt (TemplateClose) pos), advance s pos "}}")
-      | Just s <- T.stripPrefix "{"     t = Just ((TokenExt (CurlyOpen) pos), advance s pos "{")
-      | Just s <- T.stripPrefix "}"     t = Just ((TokenExt (CurlyClose) pos), advance s pos "}")
-      | Just s <- T.stripPrefix "["     t = Just ((TokenExt (SquareOpen) pos), advance s pos "[")
-      | Just s <- T.stripPrefix "]"     t = Just ((TokenExt (SquareClose) pos), advance s pos "]")
-      | Just s <- T.stripPrefix ")"     t = Just ((TokenExt (ParenClose) pos), advance s pos ")")
-      | Just s <- T.stripPrefix "("     t = Just ((TokenExt (ParenOpen) pos), advance s pos "(")
+      | Just s <- T.stripPrefix "true"  t = stepLexer (BoolLit True) s pos
+      | Just s <- T.stripPrefix "false" t = stepLexer (BoolLit False) s pos
+      | Just s <- T.stripPrefix "_"     t = stepLexer Underscore s pos
+      | Just s <- T.stripPrefix "."     t = stepLexer Dot s pos
+      | Just s <- T.stripPrefix ","     t = stepLexer Comma s pos
+      | Just s <- T.stripPrefix "$"     t = stepLexer Bling s pos
+      | Just s <- T.stripPrefix ":="    t = stepLexer Assignment s pos
+      | Just s <- T.stripPrefix ":"     t = stepLexer Colon s pos
+      | Just s <- T.stripPrefix "=="    t = stepLexer Eq' s pos
+      | Just s <- T.stripPrefix ">"     t = stepLexer GT' s pos
+      | Just s <- T.stripPrefix "<"     t = stepLexer LT' s pos
+      | Just s <- T.stripPrefix "&&"    t = stepLexer And s pos
+      | Just s <- T.stripPrefix "||"    t = stepLexer Or s pos
+      | Just s <- T.stripPrefix "(|"    t = stepLexer TemplateOpen s pos
+      | Just s <- T.stripPrefix "|)"    t = stepLexer TemplateClose s pos
+      | Just s <- T.stripPrefix "{"     t = stepLexer CurlyOpen s pos
+      | Just s <- T.stripPrefix "}"     t = stepLexer CurlyClose s pos
+      | Just s <- T.stripPrefix "["     t = stepLexer SquareOpen s pos
+      | Just s <- T.stripPrefix "]"     t = stepLexer SquareClose s pos
+      | Just s <- T.stripPrefix ")"     t = stepLexer ParenClose s pos
+      | Just s <- T.stripPrefix "("     t = stepLexer ParenOpen s pos
       | Just (str, matched, s) <- stringLit t  = Just ((TokenExt (StringLit str) pos), advance s pos matched)
       | Just (str, matched, s) <- identifier t = Just ((TokenExt (Identifier str) pos), advance s pos matched)
       | Just (n, matched, s) <- numberLit t    = Just ((TokenExt (NumLit (realToFrac n)) pos), advance s pos matched)
       | otherwise = Nothing
+
+    stepLexer :: Token -> Text -> SourcePos -> Maybe (TokenExt, (Text, SourcePos))
+    stepLexer tok s pos = Just (TokenExt tok pos, advance s pos (serialize tok))
 
     identifier :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
     identifier = fromRead (readPrec_to_P identLexeme 0) where
