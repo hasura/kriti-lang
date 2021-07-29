@@ -33,8 +33,6 @@ data Token =
   -- | Member
   | CurlyOpen
   | CurlyClose
-  | TemplateOpen
-  | TemplateClose
   | SquareOpen
   | SquareClose
   | ParenOpen
@@ -61,8 +59,6 @@ serialize = \case
     Or              -> "||"
     CurlyOpen       -> "{"
     CurlyClose      -> "}"
-    TemplateOpen    -> "(|"
-    TemplateClose   -> "|)"
     SquareOpen      -> "["
     SquareClose     -> "]"
     ParenOpen       -> "("
@@ -74,8 +70,9 @@ data TokenExt = TokenExt { teType :: Token, tePos :: SourcePos }
   deriving (Show, Eq)
 
 lexer :: Text -> [TokenExt]
-lexer = unfoldr go . (, initialPos "sourceName") -- (b -> Maybe (a, b)) -> b -> [a]
+lexer t = unfoldr go (t', iPos)
   where
+    (t', iPos) = advance t (initialPos "sourceName") mempty
     go :: (Text, SourcePos) -> Maybe (TokenExt, (Text, SourcePos))
     go (t, pos)
       | T.null t = Nothing
@@ -92,8 +89,6 @@ lexer = unfoldr go . (, initialPos "sourceName") -- (b -> Maybe (a, b)) -> b -> 
       | Just s <- T.stripPrefix "<"     t = stepLexer LT' s pos
       | Just s <- T.stripPrefix "&&"    t = stepLexer And s pos
       | Just s <- T.stripPrefix "||"    t = stepLexer Or s pos
-      | Just s <- T.stripPrefix "(|"    t = stepLexer TemplateOpen s pos
-      | Just s <- T.stripPrefix "|)"    t = stepLexer TemplateClose s pos
       | Just s <- T.stripPrefix "{"     t = stepLexer CurlyOpen s pos
       | Just s <- T.stripPrefix "}"     t = stepLexer CurlyClose s pos
       | Just s <- T.stripPrefix "["     t = stepLexer SquareOpen s pos

@@ -1,5 +1,5 @@
 [
-  (| $.path |),
-  (| x.path.foo |),
-  (| x.path.foo[1] |)
+  {{ $.path }},
+  {{ x.path.foo }},
+  {{ x.path.foo[1] }}
 ]

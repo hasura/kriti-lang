@@ -74,12 +74,6 @@ openCurly = match_ (== CurlyOpen)
 closeCurly :: Parser ()
 closeCurly = match_ (== CurlyClose)
 
-templateOpen :: Parser ()
-templateOpen = match_ (== TemplateOpen)
-
-templateClose :: Parser ()
-templateClose = match_ (== TemplateClose)
-
 squareOpen :: Parser ()
 squareOpen = match_ (== SquareOpen)
 
@@ -129,7 +123,7 @@ commaSep :: Parser a -> Parser [a]
 commaSep p = p `P.sepBy` comma
 
 template :: Parser a -> Parser a
-template = P.between templateOpen templateClose
+template = P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
 
 parens :: Parser a -> Parser a
 parens = P.between (match_ (== ParenOpen)) (match_ (== ParenClose))
@@ -147,13 +141,6 @@ parseNumber = Number <$> number
 
 parseBool :: Parser ValueExt
 parseBool = Boolean <$> bool
-
-parseArray :: Parser ValueExt
-parseArray = do
-  squareOpen
-  xs <- parseJson `P.sepBy` comma
-  squareClose
-  pure $ Array $ V.fromList xs
 
 parseObject :: Parser ValueExt
 parseObject = do
@@ -179,21 +166,28 @@ parsePath = do
     arr = squareOpen *> (Arr <$> integer) <* squareClose
     obj = dot *> (fmap Obj ident)
 
+parseArray :: Parser ValueExt
+parseArray = do
+  squareOpen
+  xs <- parseJson `P.sepBy` comma
+  squareClose
+  pure $ Array $ V.fromList xs
+
 parseRange :: Parser ValueExt
 parseRange = do
-  (bndr, Path path) <- range
+  (idx, bndr, Path path) <- range
   body <- parseJson
   end'
-  pure $ Range Nothing bndr path body
+  pure $ Range idx bndr path body
   where
     range = template $ do
       (ident_ "range")
-      underscore
+      idx <- (Just <$> ident) <|> (Nothing <$ underscore)
       comma
       bndr <- ident
       assignment
       path <- parsePath
-      pure (bndr, path)
+      pure (idx, bndr, path)
     end' = template (ident_ "end")
 
 parserIff :: Parser ValueExt
@@ -204,9 +198,6 @@ parserIff = do
   t2 <- parseJson
   template $ ident_ "end"
   pure $ Iff p t1 t2
-
-parseExt :: Parser ValueExt
-parseExt = P.try (template parsePath) <|> P.try parseRange  <|> parserIff
 
 parseJson :: Parser ValueExt
 parseJson = do
@@ -224,8 +215,13 @@ start =
     , parseNumber
     , parseBool
     , parseArray
-    , parseObject
-    , parseExt
+    -- NOTE: This isn't a very elegant solution. It would be better to
+    -- factor out the initial `{` but `parseRange` and `parseIff` have
+    -- nested `template` parsers which makes this difficult.
+    , P.try parseObject
+    , P.try (template parsePath)
+    , P.try parseRange
+    , parserIff
     , parens parseJson
     ]
 

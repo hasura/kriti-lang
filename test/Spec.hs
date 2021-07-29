@@ -48,9 +48,7 @@ checkLexer = describe "Test Lexer" $
 
 checkParse :: [FilePath] -> SpecWith ()
 checkParse paths = describe "Test Parser" $ do
-  --describe "Explicit Parser Tests" $
-  --  mapM_ (uncurry specParseYields) parseCases
-  describe "Golden Tests" $ do
+  describe "Explicit Parser Tests" $
     traverse_ mkGoldenSpec paths
   describe "QuickCheck Parser Tests" $
     it "Parser matches Aeson for standard JSON values" $
