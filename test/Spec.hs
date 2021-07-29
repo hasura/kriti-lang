@@ -1,6 +1,8 @@
 module Main where
 
+import Control.Exception (throwIO)
 import Control.Monad
+import Control.Monad.IO.Class (liftIO)
 import Data.Bifunctor (first)
 import Data.Maybe (fromJust)
 import Data.Scientific (Scientific, fromFloatDigits)
@@ -182,13 +184,13 @@ fullTemplateExAST =
     ]
 
 
-goldenParseResult :: String -> ValueExt -> Golden ValueExt
+goldenParseResult :: String -> Either String ValueExt -> Golden (Either String ValueExt)
 goldenParseResult name parseResult =
   Golden
-    { output = either (Left . show) Right parseResult
+    { output = parseResult
     , encodePretty = show
     , writeToFile = \path val -> BL.writeFile path (BLU.fromString $ show val)
-    , readFromFile = \path -> read . show <$> BL.readFile path
+    , readFromFile = \path -> read @(Either String ValueExt) . BLU.toString <$> BL.readFile path
     , goldenFile = "test/data/" <> name
     , actualFile = Nothing -- Just ("test/data/" <> name <> ".json")
     , failFirstTime = False
@@ -197,10 +199,6 @@ goldenParseResult name parseResult =
 spec :: Spec
 spec =
   describe "trial Golden test" $ do
-   it "trying to run a golden test" $ do
+   it "trying to run a golden test" $
     let res = either (Left . show) Right $ parse $ lexer fullTemplateEx
-    case res of
-      Left _ -> throwIO "bad parse"
-      Right ast -> pure ast
-
- --       goldenParseResult "example1" ast
+    in goldenParseResult "example1" res
