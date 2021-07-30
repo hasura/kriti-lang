@@ -10,19 +10,11 @@ version:             0.1.0.0
 -- license:
 license-file:        LICENSE
 author:              Solomon Bothwell
-maintainer:          ssbothwell@gmail.com
--- copyright:
--- category:
+maintainer:          solomon@hasura.io
+copyright:           2017 Hasura Systems Private Limited
+category:            Compiler
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
-
-executable go-basic
-  main-is:             Main.hs
-  build-depends:       base >=4.14 && <4.15
-                     , go-basic
-  -- hs-source-dirs:
-  ghc-options:         -Wall
-  default-language:    Haskell2010
 
 library
   build-depends:       base >= 2 && < 5
@@ -33,9 +25,7 @@ library
                      , text
                      , unordered-containers
                      , vector
-  exposed-modules:     GoBasic.Lexer
-                     , GoBasic.Parser
-                     , GoBasic.Eval
+  exposed-modules:     GoBasic
   hs-source-dirs:      src
   ghc-options:         -Wall
   default-language:    Haskell2010

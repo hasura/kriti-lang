@@ -23,9 +23,9 @@ evalPath ctx path =
       step _ _ = J.Null
   in foldl step ctx path
 
-runEval :: ValueExt -> J.Value -> Either String J.Value
+runEval :: ValueExt -> [(Text, J.Value)] -> Either String J.Value
 runEval template source =
-  let ctx = M.singleton "$" source
+  let ctx = M.fromList source
   in runReader (runExceptT (eval template)) ctx
 
 -- NOTE: In general where do we want to produce errors and where is it ok to return null?
