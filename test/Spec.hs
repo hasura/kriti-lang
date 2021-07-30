@@ -103,7 +103,7 @@ evalSpec = describe "Eval" $ do
 -- subdirectory found in the project directory hard-coded into this function.
 --
 -- NOTE: In addition to the @examples@ directory, this function also depends on
---
+-- a 'source.json' file at the same path.
 evalGoldenSpec :: Spec
 evalGoldenSpec = do
   (dir, paths) <- runIO $ fetchGoldenFiles "test/data/eval"
