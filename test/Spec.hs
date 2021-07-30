@@ -2,23 +2,20 @@
 {-# LANGUAGE RecordWildCards, ScopedTypeVariables #-}
 module Main where
 
-import Control.Exception.Safe (throwIO, throwString)
+import Control.Exception.Safe (throwString)
 import Control.Monad (replicateM)
--- import Control.Monad.IO.Class (liftIO)
--- import Data.Bifunctor (first)
-import Data.Foldable (for_, traverse_)
+import Data.Foldable (for_)
 import Data.Maybe (fromJust)
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8)
 import System.Directory (listDirectory)
 import System.FilePath
-import Text.Pretty.Simple (pShowNoColor)
 import Test.Hspec
 import Test.Hspec.Golden
 import Text.Parsec (ParseError)
-import Text.Parsec.Error (errorMessages)
-import Text.RawString.QQ
+import Text.Pretty.Simple (pShowNoColor)
+import Text.Read (readEither)
 
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Encode.Pretty as JEP (encodePretty)
@@ -26,11 +23,9 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
-import qualified Data.ByteString.Lazy.UTF8 as BLU
 import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
-import qualified Data.Text.IO as TIO
 import qualified Data.Vector as V
 import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
@@ -42,34 +37,17 @@ import GoBasic.Eval
 --------------------------------------------------------------------------------
 
 main :: IO ()
-main = do
-  -- evalTemplates <- fetchTestFiles "test/data/eval/examples"
-  -- source <- fromJust <$> J.decodeFileStrict "test/data/eval/source.json"
-  hspec $ do
-    -- checkLexer
-    checkParse
-    -- checkEval source evalTemplates
-
--- | Fetches example files for golden tests from the @examples@ subdirectory
--- at the given 'FilePath'.
---
--- We assume that the directory at the given 'FilePath' has the following
--- structure:
---  * /actual
---  * /examples
---  * /golden
-fetchGoldenFiles :: FilePath -> IO (FilePath, [FilePath])
-fetchGoldenFiles dir = do
-  let exampleDir = dir </> "examples"
-  examples <- listDirectory exampleDir
-  pure (dir, map (exampleDir </>) examples)
-
+main = hspec $ do
+  lexerSpec
+  parserSpec
+  evalSpec
 
 --------------------------------------------------------------------------------
 -- Lexing tests.
 
-checkLexer :: Spec
-checkLexer = describe "Lexer" $
+-- | Lexer tests.
+lexerSpec :: Spec
+lexerSpec = describe "Lexer" $
   describe "QuickCheck" $
     it "lexing serialized tokens yields those tokens" $
       Q.property $ \tokens ->
@@ -79,66 +57,75 @@ checkLexer = describe "Lexer" $
 --------------------------------------------------------------------------------
 -- Parsing tests.
 
-checkParse :: Spec
-checkParse = describe "Parser" $ do
-  goldenParse
+-- | Parser tests.
+parserSpec :: Spec
+parserSpec = describe "Parser" $ do
+  parserGoldenSpec
+  describe "QuickCheck" $
+    it "matches Aeson for standard JSON values" $
+      Q.property $ \value ->
+        let serialized = J.encode @J.Value value
+            tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
+            viaAeson = fromJust $ J.decode @ValueExt serialized
+        in parse tokens `shouldSatisfy` succeeds viaAeson
 
-  -- describe "QuickCheck" $
-  --   it "matches Aeson for standard JSON values" $
-  --     Q.property $ \value ->
-  --       let serialized = J.encode @J.Value value
-  --           tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
-  --           viaAeson = fromJust $ J.decode @ValueExt serialized
-  --       in parse tokens `shouldSatisfy` succeeds viaAeson
-
--- | 'Golden' parser tests for each of the files
-goldenParse :: Spec
-goldenParse = do
+-- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
+-- found in the project directory hard-coded into this function.
+parserGoldenSpec :: Spec
+parserGoldenSpec = do
   (dir, paths) <- runIO $ fetchGoldenFiles "test/data/parser"
   describe "Golden" $ do
-    describe "Parsing Success" $ for_ paths $ \path -> do
+    describe "Success" $ for_ paths $ \path -> do
       let name = takeFileName path
-      before (getValueExt path) $ it "" $
+      before (parseTemplateSuccess path) $ it ("parses " <> name) $
         \valueExt -> goldenValueExt dir name valueExt
 
-  describe "Parsing Failure" $ pure ()
-  where
-    getValueExt :: FilePath -> IO ValueExt
-    getValueExt path = do
-      tmpl <- fmap decodeUtf8 . BS.readFile $ path
-      case parse $ lexer tmpl of
-        Left err -> throwString $ "Unexpected parsing failure " <> show err
-        Right valueExt -> pure valueExt
+  describe "Failure" $ pure ()
 
-    -- getParseFailure :: FilePath -> IO String
+-- | Parse a template file that is expected to succeed; parse failures are
+-- rendered as 'String's and thrown in 'IO'.
+parseTemplateSuccess :: FilePath -> IO ValueExt
+parseTemplateSuccess path = do
+  tmpl <- fmap decodeUtf8 . BS.readFile $ path
+  case parse $ lexer tmpl of
+    Left err -> throwString $ "Unexpected parsing failure " <> show err
+    Right valueExt -> pure valueExt
 
 --------------------------------------------------------------------------------
 -- Evaluation tests.
 
-checkEval :: J.Value -> [FilePath] -> Spec
-checkEval source templates = describe "Eval" $ do
-  describe "Golden" $ pure ()
---     traverse_ (mkGoldenEval source) templates
+-- | Evaluation tests.
+evalSpec :: Spec
+evalSpec = describe "Eval" $ do
+  evalGoldenSpec
 
--- mkGoldenEval :: J.Value -> FilePath -> Spec
--- mkGoldenEval source path =
---   before (TIO.readFile path) $
---     it path \file ->
---       let result = do
---             template <- either (Left . show) Right $ parse $ lexer file
---             runEval template source
---       in Golden
---         { output = result
---         , encodePretty = show
---         , writeToFile = \path' val -> BL.writeFile path' $ either (BLU.fromString) J.encode val
---         , readFromFile = \path' -> maybe (Left "bad read") Right . J.decode <$> BL.readFile path'
---         , goldenFile = let (path', name) = splitFileName path in path' <> "/golden-files/" <> name <> ".golden"
---         , actualFile = Nothing
---         , failFirstTime = False
---         }
+-- | 'Golden' evaluation tests for each of the files in the @examples@
+-- subdirectory found in the project directory hard-coded into this function.
+--
+-- NOTE: In addition to the @examples@ directory, this function also depends on
+--
+evalGoldenSpec :: Spec
+evalGoldenSpec = do
+  (dir, paths) <- runIO $ fetchGoldenFiles "test/data/eval"
+  source <- runIO $ do
+    eSource <- J.eitherDecodeFileStrict (dir </> "source.json")
+    either throwString pure eSource
+  describe "Golden" $ do
+    describe "Success" $ for_ paths $ \path -> do
+      let name = takeFileName path
+      before (evalSuccess source path) $ it ("evaluates " <> name) $
+        \json -> goldenAesonValue dir name json
+
+-- | Parse an example file and evaluate it against the provided JSON source
+-- file; any parsing or evaluation failures will be rendered as 'String's
+-- and thrown in 'IO'.
+evalSuccess :: J.Value -> FilePath -> IO J.Value
+evalSuccess source path = do
+  tmpl <- parseTemplateSuccess path
+  either throwString pure $ runEval tmpl source
 
 --------------------------------------------------------------------------------
--- Golden test helpers and orphan instances.
+-- Golden test construction functions.
 
 -- | Construct a 'Golden' test for any value with valid 'Read' and 'Show'
 -- instances.
@@ -154,10 +141,11 @@ goldenReadShow dir name val = Golden {..}
   where
     output = val
     encodePretty = TL.unpack . pShowNoColor
-    writeToFile fullPath actual =
-      BS.writeFile fullPath . BS8.pack . TL.unpack . pShowNoColor $ actual
-    readFromFile fullPath =
-      read . BS8.unpack <$> BS.readFile fullPath
+    writeToFile path actual =
+      BS.writeFile path . BS8.pack . TL.unpack . pShowNoColor $ actual
+    readFromFile path = do
+      eVal <- readEither . BS8.unpack <$> BS.readFile path
+      either throwString pure eVal
     goldenFile = dir </> "golden" </> name <.> "txt"
     actualFile = Just $ dir </> "actual" </> name <.> "txt"
     failFirstTime = False
@@ -187,19 +175,19 @@ goldenParseError dir name parseError = Golden{..}
 --
 -- That is, something serialized with 'J.toJSON' can be read without error by
 -- 'J.fromJSON'.
+--
+-- NOTE: If
 goldenAeson
   :: (J.FromJSON val, J.ToJSON val) => FilePath -> String -> val -> Golden val
 goldenAeson dir name val = Golden {..}
   where
     output = val
     encodePretty = BL8.unpack . JEP.encodePretty
-    writeToFile fullPath actual =
-      BL.writeFile fullPath . JEP.encodePretty $ actual
-    readFromFile fullPath = do
-      bytes <- BL.readFile fullPath
-      case J.eitherDecode' bytes of
-        Left err -> throwString err
-        Right json -> pure json
+    writeToFile path actual =
+      BL.writeFile path . JEP.encodePretty $ actual
+    readFromFile path = do
+      eValue <- J.eitherDecodeFileStrict path
+      either throwString pure eValue
     goldenFile = dir </> "golden" </> name <.> "json"
     actualFile = Just $ dir </> "actual" </> name <.> "json"
     failFirstTime = False
@@ -251,7 +239,21 @@ instance Q.Arbitrary J.Value where
           object' = J.Object . M.fromList <$> Q.arbitrary
 
 --------------------------------------------------------------------------------
--- Test helpers.
+-- General test helpers.
+
+-- | Fetches example files for golden tests from the @examples@ subdirectory
+-- at the given 'FilePath'.
+--
+-- We assume that the directory at the given 'FilePath' has the following
+-- structure:
+--  * /actual
+--  * /examples
+--  * /golden
+fetchGoldenFiles :: FilePath -> IO (FilePath, [FilePath])
+fetchGoldenFiles dir = do
+  let exampleDir = dir </> "examples"
+  examples <- listDirectory exampleDir
+  pure (dir, map (exampleDir </>) examples)
 
 succeeds :: Eq a => a -> Either e a -> Bool
 succeeds s (Right s') = s == s'
