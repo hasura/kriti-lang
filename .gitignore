@@ -2,5 +2,3 @@
 /shell.nix
 /dist-newstyle/
 /.envrc
-/test/data/parser-tests/golden-files/
-/test/data/eval-tests/golden-files/
