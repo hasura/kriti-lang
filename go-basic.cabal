@@ -35,6 +35,9 @@ library
                        TupleSections
                        DerivingVia
                        DeriveGeneric
+  other-modules:       GoBasic.Lexer
+                     , GoBasic.Parser
+                     , GoBasic.Eval
 
 test-suite go-basic-test
   type:                exitcode-stdio-1.0
