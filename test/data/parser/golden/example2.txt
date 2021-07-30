@@ -1,0 +1,91 @@
+Object
+    ( fromList
+        [
+            ( "event"
+            , Object
+                ( fromList
+                    [
+                        ( "author"
+                        , Object
+                            ( fromList
+                                [
+                                    ( "articles"
+                                    , Array
+                                        [ Object
+                                            ( fromList
+                                                [
+                                                    ( "length"
+                                                    , Number 150.0
+                                                    )
+                                                ,
+                                                    ( "title"
+                                                    , String "The Elements"
+                                                    )
+                                                ,
+                                                    ( "id"
+                                                    , Number 0.0
+                                                    )
+                                                ,
+                                                    ( "published"
+                                                    , Boolean True
+                                                    )
+                                                ]
+                                            )
+                                        , Object
+                                            ( fromList
+                                                [
+                                                    ( "length"
+                                                    , Number 1000.0
+                                                    )
+                                                ,
+                                                    ( "title"
+                                                    , String "ARRL Handbook"
+                                                    )
+                                                ,
+                                                    ( "id"
+                                                    , Number 1.0
+                                                    )
+                                                ,
+                                                    ( "published"
+                                                    , Boolean True
+                                                    )
+                                                ]
+                                            )
+                                        , Object
+                                            ( fromList
+                                                [
+                                                    ( "length"
+                                                    , Number 500.0
+                                                    )
+                                                ,
+                                                    ( "title"
+                                                    , String "The Mars Trilogy"
+                                                    )
+                                                ,
+                                                    ( "id"
+                                                    , Number 2.0
+                                                    )
+                                                ,
+                                                    ( "published"
+                                                    , Boolean False
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        )
+                    ,
+                        ( "name"
+                        , String "Freddie Jones"
+                        )
+                    ,
+                        ( "age"
+                        , Number 27.0
+                        )
+                    ]
+                )
+            )
+        ]
+    )
