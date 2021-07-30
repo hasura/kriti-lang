@@ -29,14 +29,17 @@ import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 
 import GoBasic.Lexer
 import GoBasic.Parser
+import GoBasic.Eval
 
 main :: IO ()
 main = do
   parseTests <- fetchTestFiles "test/data/parser-tests"
+  evalTemplates <- fetchTestFiles "test/data/eval-tests"
+  source <- fromJust <$> J.decodeFileStrict "test/data/eval-source.json"
   hspec $ do
     checkLexer
     checkParse parseTests
-    --checkEval
+    checkEval source evalTemplates
 
 checkLexer :: SpecWith ()
 checkLexer = describe "Test Lexer" $
@@ -49,7 +52,7 @@ checkLexer = describe "Test Lexer" $
 checkParse :: [FilePath] -> SpecWith ()
 checkParse paths = describe "Test Parser" $ do
   describe "Explicit Parser Tests" $
-    traverse_ mkGoldenSpec paths
+    traverse_ mkGoldenParse paths
   describe "QuickCheck Parser Tests" $
     it "Parser matches Aeson for standard JSON values" $
       Q.property $ \value ->
@@ -58,13 +61,18 @@ checkParse paths = describe "Test Parser" $ do
             viaAeson = fromJust $ J.decode @ValueExt serialized
         in parse tokens `shouldSatisfy` succeeds viaAeson
 
+checkEval :: J.Value -> [FilePath] -> SpecWith ()
+checkEval source templates = describe "Test Eval" $ do
+  describe "Explicit Parser Tests" $
+    traverse_ (mkGoldenEval source) templates
+
 fetchTestFiles :: FilePath -> IO [FilePath]
 fetchTestFiles folder = do
   parseTests <- filter (/= "golden-files") <$> listDirectory folder
   pure $ fmap (folder </>) parseTests
 
-mkGoldenSpec :: FilePath -> Spec
-mkGoldenSpec path =
+mkGoldenParse :: FilePath -> Spec
+mkGoldenParse path =
   before (TIO.readFile path) $
     it path \file ->
      Golden
@@ -76,6 +84,23 @@ mkGoldenSpec path =
        , actualFile = Nothing
        , failFirstTime = False
        }
+
+mkGoldenEval :: J.Value -> FilePath -> Spec
+mkGoldenEval source path =
+  before (TIO.readFile path) $
+    it path \file ->
+      let result = do
+            template <- either (Left . show) Right $ parse $ lexer file
+            runEval template source
+      in Golden
+        { output = result
+        , encodePretty = show
+        , writeToFile = \path' val -> BL.writeFile path' (BLU.fromString $ show val)
+        , readFromFile = \path' -> read @(Either String J.Value) . BLU.toString <$> BL.readFile path'
+        , goldenFile = let (path', name) = splitFileName path in path' <> "/golden-files/" <> name <> ".golden"
+        , actualFile = Nothing
+        , failFirstTime = False
+        }
 
 alphabet :: String
 alphabet = ['a'..'z'] ++ ['A'..'Z']

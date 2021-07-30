@@ -1,0 +1,1 @@
+Right (Object (fromList [("person",Object (fromList [("age",Number 26.0),("friends",Array [String "hello",Array [Object (fromList [("id",Number 0.0),("name",String "Wilkerson Gill")]),Object (fromList [("id",Number 1.0),("name",String "Gonzalez Long")]),Object (fromList [("id",Number 2.0),("name",String "Hanson Ellison")])],String "world"]),("name",String "Shepard Mccall")]))]))
