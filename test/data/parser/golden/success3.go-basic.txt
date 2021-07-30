@@ -1,0 +1,17 @@
+Array
+    [ Path
+        [ Obj "$"
+        , Obj "path"
+        ]
+    , Path
+        [ Obj "x"
+        , Obj "path"
+        , Obj "foo"
+        ]
+    , Path
+        [ Obj "x"
+        , Obj "path"
+        , Obj "foo"
+        , Arr 1
+        ]
+    ]

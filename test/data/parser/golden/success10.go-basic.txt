@@ -1,0 +1,84 @@
+Object
+    ( fromList
+        [
+            ( "author"
+            , Object
+                ( fromList
+                    [
+                        ( "name"
+                        , Path
+                            [ Obj "$"
+                            , Obj "event"
+                            , Obj "name"
+                            ]
+                        )
+                    ,
+                        ( "articles"
+                        , Array
+                            [ String "hello"
+                            , Range Nothing "x"
+                                [ Obj "$"
+                                , Obj "event"
+                                , Obj "author"
+                                , Obj "articles"
+                                ]
+                                ( Object
+                                    ( fromList
+                                        [
+                                            ( "title"
+                                            , Path
+                                                [ Obj "x"
+                                                , Obj "title"
+                                                ]
+                                            )
+                                        ,
+                                            ( "id"
+                                            , Path
+                                                [ Obj "x"
+                                                , Obj "id"
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                )
+                            , Range Nothing "x"
+                                [ Obj "$"
+                                , Obj "event"
+                                , Obj "author"
+                                , Obj "articles"
+                                ]
+                                ( Object
+                                    ( fromList
+                                        [
+                                            ( "title"
+                                            , Path
+                                                [ Obj "x"
+                                                , Obj "title"
+                                                ]
+                                            )
+                                        ,
+                                            ( "id"
+                                            , Path
+                                                [ Obj "x"
+                                                , Obj "id"
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                )
+                            , String "world"
+                            ]
+                        )
+                    ,
+                        ( "age"
+                        , Path
+                            [ Obj "$"
+                            , Obj "event"
+                            , Obj "age"
+                            ]
+                        )
+                    ]
+                )
+            )
+        ]
+    )

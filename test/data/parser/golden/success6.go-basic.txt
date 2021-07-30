@@ -1,0 +1,7 @@
+Iff
+    ( Path
+        [ Obj "$"
+        , Obj "foo"
+        ]
+    )
+    ( Number 1.0 ) Null

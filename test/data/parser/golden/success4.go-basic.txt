@@ -1,0 +1,19 @@
+Array
+    [ Range
+        ( Just "i" ) "x"
+        [ Obj "$"
+        , Obj "events"
+        ]
+        ( Object
+            ( fromList
+                [
+                    ( "name"
+                    , Path
+                        [ Obj "x"
+                        , Obj "name"
+                        ]
+                    )
+                ]
+            )
+        )
+    ]
