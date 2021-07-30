@@ -78,7 +78,7 @@ mkGoldenParse path =
      Golden
        { output = either (Left . show) Right $ parse $ lexer file
        , encodePretty = show
-       , writeToFile = \path' val -> BL.writeFile path' (BLU.fromString $ show val)
+       , writeToFile = \path' val -> BL.writeFile path'  (BLU.fromString $ show val)
        , readFromFile = \path' -> read @(Either String ValueExt) . BLU.toString <$> BL.readFile path'
        , goldenFile = let (path', name) = splitFileName path in path' <> "/golden-files/" <> name <> ".golden"
        , actualFile = Nothing
@@ -95,7 +95,7 @@ mkGoldenEval source path =
       in Golden
         { output = result
         , encodePretty = show
-        , writeToFile = \path' val -> BL.writeFile path' (BLU.fromString $ show val)
+        , writeToFile = \path' val -> BL.writeFile path' $ either (BLU.fromString) J.encode val
         , readFromFile = \path' -> read @(Either String J.Value) . BLU.toString <$> BL.readFile path'
         , goldenFile = let (path', name) = splitFileName path in path' <> "/golden-files/" <> name <> ".golden"
         , actualFile = Nothing
