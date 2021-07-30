@@ -96,7 +96,7 @@ mkGoldenEval source path =
         { output = result
         , encodePretty = show
         , writeToFile = \path' val -> BL.writeFile path' $ either (BLU.fromString) J.encode val
-        , readFromFile = \path' -> read @(Either String J.Value) . BLU.toString <$> BL.readFile path'
+        , readFromFile = \path' -> maybe (Left "bad read") Right . J.decode <$> BL.readFile path'
         , goldenFile = let (path', name) = splitFileName path in path' <> "/golden-files/" <> name <> ".golden"
         , actualFile = Nothing
         , failFirstTime = False
