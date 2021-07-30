@@ -72,13 +72,12 @@ parserSpec = describe "Parser" $ do
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
 parserGoldenSpec :: Spec
-parserGoldenSpec = do
+parserGoldenSpec = describe "Golden" $ do
   (dir, paths) <- runIO $ fetchGoldenFiles "test/data/parser"
-  describe "Golden" $ do
-    describe "Success" $ for_ paths $ \path -> do
-      let name = takeFileName path
-      before (parseTemplateSuccess path) $ it ("parses " <> name) $
-        \valueExt -> goldenValueExt dir name valueExt
+  describe "Success" $ for_ paths $ \path -> do
+    let name = dropExtension $ takeFileName path
+    before (parseTemplateSuccess path) $ it ("parses " <> name) $
+      \valueExt -> goldenValueExt dir name valueExt
 
   describe "Failure" $ pure ()
 
@@ -105,16 +104,15 @@ evalSpec = describe "Eval" $ do
 -- NOTE: In addition to the @examples@ directory, this function also depends on
 -- a 'source.json' file at the same path.
 evalGoldenSpec :: Spec
-evalGoldenSpec = do
+evalGoldenSpec = describe "Golden" do
   (dir, paths) <- runIO $ fetchGoldenFiles "test/data/eval"
   source <- runIO $ do
     eSource <- J.eitherDecodeFileStrict (dir </> "source.json")
     either throwString pure eSource
-  describe "Golden" $ do
-    describe "Success" $ for_ paths $ \path -> do
-      let name = takeFileName path
-      before (evalSuccess source path) $ it ("evaluates " <> name) $
-        \json -> goldenAesonValue dir name json
+  describe "Success" $ for_ paths $ \path -> do
+    let name = dropExtension $ takeFileName path
+    before (evalSuccess source path) $ it ("evaluates " <> name) $
+      \json -> goldenAesonValue dir name json
 
 -- | Parse an example file and evaluate it against the provided JSON source
 -- file; any parsing or evaluation failures will be rendered as 'String's
