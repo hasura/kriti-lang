@@ -192,7 +192,6 @@ goldenAeson dir name val = Golden {..}
     actualFile = Just $ dir </> "actual" </> name <.> "json"
     failFirstTime = False
 
-
 -- | Alias for 'goldenAeson' specialized to 'J.Value's.
 goldenAesonValue :: FilePath -> String -> J.Value -> Golden J.Value
 goldenAesonValue = goldenAeson
