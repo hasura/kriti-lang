@@ -31,6 +31,8 @@ import GoBasic.Lexer
 import GoBasic.Parser
 import GoBasic.Eval
 
+--------------------------------------------------------------------------------
+
 main :: IO ()
 main = do
   parseTests <- fetchTestFiles "test/data/parser-tests"
@@ -41,6 +43,9 @@ main = do
     checkParse parseTests
     checkEval source evalTemplates
 
+--------------------------------------------------------------------------------
+-- Lexing tests.
+
 checkLexer :: SpecWith ()
 checkLexer = describe "Test Lexer" $
   describe "QuickCheck Lexer Tests" $
@@ -48,6 +53,9 @@ checkLexer = describe "Test Lexer" $
     Q.property $ \tokens ->
       let serialized = T.intercalate " " $ fmap serialize tokens
       in (fmap teType <$> lexer) serialized `shouldBe` (tokens :: [Token])
+
+--------------------------------------------------------------------------------
+-- Parsing tests.
 
 checkParse :: [FilePath] -> SpecWith ()
 checkParse paths = describe "Test Parser" $ do
@@ -61,15 +69,12 @@ checkParse paths = describe "Test Parser" $ do
             viaAeson = fromJust $ J.decode @ValueExt serialized
         in parse tokens `shouldSatisfy` succeeds viaAeson
 
-checkEval :: J.Value -> [FilePath] -> SpecWith ()
+--------------------------------------------------------------------------------
+-- Evaluation tests.
+
 checkEval source templates = describe "Test Eval" $ do
   describe "Explicit Parser Tests" $
     traverse_ (mkGoldenEval source) templates
-
-fetchTestFiles :: FilePath -> IO [FilePath]
-fetchTestFiles folder = do
-  parseTests <- filter (/= "golden-files") <$> listDirectory folder
-  pure $ fmap (folder </>) parseTests
 
 mkGoldenParse :: FilePath -> Spec
 mkGoldenParse path =
@@ -101,6 +106,12 @@ mkGoldenEval source path =
         , actualFile = Nothing
         , failFirstTime = False
         }
+
+--------------------------------------------------------------------------------
+-- Golden test helpers and orphan instances.
+
+--------------------------------------------------------------------------------
+-- QuickCheck helpers and orphan instances.
 
 alphabet :: String
 alphabet = ['a'..'z'] ++ ['A'..'Z']
@@ -139,6 +150,14 @@ instance Q.Arbitrary J.Value where
           string' = J.String <$> Q.arbitrary
           array' = J.Array . V.fromList <$> Q.arbitrary
           object' = J.Object . M.fromList <$> Q.arbitrary
+
+--------------------------------------------------------------------------------
+-- Test helpers.
+
+fetchTestFiles :: FilePath -> IO [FilePath]
+fetchTestFiles folder = do
+  parseTests <- filter (/= "golden-files") <$> listDirectory folder
+  pure $ fmap (folder </>) parseTests
 
 succeeds :: Eq a => a -> Either e a -> Bool
 succeeds s (Right s') = s == s'
