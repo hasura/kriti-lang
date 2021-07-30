@@ -52,6 +52,7 @@ test-suite go-basic-test
   main-is:             Spec.hs
   build-depends:       go-basic
                      , aeson
+                     , aeson-pretty
                      , base
                      , bytestring
                      , directory
