@@ -7,11 +7,13 @@ import Data.Scientific (Scientific, scientificP)
 import Data.Text (Text)
 import GHC.Generics
 import Text.Parsec.Pos (SourcePos, incSourceLine, incSourceColumn, initialPos, newPos, sourceColumn, sourceLine, setSourceColumn)
+--import Text.ParserCombinators.ReadPrec ((+++))
 import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
-import Text.Read (lexP, readPrec_to_P)
+import Text.Read (lexP, lift, readPrec_to_P)
 
 import qualified Data.Text as T
 import qualified Text.Read.Lex as L
+import           Text.Read.Lex.Extended (lexString)
 
 data Token =
     StringLit Text
@@ -74,30 +76,30 @@ lexer t = unfoldr go (t', iPos)
   where
     (t', iPos) = advance t (initialPos "sourceName") mempty
     go :: (Text, SourcePos) -> Maybe (TokenExt, (Text, SourcePos))
-    go (t, pos)
+    go (txt, pos)
       | T.null t = Nothing
-      | Just s <- T.stripPrefix "true"  t = stepLexer (BoolLit True) s pos
-      | Just s <- T.stripPrefix "false" t = stepLexer (BoolLit False) s pos
-      | Just s <- T.stripPrefix "_"     t = stepLexer Underscore s pos
-      | Just s <- T.stripPrefix "."     t = stepLexer Dot s pos
-      | Just s <- T.stripPrefix ","     t = stepLexer Comma s pos
-      | Just s <- T.stripPrefix "$"     t = stepLexer Bling s pos
-      | Just s <- T.stripPrefix ":="    t = stepLexer Assignment s pos
-      | Just s <- T.stripPrefix ":"     t = stepLexer Colon s pos
-      | Just s <- T.stripPrefix "=="    t = stepLexer Eq' s pos
-      | Just s <- T.stripPrefix ">"     t = stepLexer GT' s pos
-      | Just s <- T.stripPrefix "<"     t = stepLexer LT' s pos
-      | Just s <- T.stripPrefix "&&"    t = stepLexer And s pos
-      | Just s <- T.stripPrefix "||"    t = stepLexer Or s pos
-      | Just s <- T.stripPrefix "{"     t = stepLexer CurlyOpen s pos
-      | Just s <- T.stripPrefix "}"     t = stepLexer CurlyClose s pos
-      | Just s <- T.stripPrefix "["     t = stepLexer SquareOpen s pos
-      | Just s <- T.stripPrefix "]"     t = stepLexer SquareClose s pos
-      | Just s <- T.stripPrefix ")"     t = stepLexer ParenClose s pos
-      | Just s <- T.stripPrefix "("     t = stepLexer ParenOpen s pos
-      | Just (str, matched, s) <- stringLit t  = Just ((TokenExt (StringLit str) pos), advance s pos matched)
-      | Just (str, matched, s) <- identifier t = Just ((TokenExt (Identifier str) pos), advance s pos matched)
-      | Just (n, matched, s) <- numberLit t    = Just ((TokenExt (NumLit (realToFrac n)) pos), advance s pos matched)
+      | Just s <- T.stripPrefix "true"  txt = stepLexer (BoolLit True) s pos
+      | Just s <- T.stripPrefix "false" txt = stepLexer (BoolLit False) s pos
+      | Just s <- T.stripPrefix "_"     txt = stepLexer Underscore s pos
+      | Just s <- T.stripPrefix "."     txt = stepLexer Dot s pos
+      | Just s <- T.stripPrefix ","     txt = stepLexer Comma s pos
+      | Just s <- T.stripPrefix "$"     txt = stepLexer Bling s pos
+      | Just s <- T.stripPrefix ":="    txt = stepLexer Assignment s pos
+      | Just s <- T.stripPrefix ":"     txt = stepLexer Colon s pos
+      | Just s <- T.stripPrefix "=="    txt = stepLexer Eq' s pos
+      | Just s <- T.stripPrefix ">"     txt = stepLexer GT' s pos
+      | Just s <- T.stripPrefix "<"     txt = stepLexer LT' s pos
+      | Just s <- T.stripPrefix "&&"    txt = stepLexer And s pos
+      | Just s <- T.stripPrefix "||"    txt = stepLexer Or s pos
+      | Just s <- T.stripPrefix "{"     txt = stepLexer CurlyOpen s pos
+      | Just s <- T.stripPrefix "}"     txt = stepLexer CurlyClose s pos
+      | Just s <- T.stripPrefix "["     txt = stepLexer SquareOpen s pos
+      | Just s <- T.stripPrefix "]"     txt = stepLexer SquareClose s pos
+      | Just s <- T.stripPrefix ")"     txt = stepLexer ParenClose s pos
+      | Just s <- T.stripPrefix "("     txt = stepLexer ParenOpen s pos
+      | Just (str, matched, s) <- stringLit txt  = Just (TokenExt (StringLit str) pos, advance s pos matched)
+      | Just (str, matched, s) <- identifier txt = Just (TokenExt (Identifier str) pos, advance s pos matched)
+      | Just (n, matched, s) <- numberLit txt    = Just (TokenExt (NumLit (realToFrac n)) pos, advance s pos matched)
       | otherwise = Nothing
 
     stepLexer :: Token -> Text -> SourcePos -> Maybe (TokenExt, (Text, SourcePos))
@@ -113,17 +115,17 @@ lexer t = unfoldr go (t', iPos)
     stringLit = fromRead (readPrec_to_P stringLexeme 0)
       where
         stringLexeme = do
-          L.String s <- lexP
+          L.String s <- lift lexString
           pure (T.pack s)
 
     numberLit :: Text -> Maybe (Scientific, Text, Text) -- (value, lit, remainder)
     numberLit = fromRead scientificP
 
     fromRead :: ReadP a -> Text -> Maybe (a, Text, Text) -- (value, lit, remainder)
-    fromRead rp t =
+    fromRead rp txt =
       let matchS = maxParsed <$> readP_to_S (gather rp)
-       in case matchS (T.unpack t) of
-            (((lit, value), rest):_) -> do
+       in case matchS (T.unpack txt) of
+            (((lit, value), rest):_) ->
               pure (value, T.pack lit, T.pack rest)
             _ -> Nothing
 
@@ -136,8 +138,8 @@ lexer t = unfoldr go (t', iPos)
       in maybeToList $ foldr f Nothing xs
 
     advance :: Text -> SourcePos -> Text -> (Text, SourcePos)
-    advance t pos eaten =
-      let (ws, rest) = T.span isSpace t
+    advance txt pos eaten =
+      let (ws, rest) = T.span isSpace txt
           col = sourceColumn pos + T.length eaten
           newSourcePos = T.foldl' f (newPos "sourceName" (sourceLine pos) col) ws
           f pos' '\n' = setSourceColumn (incSourceLine pos' 1) 0

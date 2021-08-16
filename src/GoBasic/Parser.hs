@@ -35,7 +35,6 @@ data ValueExt =
   | Member ValueExt ValueExt
   | Range (Maybe Text) Text [Accessor] ValueExt
   -- ^ {{ range i, x := $.foo.bar }}
-  -- ^ {{ range $.foo.bar }}
   deriving (Show, Eq, Read)
 
 instance J.FromJSON ValueExt where
@@ -47,7 +46,6 @@ instance J.FromJSON ValueExt where
     J.Array arr  -> Array <$> traverse J.parseJSON arr
     J.Object obj | null obj -> pure Null
     J.Object obj -> Object <$> traverse J.parseJSON obj
-
 
 -- {{ range $index, $article := .event.author.articles }}
 

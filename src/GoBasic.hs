@@ -1,8 +1,8 @@
-module GoBasic (GoBasicErr(..), runGoBasic)  where
+module GoBasic (GoBasicErr(..), ValueExt(..), runGoBasic)  where
 
 import GoBasic.Eval
 import GoBasic.Lexer (lexer)
-import GoBasic.Parser (parse)
+import GoBasic.Parser (ValueExt(..), parse)
 
 import Data.Bifunctor
 import Data.Text (Text)

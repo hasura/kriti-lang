@@ -120,7 +120,7 @@ evalGoldenSpec = describe "Golden" do
 evalSuccess :: J.Value -> FilePath -> IO J.Value
 evalSuccess source path = do
   tmpl <- parseTemplateSuccess path
-  either throwString pure $ runEval tmpl source
+  either throwString pure $ runEval tmpl [("$", source)]
 
 --------------------------------------------------------------------------------
 -- Golden test construction functions.

@@ -26,6 +26,9 @@ library
                      , unordered-containers
                      , vector
   exposed-modules:     GoBasic
+                     , GoBasic.Lexer
+                     , GoBasic.Parser
+                     , GoBasic.Eval
   hs-source-dirs:      src
   ghc-options:         -Wall
   default-language:    Haskell2010
@@ -35,9 +38,7 @@ library
                        TupleSections
                        DerivingVia
                        DeriveGeneric
-  other-modules:       GoBasic.Lexer
-                     , GoBasic.Parser
-                     , GoBasic.Eval
+  other-modules:       Text.Read.Lex.Extended
 
 test-suite go-basic-test
   type:                exitcode-stdio-1.0
