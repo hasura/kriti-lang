@@ -22,11 +22,13 @@ myTemp =
     \       'hp': {{$.base.HP}},\
     \       'attack': {{$.base.Attack}},\
     \       'defence': {{$.base.Defense}},\
-    \       'spAttack': {{$.base.Sp. Attack}},\
-    \       'spDefence': {{$.base.Sp. Defense}},\
     \       'speed': {{$.base.Speed}}\
     \   }\
     \}"
+
+-- TODO: parse the following too
+--    \       'spAttack': {{$.base.Sp. Attack}},\
+--    \       'spDefence': {{$.base.Sp. Defense}},\
 
 main :: IO ()
 main = runReq defaultHttpConfig $ do

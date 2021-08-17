@@ -37,6 +37,7 @@ git clone git@github.com:hasura/go-basic.git
 ```
 Now, run the following command:
 ``` sh
+cd go-basic
 cabal new-run example
 ```
 ## Examples

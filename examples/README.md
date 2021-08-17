@@ -74,8 +74,6 @@ We want to remodel the JSON according to the following template:
         "hp": {{$.base.HP}},
         "attack": {{$.base.Attack}},
         "defence": {{$.base.Defense}},
-        "spAttack": {{$.base.Sp. Attack}},
-        "spDefence": {{$.base.Sp. Defense}},
         "speed": {{$.base.Speed}}
     }
 }
@@ -93,8 +91,6 @@ The final parsed JSON looks like the following:
         "hp": 35,
         "attack": 55,
         "defence": 40,
-        "spAttack": "",
-        "spDefence": "",
         "speed": 90
     }
 }
