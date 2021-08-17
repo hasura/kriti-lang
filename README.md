@@ -10,6 +10,35 @@ A minimal json templating language based on Go's template language.
 - Port over unit tests from old project
 - Many additional unit tests
 
+## Uses
+This library exposes the function `runGoBasic`, the type definition of the function is:
+``` haskell
+runGoBasic :: Text -> [(Text, Value)] -> Either GoBasicErr Value
+```
+The first argument of the function is the template JSON, for example, we can use `myTemplate` as the first argument:
+``` haskell
+myTemplate :: Text
+myTemplate = 
+    "{\
+    \   'name': {{x.name.english}},\
+    \   'id': {{x.id}},\
+    \   'hp': {{x.base.HP}}\
+    \}"
+```
+
+The second argument is a `list` of `tuple` of `(Text, Value)`. The first element of the tuple is the binding to be used for the JSON object, i.e. for the above template we are using `x` as the JSON binding, so, `x` will bind to the JSON object. The second element of the tuple is of type `Data.Aeson.Value` (can be obtained by `Data.Aeson.decode` method).
+
+The function `runGoBasic` will return `Either GoBasicErr Value`. If the parser is successful, then it will return `Right Value`, else it will return `Left GoBasicErr` which can be used for debugging.
+
+## Run example
+To run the example, first clone this repository using the following command:
+``` sh
+git clone git@github.com:hasura/go-basic.git
+```
+Now, run the following command:
+``` sh
+cabal new-run example
+```
 ## Examples
 
 JSON Input:
