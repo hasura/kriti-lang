@@ -12,7 +12,7 @@ import qualified Text.Parsec as P
 data GoBasicErr =
     ParseError P.ParseError
   | EvalError String
-  deriving (Show)
+  deriving Show
 
 runGoBasic :: Text -> [(Text, J.Value)] -> Either GoBasicErr J.Value
 runGoBasic template source = do

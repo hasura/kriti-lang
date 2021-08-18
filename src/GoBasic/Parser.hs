@@ -154,15 +154,23 @@ parseObject = do
       value <- parseJson
       pure (key, value)
 
+blingPrefixedId :: Parser Text
+blingPrefixedId = do
+  bling
+  x <- P.optionMaybe ident
+  case x of
+    Just x' -> pure $ "$" <> x'
+    Nothing -> pure "$"
+
 parsePath :: Parser ValueExt
 parsePath = do
-  x <- P.try bling' <|> fmap Obj ident
+  x <- prefix <|> fmap Obj ident
   xs <- many (obj <|> arr)
   pure $ Path (x:xs)
   where
-    bling' = Obj "$" <$ bling
+    prefix = P.try $ Obj <$> blingPrefixedId
     arr = squareOpen *> (Arr <$> integer) <* squareClose
-    obj = dot *> (fmap Obj ident)
+    obj = dot *> fmap Obj ident
 
 parseArray :: Parser ValueExt
 parseArray = do
@@ -179,10 +187,10 @@ parseRange = do
   pure $ Range idx bndr path body
   where
     range = template $ do
-      (ident_ "range")
-      idx <- (Just <$> ident) <|> (Nothing <$ underscore)
+      ident_ "range"
+      idx <- (Just <$> (blingPrefixedId <|> ident)) <|> (Nothing <$ underscore)
       comma
-      bndr <- ident
+      bndr <- blingPrefixedId <|> ident
       assignment
       path <- parsePath
       pure (idx, bndr, path)

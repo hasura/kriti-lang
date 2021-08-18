@@ -4,6 +4,10 @@ Array
         , Obj "path"
         ]
     , Path
+        [ Obj "$foo"
+        , Obj "path"
+        ]
+    , Path
         [ Obj "x"
         , Obj "path"
         , Obj "foo"
