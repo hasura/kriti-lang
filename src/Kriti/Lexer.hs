@@ -1,4 +1,4 @@
-module GoBasic.Lexer where
+module Kriti.Lexer where
 
 import Data.Char (isSpace)
 import Data.List (unfoldr)

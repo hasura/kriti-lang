@@ -1,38 +1,36 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Main where
 
-import              Control.Monad.IO.Class
 import qualified    Data.Aeson              as J
 import qualified    Data.ByteString.Lazy    as BL
+import              Data.Text               (Text)
 import              Data.Maybe
-import              GoBasic                 (runGoBasic)
-import              Network.HTTP.Req
+import              Network.HTTP.Client
+import              Text.RawString.QQ
+import              Kriti                   (runKriti)
 
-getPokemon :: MonadHttp m => m BsResponse
-getPokemon = req GET (https "app.pokemon-api.xyz" /: "pokemon" /: "pikachu") NoReqBody bsResponse mempty
-
-myTemp = 
-    "{\
-    \   'id': {{$.id}},\
-    \   'name': {{$.name.english}},\
-    \   'description': {{$.description}},\
-    \   'profile': {\
-    \       'height': {{$.profile.height}},\
-    \       'weight': {{$.profile.weight}},\
-    \       'hp': {{$.base.HP}},\
-    \       'attack': {{$.base.Attack}},\
-    \       'defence': {{$.base.Defense}},\
-    \       'speed': {{$.base.Speed}}\
-    \   }\
-    \}"
-
--- TODO: parse the following too
---    \       'spAttack': {{$.base.Sp. Attack}},\
---    \       'spDefence': {{$.base.Sp. Defense}},\
+exampleTemplate :: Text
+exampleTemplate = [r|
+{
+   'id': {{$.id}},
+   'name': {{$.name.english}},
+   'description': {{$.description}},
+   'profile': {
+       'height': {{$.profile.height}},
+       'weight': {{$.profile.weight}},
+       'hp': {{$.base.HP}},
+       'attack': {{$.base.Attack}},
+       'defence': {{$.base.Defense}},
+       'speed': {{$.base.Speed}}
+   }
+}
+|]
 
 main :: IO ()
-main = runReq defaultHttpConfig $ do
-    pokeResp <- getPokemon
-    let
-        parseResp = fromJust . J.decode . BL.fromStrict . responseBody $ pokeResp
-    liftIO $ print $ runGoBasic myTemp [("$", parseResp)]
+main = do
+  manager <- newManager defaultManagerSettings
+  request <- parseRequest "http://app.pokemon-api.xyz/pokemon/pikachu"
+  response <- httpLbs request manager
+  let parseResp = fromJust . J.decode $ responseBody response
+  print $ runKriti exampleTemplate [("$", parseResp)]

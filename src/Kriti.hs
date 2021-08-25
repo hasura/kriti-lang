@@ -1,20 +1,20 @@
-module GoBasic (GoBasicErr(..), ValueExt(..), runGoBasic)  where
+module Kriti (KritiErr(..), ValueExt(..), runKriti)  where
 
-import GoBasic.Eval
-import GoBasic.Lexer (lexer)
-import GoBasic.Parser (ValueExt(..), parse)
+import Kriti.Eval
+import Kriti.Lexer (lexer)
+import Kriti.Parser (ValueExt(..), parse)
 
 import Data.Bifunctor
 import Data.Text (Text)
 import qualified Data.Aeson as J
 import qualified Text.Parsec as P
 
-data GoBasicErr =
+data KritiErr =
     ParseError P.ParseError
   | EvalError String
   deriving Show
 
-runGoBasic :: Text -> [(Text, J.Value)] -> Either GoBasicErr J.Value
-runGoBasic template source = do
+runKriti :: Text -> [(Text, J.Value)] -> Either KritiErr J.Value
+runKriti template source = do
   template' <- first ParseError $ parse $ lexer template
   first EvalError $ runEval template' source

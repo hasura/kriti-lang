@@ -30,9 +30,9 @@ import qualified Data.Vector as V
 import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 
-import GoBasic.Lexer
-import GoBasic.Parser
-import GoBasic.Eval
+import Kriti.Lexer
+import Kriti.Parser
+import Kriti.Eval
 
 --------------------------------------------------------------------------------
 

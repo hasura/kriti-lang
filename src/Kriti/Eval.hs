@@ -1,6 +1,6 @@
-module GoBasic.Eval where
+module Kriti.Eval where
 
-import GoBasic.Parser (Accessor(..), ValueExt(..))
+import Kriti.Parser (Accessor(..), ValueExt(..))
 
 import Control.Monad.Except
 import Control.Monad.Reader

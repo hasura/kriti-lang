@@ -1,6 +1,6 @@
-module GoBasic.Parser where
+module Kriti.Parser where
 
-import GoBasic.Lexer
+import Kriti.Lexer
 
 import Control.Applicative
 import Control.Monad.Identity
