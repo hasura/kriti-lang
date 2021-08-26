@@ -4,17 +4,27 @@ import Kriti.Lexer
 
 import Control.Applicative
 import Control.Monad.Identity
+import Data.List (intersperse)
 import Data.Monoid (Alt(..))
 import Data.Scientific (Scientific, toBoundedInteger)
 import Data.Text (Text)
 
 import qualified Data.Aeson as J
 import qualified Data.HashMap.Strict as M
+import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified Text.Parsec as P
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
+
+renderAccessor :: Accessor -> String
+renderAccessor = \case
+  Obj txt -> T.unpack txt
+  Arr i -> show i
+
+renderPath :: [Accessor] -> String
+renderPath = mconcat . intersperse "." . fmap renderAccessor
 
 data ValueExt =
   -- Core Aeson Terms
