@@ -13,7 +13,6 @@ import System.Directory (listDirectory)
 import System.FilePath
 import Test.Hspec
 import Test.Hspec.Golden
-import Text.Parsec (ParseError)
 import Text.Pretty.Simple (pShowNoColor)
 import Text.Read (readEither)
 
@@ -67,7 +66,7 @@ parserSpec = describe "Parser" $ do
         let serialized = J.encode @J.Value value
             tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
             viaAeson = fromJust $ J.decode @ValueExt serialized
-        in parse tokens `shouldSatisfy` succeeds viaAeson
+        in parser tokens `shouldSatisfy` succeeds viaAeson
 
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
@@ -86,7 +85,7 @@ parserGoldenSpec = describe "Golden" $ do
 parseTemplateSuccess :: FilePath -> IO ValueExt
 parseTemplateSuccess path = do
   tmpl <- fmap decodeUtf8 . BS.readFile $ path
-  case parse $ lexer tmpl of
+  case parser $ lexer tmpl of
     Left err -> throwString $ "Unexpected parsing failure " <> show err
     Right valueExt -> pure valueExt
 
@@ -120,7 +119,7 @@ evalGoldenSpec = describe "Golden" do
 evalSuccess :: J.Value -> FilePath -> IO J.Value
 evalSuccess source path = do
   tmpl <- parseTemplateSuccess path
-  either throwString pure $ runEval tmpl [("$", source)]
+  either throwString pure $ either (Left . show) Right $ runEval tmpl [("$", source)]
 
 --------------------------------------------------------------------------------
 -- Golden test construction functions.

@@ -1,21 +1,197 @@
 Array
     [ Path
-        [ Obj "$"
-        , Obj "path"
+        [
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 2
+                    , _column = 5
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 2
+                        , _column = 6
+                        }
+                    )
+                )
+            , Obj "$"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 2
+                    , _column = 6
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 2
+                        , _column = 10
+                        }
+                    )
+                )
+            , Obj "path"
+            )
         ]
     , Path
-        [ Obj "$foo"
-        , Obj "path"
+        [
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 3
+                    , _column = 5
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 3
+                        , _column = 9
+                        }
+                    )
+                )
+            , Obj "$foo"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 3
+                    , _column = 9
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 3
+                        , _column = 13
+                        }
+                    )
+                )
+            , Obj "path"
+            )
         ]
     , Path
-        [ Obj "x"
-        , Obj "path"
-        , Obj "foo"
+        [
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 4
+                    , _column = 5
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 4
+                        , _column = 6
+                        }
+                    )
+                )
+            , Obj "x"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 4
+                    , _column = 6
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 4
+                        , _column = 10
+                        }
+                    )
+                )
+            , Obj "path"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 4
+                    , _column = 11
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 4
+                        , _column = 14
+                        }
+                    )
+                )
+            , Obj "foo"
+            )
         ]
     , Path
-        [ Obj "x"
-        , Obj "path"
-        , Obj "foo"
-        , Arr 1
+        [
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 5
+                    , _column = 5
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 5
+                        , _column = 6
+                        }
+                    )
+                )
+            , Obj "x"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 5
+                    , _column = 6
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 5
+                        , _column = 10
+                        }
+                    )
+                )
+            , Obj "path"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 5
+                    , _column = 11
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 5
+                        , _column = 14
+                        }
+                    )
+                )
+            , Obj "foo"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 5
+                    , _column = 15
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 5
+                        , _column = 17
+                        }
+                    )
+                )
+            , Arr 1
+            )
         ]
     ]

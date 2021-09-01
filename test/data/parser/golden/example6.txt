@@ -1,7 +1,52 @@
 Iff
+    ( SourcePosition
+        { _sourceName = ""
+        , _line = 1
+        , _column = 1
+        }
+    , Just
+        ( SourcePosition
+            { _sourceName = "sourceName"
+            , _line = 1
+            , _column = 41
+            }
+        )
+    )
     ( Path
-        [ Obj "$"
-        , Obj "foo"
+        [
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 7
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 8
+                        }
+                    )
+                )
+            , Obj "$"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 8
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 11
+                        }
+                    )
+                )
+            , Obj "foo"
+            )
         ]
     )
     ( Number 1.0 ) Null

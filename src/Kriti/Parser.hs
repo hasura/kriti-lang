@@ -1,30 +1,42 @@
-module Kriti.Parser where
+module Kriti.Parser ( Accessor(..)
+                    , ValueExt(..)
+                    , SourcePosition(..)
+                    , Span
+                    , ParseError
+                    , parser
+                    , renderPath
+                    , parsePath
+                    ) where
 
+import Kriti.Error
 import Kriti.Lexer
 
 import Control.Applicative
 import Control.Monad.Identity
-import Data.List (intersperse)
-import Data.Monoid (Alt(..))
-import Data.Scientific (Scientific, toBoundedInteger)
-import Data.Text (Text)
+import Data.Bifunctor                (first)
+import Data.Function                 ((&))
+import Data.List                     (intersperse)
+import Data.Monoid                   (Alt(..))
+import Data.Scientific               (Scientific, toBoundedInteger)
+import Data.Text                     (Text)
 
-import qualified Data.Aeson as J
+import qualified Data.Aeson          as J
 import qualified Data.HashMap.Strict as M
-import qualified Data.Text as T
-import qualified Data.Vector as V
-import qualified Text.Parsec as P
+import qualified Data.Text           as T
+import qualified Data.Vector         as V
+import qualified Text.Parsec         as P
+import qualified Text.Parsec.Error as PE
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
 
-renderAccessor :: Accessor -> String
+renderAccessor :: Accessor -> Text
 renderAccessor = \case
-  Obj txt -> T.unpack txt
-  Arr i -> show i
+  Obj txt -> txt
+  Arr i -> T.pack $ show i
 
-renderPath :: [Accessor] -> String
-renderPath = mconcat . intersperse "." . fmap renderAccessor
+renderPath :: [(Span, Accessor)] -> Text
+renderPath = mconcat . intersperse "." . fmap (renderAccessor . snd)
 
 data ValueExt =
   -- Core Aeson Terms
@@ -35,15 +47,15 @@ data ValueExt =
   | Boolean Bool
   | Null
   -- Extended Terms
-  | Path [Accessor]
-  | Iff ValueExt ValueExt ValueExt
+  | Path [(Span, Accessor)]
+  | Iff Span ValueExt ValueExt ValueExt
   | Eq ValueExt ValueExt
   | Gt ValueExt ValueExt
   | Lt ValueExt ValueExt
-  | AND ValueExt ValueExt
-  | OR ValueExt ValueExt
-  | Member ValueExt ValueExt
-  | Range (Maybe Text) Text [Accessor] ValueExt
+  | AND Span ValueExt ValueExt
+  | OR Span ValueExt ValueExt
+  | Member Span ValueExt ValueExt
+  | Range Span (Maybe Text) Text [(Span, Accessor)] ValueExt
   -- ^ {{ range i, x := $.foo.bar }}
   deriving (Show, Eq, Read)
 
@@ -127,9 +139,6 @@ integer = match \case
   TokenExt (NumLit n) _ -> toBoundedInteger n
   _ -> Nothing
 
-commaSep :: Parser a -> Parser [a]
-commaSep p = p `P.sepBy` comma
-
 template :: Parser a -> Parser a
 template = P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
 
@@ -174,13 +183,26 @@ blingPrefixedId = do
 
 parsePath :: Parser ValueExt
 parsePath = do
+  startPos <- fromSourcePos <$> P.getPosition
   x <- prefix <|> fmap Obj ident
-  xs <- many (obj <|> arr)
-  pure $ Path (x:xs)
+  xs <- many $ obj <|> arr
+  let path = ((startPos, x):xs) & fmap \(pos, el) -> ((pos, Just $ incCol (len el) pos), el)
+  pure $ Path path
   where
+    len (Obj x) = T.length x
+    len (Arr i) = length (show i) + 1
     prefix = P.try $ Obj <$> blingPrefixedId
-    arr = squareOpen *> (Arr <$> integer) <* squareClose
-    obj = dot *> fmap Obj ident
+    arr = do
+      pos <- getSourcePos
+      squareOpen
+      x <- Arr <$> integer
+      squareClose
+      pure (pos, x)
+    obj = do
+      pos <- getSourcePos
+      dot
+      x <- Obj <$> ident
+      pure (pos, x)
 
 parseArray :: Parser ValueExt
 parseArray = do
@@ -191,10 +213,12 @@ parseArray = do
 
 parseRange :: Parser ValueExt
 parseRange = do
+  pos1 <- fromSourcePos <$> P.getPosition
   (idx, bndr, Path path) <- range
   body <- parseJson
   end'
-  pure $ Range idx bndr path body
+  pos2 <- fromSourcePos <$> P.getPosition
+  pure $ Range (pos1, Just pos2) idx bndr path body
   where
     range = template $ do
       ident_ "range"
@@ -208,12 +232,14 @@ parseRange = do
 
 parserIff :: Parser ValueExt
 parserIff = do
+  pos1 <- fromSourcePos <$> P.getPosition
   p <- template $ ident_ "if" *> parsePath
   t1 <- parseJson
   template $ ident_ "else"
   t2 <- parseJson
   template $ ident_ "end"
-  pure $ Iff p t1 t2
+  pos2 <- fromSourcePos <$> P.getPosition
+  pure $ Iff (pos1, Just pos2) p t1 t2
 
 parseJson :: Parser ValueExt
 parseJson = do
@@ -248,5 +274,17 @@ end = lt <|> gt <|> eq <|> pure Nothing
     gt = match_ (== GT') *> parseJson >>= (pure . Just . (Gt, ))
     eq = match_ (== Eq') *> parseJson >>= (pure . Just . (Eq, ))
 
-parse :: [TokenExt] -> Either P.ParseError ValueExt
-parse = P.runParser parseJson mempty mempty
+newtype ParseError = ParseError P.ParseError
+  deriving Show
+
+instance RenderError ParseError where
+  render (ParseError err) =
+    let startPos = fromSourcePos $ PE.errorPos err
+        errorMessage = PE.showErrorMessages "or" "unknown parse error" "expecting" "unexpected" "end of input" $ PE.errorMessages err
+    in RenderedError { _code = ParseErrorCode, _message = T.pack errorMessage, _span = (startPos, Nothing) }
+
+getSourcePos :: Parser SourcePosition
+getSourcePos = fromSourcePos <$> P.getPosition
+
+parser :: [TokenExt] -> Either ParseError ValueExt
+parser = first ParseError . P.runParser parseJson mempty mempty

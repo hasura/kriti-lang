@@ -7,7 +7,6 @@ import Data.Scientific (Scientific, scientificP)
 import Data.Text (Text)
 import GHC.Generics
 import Text.Parsec.Pos (SourcePos, incSourceLine, incSourceColumn, initialPos, newPos, sourceColumn, sourceLine, setSourceColumn)
---import Text.ParserCombinators.ReadPrec ((+++))
 import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
 import Text.Read (lexP, lift, readPrec_to_P)
 
