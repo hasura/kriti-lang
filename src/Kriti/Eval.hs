@@ -64,25 +64,25 @@ eval = \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
       p' -> throwError $ TypeError pos $ T.pack $ show p' <> "' is not a boolean."
-  Eq t1 t2 -> do
+  Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
-  Lt t1 t2 -> do
+  Lt _ t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' < t2'
-  Gt t1 t2 -> do
+  Gt _ t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' > t2'
-  AND pos t1 t2 -> do
+  And pos t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p && q
       (t1'', J.Bool _) -> throwError $ TypeError pos $ T.pack $ show t1'' <> "' is not a boolean."
       (_, t2'') -> throwError $ TypeError pos $ T.pack $ show t2'' <> "' is not a boolean."
-  OR pos t1 t2 -> do
+  Or pos t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of

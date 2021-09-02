@@ -26,9 +26,9 @@ data Token =
   | Colon
   | Dot
   | Comma
-  | Eq'
-  | GT'
-  | LT'
+  | Eq
+  | Gt
+  | Lt
   | And
   | Or
   -- | Member
@@ -53,9 +53,9 @@ serialize = \case
     Colon           -> ":"
     Dot             -> "."
     Comma           -> ","
-    Eq'             -> "=="
-    GT'             -> ">"
-    LT'             -> "<"
+    Eq             -> "=="
+    Gt             -> ">"
+    Lt             -> "<"
     And             -> "&&"
     Or              -> "||"
     CurlyOpen       -> "{"
@@ -85,9 +85,9 @@ lexer t = unfoldr go (t', iPos)
       | Just s <- T.stripPrefix "$"     txt = stepLexer Bling s pos
       | Just s <- T.stripPrefix ":="    txt = stepLexer Assignment s pos
       | Just s <- T.stripPrefix ":"     txt = stepLexer Colon s pos
-      | Just s <- T.stripPrefix "=="    txt = stepLexer Eq' s pos
-      | Just s <- T.stripPrefix ">"     txt = stepLexer GT' s pos
-      | Just s <- T.stripPrefix "<"     txt = stepLexer LT' s pos
+      | Just s <- T.stripPrefix "=="    txt = stepLexer Eq s pos
+      | Just s <- T.stripPrefix ">"     txt = stepLexer Gt s pos
+      | Just s <- T.stripPrefix "<"     txt = stepLexer Lt s pos
       | Just s <- T.stripPrefix "&&"    txt = stepLexer And s pos
       | Just s <- T.stripPrefix "||"    txt = stepLexer Or s pos
       | Just s <- T.stripPrefix "{"     txt = stepLexer CurlyOpen s pos

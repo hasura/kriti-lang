@@ -9,7 +9,7 @@ module Kriti.Parser ( Accessor(..)
                     ) where
 
 import Kriti.Error
-import Kriti.Lexer
+import qualified Kriti.Lexer         as Lex
 
 import Control.Applicative
 import Control.Monad.Identity
@@ -49,11 +49,11 @@ data ValueExt =
   -- Extended Terms
   | Path [(Span, Accessor)]
   | Iff Span ValueExt ValueExt ValueExt
-  | Eq ValueExt ValueExt
-  | Gt ValueExt ValueExt
-  | Lt ValueExt ValueExt
-  | AND Span ValueExt ValueExt
-  | OR Span ValueExt ValueExt
+  | Eq Span ValueExt ValueExt
+  | Gt Span ValueExt ValueExt
+  | Lt Span ValueExt ValueExt
+  | And Span ValueExt ValueExt
+  | Or Span ValueExt ValueExt
   | Member Span ValueExt ValueExt
   | Range Span (Maybe Text) Text [(Span, Accessor)] ValueExt
   -- ^ {{ range i, x := $.foo.bar }}
@@ -71,79 +71,79 @@ instance J.FromJSON ValueExt where
 
 -- {{ range $index, $article := .event.author.articles }}
 
-type Parser a = P.ParsecT [TokenExt] () Identity a
+type Parser a = P.ParsecT [Lex.TokenExt] () Identity a
 
-match :: (TokenExt -> Maybe a) -> Parser a
-match = P.token (show . teType) tePos
+match :: (Lex.TokenExt -> Maybe a) -> Parser a
+match = P.token (show . Lex.teType) Lex.tePos
 
-match_ :: (Token -> Bool) -> Parser ()
-match_ f = match (guard . f . teType)
+match_ :: (Lex.Token -> Bool) -> Parser ()
+match_ f = match (guard . f . Lex.teType)
 
 colon :: Parser ()
-colon = match_ (== Colon)
+colon = match_ (== Lex.Colon)
 
 dot :: Parser ()
-dot = match_ (== Dot)
+dot = match_ (== Lex.Dot)
 
 comma :: Parser ()
-comma = match_ (== Comma)
+comma = match_ (== Lex.Comma)
 
 openCurly :: Parser ()
-openCurly = match_ (== CurlyOpen)
+openCurly = match_ (== Lex.CurlyOpen)
 
 closeCurly :: Parser ()
-closeCurly = match_ (== CurlyClose)
+closeCurly = match_ (== Lex.CurlyClose)
 
 squareOpen :: Parser ()
-squareOpen = match_ (== SquareOpen)
+squareOpen = match_ (== Lex.SquareOpen)
 
 squareClose :: Parser ()
-squareClose = match_ (== SquareClose)
+squareClose = match_ (== Lex.SquareClose)
 
 bling :: Parser ()
-bling = match_ (== Bling)
+bling = match_ (== Lex.Bling)
 
 underscore :: Parser ()
-underscore = match_ (== Underscore)
+underscore = match_ (== Lex.Underscore)
 
 assignment :: Parser ()
-assignment = match_ (== Assignment)
+assignment = match_ (== Lex.Assignment)
 
 ident :: Parser Text
 ident = match \case
-  TokenExt (Identifier s) _ -> Just s
+  Lex.TokenExt (Lex.Identifier s) _ -> Just s
   _ -> Nothing
 
 ident_ :: Text -> Parser ()
 ident_ s = match_ \case
-  Identifier s' -> s == s'
+  Lex.Identifier s' -> s == s'
   _ -> False
 
 bool :: Parser Bool
 bool = match \case
-  TokenExt (BoolLit p) _ -> Just p
+  Lex.TokenExt (Lex.BoolLit p) _ -> Just p
   _ -> Nothing
 
 stringLit :: Parser Text
 stringLit = match \case
-  TokenExt (StringLit s) _ -> Just s
+  Lex.TokenExt (Lex.StringLit s) _ -> Just s
   _ -> Nothing
 
 number :: Fractional a => Parser a
 number = match \case
-  TokenExt (NumLit n) _ -> Just (fromRational $ toRational n)
+  Lex.TokenExt (Lex.NumLit n) _ -> Just (fromRational $ toRational n)
   _ -> Nothing
 
 integer :: Parser Int
 integer = match \case
-  TokenExt (NumLit n) _ -> toBoundedInteger n
+  Lex.TokenExt (Lex.NumLit n) _ -> toBoundedInteger n
   _ -> Nothing
 
 template :: Parser a -> Parser a
 template = P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
 
 parens :: Parser a -> Parser a
-parens = P.between (match_ (== ParenOpen)) (match_ (== ParenClose))
+parens = P.between (match_ (== Lex.ParenOpen)) (match_ (== Lex.ParenClose))
 
 parseNull :: Parser ValueExt
 parseNull = do
@@ -268,11 +268,20 @@ start =
     ]
 
 end :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
-end = lt <|> gt <|> eq <|> pure Nothing
+end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
   where
-    lt = match_ (== LT') *> parseJson >>= (pure . Just . (Lt, ))
-    gt = match_ (== GT') *> parseJson >>= (pure . Just . (Gt, ))
-    eq = match_ (== Eq') *> parseJson >>= (pure . Just . (Eq, ))
+    lt, gt, eq :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
+    lt   = op Lex.Lt Lt 0
+    gt   = op Lex.Gt Gt 0
+    eq   = op Lex.Eq Eq 1
+    and' = op Lex.And And 1
+    or'  = op Lex.Or Or 1
+
+    op tok con size = do
+      pos1 <- getSourcePos
+      void $ match_ (== tok)
+      v <- parseJson
+      pure $ Just (con (pos1, Just $ incCol size pos1), v)
 
 newtype ParseError = ParseError P.ParseError
   deriving Show
@@ -286,5 +295,5 @@ instance RenderError ParseError where
 getSourcePos :: Parser SourcePosition
 getSourcePos = fromSourcePos <$> P.getPosition
 
-parser :: [TokenExt] -> Either ParseError ValueExt
+parser :: [Lex.TokenExt] -> Either ParseError ValueExt
 parser = first ParseError . P.runParser parseJson mempty mempty
