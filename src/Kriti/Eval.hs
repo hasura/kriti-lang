@@ -1,7 +1,11 @@
+{-# LANGUAGE LambdaCase     #-}
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Kriti.Eval where
 
-import           Control.Monad.Except
-import           Control.Monad.Reader
+import           Control.Monad.Except (ExceptT, runExceptT, throwError)
+import           Control.Monad.Reader (Reader, ask, local, runReader)
+import           Data.Dynamic         (toDyn)
 import           Data.Foldable        (foldlM)
 import           Data.Maybe           (maybeToList)
 import           Kriti.Error
@@ -13,17 +17,39 @@ import qualified Data.Text            as T
 import qualified Data.Vector          as V
 
 data EvalError =
+    -- | The first 'SourcePosition' is the point where the lookup failed.
+    --
+    -- TODO: Clarify this comment.
     InvalidPath Span [(Span, Accessor)]
-  -- ^ The first SourcePosition is the point where the lookup failed
   | TypeError Span T.Text
   | RangeError Span
   deriving Show
 
-instance RenderError EvalError where
-  render :: EvalError -> RenderedError
-  render (InvalidPath span' path) = RenderedError { _code = InvalidPathCode, _message = "Path Lookup Error: \"" <> renderPath path <> "\"", _span = span' }
-  render (TypeError span' txt)    = RenderedError { _code = TypeErrorCode,   _message = "Type Error: " <> txt, _span = span' }
-  render (RangeError span')       = RenderedError { _code = RangeErrorCode,  _message = "Range Error: Can only range over an array", _span = span' }
+instance ToError EvalError where
+  toError :: EvalError -> Error
+  toError thisError = case thisError of
+    InvalidPath _span path -> Error {
+        _code = InvalidPathCode,
+        _message = "Path Lookup Error: \"" <> renderPath path <> "\"",
+        _span,
+        _innerError = toDyn thisError
+      }
+    TypeError _span txt -> Error {
+        _code = TypeErrorCode,
+        _message = "Type Error: " <> txt,
+        _span,
+        _innerError = toDyn thisError
+      }
+    RangeError _span -> Error {
+        _code = RangeErrorCode,
+        _message = "Range Error: Can only range over an array ",
+        _span,
+        _innerError = toDyn thisError
+      }
+
+-- Use the default instance, which tries to cast the ''Dynamic' to a
+-- 'EvalError'.
+instance TryFromError EvalError where
 
 type Ctxt = M.HashMap T.Text J.Value
 
