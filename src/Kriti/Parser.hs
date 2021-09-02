@@ -1,21 +1,25 @@
-module Kriti.Parser ( Accessor(..)
-                    , ValueExt(..)
-                    , SourcePosition(..)
-                    , Span
-                    , ParseError
-                    , parser
-                    , renderPath
-                    , parsePath
-                    ) where
+{-# LANGUAGE ScopedTypeVariables #-}
 
-import Kriti.Error
-import Kriti.Lexer
+module Kriti.Parser (
+  Accessor(..),
+  ValueExt(..),
+  SourcePosition(..),
+  Span,
+  ParseError,
+  parser,
+  renderPath,
+  parsePath,
+) where
 
-import Control.Applicative
-import Control.Monad.Identity
+import Kriti.Error                   (Error(..), ErrorCode(..), SourcePosition(..), Span(..), ToError(..), TryFromError(..), fromSourcePos, incCol)
+import Kriti.Lexer                   (Token(..), TokenExt(..))
+
+import Control.Applicative           ((<|>), many)
+import Control.Monad                 (guard)
+import Control.Monad.Identity        (Identity)
 import Data.Bifunctor                (first)
+import Data.Dynamic                  (toDyn)
 import Data.Function                 ((&))
-import Data.List                     (intersperse)
 import Data.Monoid                   (Alt(..))
 import Data.Scientific               (Scientific, toBoundedInteger)
 import Data.Text                     (Text)
@@ -27,17 +31,23 @@ import qualified Data.Vector         as V
 import qualified Text.Parsec         as P
 import qualified Text.Parsec.Error as PE
 
-data Accessor = Obj Text | Arr Int
-  deriving (Show, Eq, Read)
+-- | TODO: Documentation.
+data Accessor =
+    Obj Text
+  | Arr Int
+  deriving stock (Eq, Read, Show)
 
+-- | TODO: Documentation.
 renderAccessor :: Accessor -> Text
 renderAccessor = \case
   Obj txt -> txt
   Arr i -> T.pack $ show i
 
+-- | TODO: Documentation.
 renderPath :: [(Span, Accessor)] -> Text
-renderPath = mconcat . intersperse "." . fmap (renderAccessor . snd)
+renderPath path = T.intercalate "." $ map (renderAccessor . snd) path
 
+-- | TODO: Documentation.
 data ValueExt =
   -- Core Aeson Terms
     Object (M.HashMap Text ValueExt)
@@ -71,94 +81,120 @@ instance J.FromJSON ValueExt where
 
 -- {{ range $index, $article := .event.author.articles }}
 
+-- | TODO: Documentation.
 type Parser a = P.ParsecT [TokenExt] () Identity a
 
+-- | TODO: Documentation.
 match :: (TokenExt -> Maybe a) -> Parser a
 match = P.token (show . teType) tePos
 
+-- | TODO: Documentation.
 match_ :: (Token -> Bool) -> Parser ()
 match_ f = match (guard . f . teType)
 
+-- | TODO: Documentation.
 colon :: Parser ()
 colon = match_ (== Colon)
 
+-- | TODO: Documentation.
 dot :: Parser ()
 dot = match_ (== Dot)
 
+-- | TODO: Documentation.
 comma :: Parser ()
 comma = match_ (== Comma)
 
+-- | TODO: Documentation.
 openCurly :: Parser ()
 openCurly = match_ (== CurlyOpen)
 
+-- | TODO: Documentation.
 closeCurly :: Parser ()
 closeCurly = match_ (== CurlyClose)
 
+-- | TODO: Documentation.
 squareOpen :: Parser ()
 squareOpen = match_ (== SquareOpen)
 
+-- | TODO: Documentation.
 squareClose :: Parser ()
 squareClose = match_ (== SquareClose)
 
+-- | TODO: Documentation.
 bling :: Parser ()
 bling = match_ (== Bling)
 
+-- | TODO: Documentation.
 underscore :: Parser ()
 underscore = match_ (== Underscore)
 
+-- | TODO: Documentation.
 assignment :: Parser ()
 assignment = match_ (== Assignment)
 
+-- | TODO: Documentation.
 ident :: Parser Text
 ident = match \case
   TokenExt (Identifier s) _ -> Just s
   _ -> Nothing
 
+-- | TODO: Documentation.
 ident_ :: Text -> Parser ()
 ident_ s = match_ \case
   Identifier s' -> s == s'
   _ -> False
 
+-- | TODO: Documentation.
 bool :: Parser Bool
 bool = match \case
   TokenExt (BoolLit p) _ -> Just p
   _ -> Nothing
 
+-- | TODO: Documentation.
 stringLit :: Parser Text
 stringLit = match \case
   TokenExt (StringLit s) _ -> Just s
   _ -> Nothing
 
+-- | TODO: Documentation.
 number :: Fractional a => Parser a
 number = match \case
   TokenExt (NumLit n) _ -> Just (fromRational $ toRational n)
   _ -> Nothing
 
+-- | TODO: Documentation.
 integer :: Parser Int
 integer = match \case
   TokenExt (NumLit n) _ -> toBoundedInteger n
   _ -> Nothing
 
+-- | TODO: Documentation.
 template :: Parser a -> Parser a
 template = P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
 
+-- | TODO: Documentation.
 parens :: Parser a -> Parser a
 parens = P.between (match_ (== ParenOpen)) (match_ (== ParenClose))
 
+-- | TODO: Documentation.
 parseNull :: Parser ValueExt
 parseNull = do
   ident_ "null" <|> P.try (openCurly *> closeCurly)
   pure Null
 
+-- | TODO: Documentation.
 parseString :: Parser ValueExt
 parseString = String <$> stringLit
 
+-- | TODO: Documentation.
 parseNumber :: Parser ValueExt
 parseNumber = Number <$> number
 
+-- | TODO: Documentation.
 parseBool :: Parser ValueExt
 parseBool = Boolean <$> bool
 
+-- | TODO: Documentation.
 parseObject :: Parser ValueExt
 parseObject = do
   openCurly
@@ -173,6 +209,7 @@ parseObject = do
       value <- parseJson
       pure (key, value)
 
+-- | TODO: Documentation.
 blingPrefixedId :: Parser Text
 blingPrefixedId = do
   bling
@@ -181,12 +218,16 @@ blingPrefixedId = do
     Just x' -> pure $ "$" <> x'
     Nothing -> pure "$"
 
+-- | TODO: Documentation.
 parsePath :: Parser ValueExt
 parsePath = do
   startPos <- fromSourcePos <$> P.getPosition
-  x <- prefix <|> fmap Obj ident
-  xs <- many $ obj <|> arr
-  let path = ((startPos, x):xs) & fmap \(pos, el) -> ((pos, Just $ incCol (len el) pos), el)
+  startAccessor <- prefix <|> fmap Obj ident
+  rest <- many $ obj <|> arr
+  let origPath = (startPos, startAccessor) : rest
+      path = origPath & map \(pos, accessor) ->
+        let aSpan = Span pos (Just $ incCol (len accessor) pos)
+        in (aSpan, accessor)
   pure $ Path path
   where
     len (Obj x) = T.length x
@@ -204,6 +245,7 @@ parsePath = do
       x <- Obj <$> ident
       pure (pos, x)
 
+-- | TODO: Documentation.
 parseArray :: Parser ValueExt
 parseArray = do
   squareOpen
@@ -211,6 +253,7 @@ parseArray = do
   squareClose
   pure $ Array $ V.fromList xs
 
+-- | TODO: Documentation.
 parseRange :: Parser ValueExt
 parseRange = do
   pos1 <- fromSourcePos <$> P.getPosition
@@ -218,7 +261,8 @@ parseRange = do
   body <- parseJson
   end'
   pos2 <- fromSourcePos <$> P.getPosition
-  pure $ Range (pos1, Just pos2) idx bndr path body
+  let aSpan = Span pos1 (Just pos2)
+  pure $ Range aSpan idx bndr path body
   where
     range = template $ do
       ident_ "range"
@@ -230,6 +274,7 @@ parseRange = do
       pure (idx, bndr, path)
     end' = template (ident_ "end")
 
+-- | TODO: Documentation.
 parserIff :: Parser ValueExt
 parserIff = do
   pos1 <- fromSourcePos <$> P.getPosition
@@ -239,8 +284,10 @@ parserIff = do
   t2 <- parseJson
   template $ ident_ "end"
   pos2 <- fromSourcePos <$> P.getPosition
-  pure $ Iff (pos1, Just pos2) p t1 t2
+  let aSpan = Span pos1 (Just pos2)
+  pure $ Iff aSpan p t1 t2
 
+-- | TODO: Documentation.
 parseJson :: Parser ValueExt
 parseJson = do
   e1 <- start
@@ -249,6 +296,7 @@ parseJson = do
     Nothing -> pure e1
     Just (f, e2) -> pure (f e1 e2)
 
+-- | TODO: Documentation.
 start :: Parser ValueExt
 start =
   getAlt $ foldMap Alt
@@ -267,6 +315,7 @@ start =
     , parens parseJson
     ]
 
+-- | TODO: Documentation.
 end :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
 end = lt <|> gt <|> eq <|> pure Nothing
   where
@@ -274,14 +323,31 @@ end = lt <|> gt <|> eq <|> pure Nothing
     gt = match_ (== GT') *> parseJson >>= (pure . Just . (Gt, ))
     eq = match_ (== Eq') *> parseJson >>= (pure . Just . (Eq, ))
 
+-- | TODO: Documentation.
 newtype ParseError = ParseError P.ParseError
-  deriving Show
+  deriving stock (Show)
 
-instance RenderError ParseError where
-  render (ParseError err) =
+instance ToError ParseError where
+  toError thisError@(ParseError err) =
     let startPos = fromSourcePos $ PE.errorPos err
-        errorMessage = PE.showErrorMessages "or" "unknown parse error" "expecting" "unexpected" "end of input" $ PE.errorMessages err
-    in RenderedError { _code = ParseErrorCode, _message = T.pack errorMessage, _span = (startPos, Nothing) }
+        errorMessage = PE.showErrorMessages
+          "or"
+          "unknown parse error"
+          "expecting"
+          "unexpected"
+          "end of input" $
+          PE.errorMessages err
+    in
+      Error {
+        _code = ParseErrorCode,
+        _message = T.pack errorMessage,
+        _span = Span startPos Nothing,
+        _innerError = toDyn thisError
+      }
+
+-- Use the default instance, which tries to cast the ''Dynamic' to a
+-- 'ParseError'.
+instance TryFromError ParseError
 
 getSourcePos :: Parser SourcePosition
 getSourcePos = fromSourcePos <$> P.getPosition
