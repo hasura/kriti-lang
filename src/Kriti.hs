@@ -1,6 +1,5 @@
 module Kriti (RenderedError(..), ErrorCode(..), SourcePosition(..), ValueExt(..), runKriti)  where
 
-
 import           Data.Bifunctor    (first)
 import           Kriti.Error
 import           Kriti.Eval
