@@ -7,7 +7,7 @@ import Data.Scientific (Scientific, scientificP)
 import Data.Text (Text)
 import GHC.Generics
 import Text.Parsec.Pos (SourcePos, incSourceLine, incSourceColumn, initialPos, newPos, sourceColumn, sourceLine, setSourceColumn)
-import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
+import Text.ParserCombinators.ReadP (ReadP, char, gather, many, readP_to_S, satisfy)
 import Text.Read (lexP, lift, readPrec_to_P)
 
 import qualified Data.Text as T
@@ -17,6 +17,8 @@ import           Text.Read.Lex.Extended (lexString)
 data Token =
     StringLit Text
     -- ^ String Literal
+  | StringTem Text
+    -- ^ String Template
   | Identifier Text
     -- ^ Identifier
   | NumLit Scientific
@@ -45,6 +47,7 @@ data Token =
 serialize :: Token -> Text
 serialize = \case
     StringLit str   -> "\"" <> str <> "\""
+    StringTem str   -> "`" <> str <> "`"
     Identifier iden -> iden
     NumLit i        -> T.pack $ show i
     BoolLit True    -> "true"
@@ -53,9 +56,9 @@ serialize = \case
     Colon           -> ":"
     Dot             -> "."
     Comma           -> ","
-    Eq             -> "=="
-    Gt             -> ">"
-    Lt             -> "<"
+    Eq              -> "=="
+    Gt              -> ">"
+    Lt              -> "<"
     And             -> "&&"
     Or              -> "||"
     CurlyOpen       -> "{"
@@ -97,6 +100,7 @@ lexer t = unfoldr go (t', iPos)
       | Just s <- T.stripPrefix ")"     txt = stepLexer ParenClose s pos
       | Just s <- T.stripPrefix "("     txt = stepLexer ParenOpen s pos
       | Just (str, matched, s) <- stringLit txt  = Just (TokenExt (StringLit str) pos, advance s pos matched)
+      | Just (str, matched, s) <- stringTem txt  = Just (TokenExt (StringTem str) pos, advance s pos matched)
       | Just (str, matched, s) <- identifier txt = Just (TokenExt (Identifier str) pos, advance s pos matched)
       | Just (n, matched, s) <- numberLit txt    = Just (TokenExt (NumLit (realToFrac n)) pos, advance s pos matched)
       | otherwise = Nothing
@@ -115,6 +119,17 @@ lexer t = unfoldr go (t', iPos)
       where
         stringLexeme = do
           L.String s <- lift lexString
+          pure (T.pack s)
+
+    stringTem :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
+    stringTem = fromRead (readPrec_to_P stringLexeme 0)
+      where
+        stringLexeme = do
+          L.String s <- lift do
+            _ <- char '`'
+            tem <- many $ satisfy (/= '`')
+            _ <- char '`'
+            pure $ L.String tem
           pure (T.pack s)
 
     numberLit :: Text -> Maybe (Scientific, Text, Text) -- (value, lit, remainder)

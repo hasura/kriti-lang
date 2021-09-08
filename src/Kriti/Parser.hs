@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Kriti.Parser ( Accessor(..)
                     , ValueExt(..)
                     , SourcePosition(..)
@@ -6,6 +7,7 @@ module Kriti.Parser ( Accessor(..)
                     , parser
                     , renderPath
                     , parsePath
+                    , parserStringInterp
                     ) where
 
 import Kriti.Error
@@ -13,7 +15,8 @@ import qualified Kriti.Lexer         as Lex
 
 import Control.Applicative
 import Control.Monad.Identity
-import Data.Bifunctor                (first)
+import Control.Monad.Except
+import Data.Bifunctor                (first, bimap)
 import Data.Function                 ((&))
 import Data.List                     (intersperse)
 import Data.Monoid                   (Alt(..))
@@ -26,6 +29,7 @@ import qualified Data.Text           as T
 import qualified Data.Vector         as V
 import qualified Text.Parsec         as P
 import qualified Text.Parsec.Error as PE
+import Data.Aeson.Types (explicitParseFieldMaybe')
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
@@ -43,6 +47,7 @@ data ValueExt =
     Object (M.HashMap Text ValueExt)
   | Array (V.Vector ValueExt)
   | String Text
+  | StringInterp [Either Text ValueExt]
   | Number Scientific
   | Boolean Bool
   | Null
@@ -78,6 +83,9 @@ match = P.token (show . Lex.teType) Lex.tePos
 
 match_ :: (Lex.Token -> Bool) -> Parser ()
 match_ f = match (guard . f . Lex.teType)
+
+eitherP :: Parser a -> Parser b -> Parser (Either a b)
+eitherP a b = (Left <$> a) <|> (Right <$> b)
 
 colon :: Parser ()
 colon = match_ (== Lex.Colon)
@@ -129,6 +137,18 @@ stringLit = match \case
   Lex.TokenExt (Lex.StringLit s) _ -> Just s
   _ -> Nothing
 
+type Lit = Text
+type UnLexed = Text
+
+stringTem :: Parser [Either Text [Lex.TokenExt]]
+stringTem = match \case
+  Lex.TokenExt (Lex.StringTem s) _ ->
+    Just $ fmap (fmap Lex.lexer) (splitTem s)
+  _ -> Nothing
+  where
+    splitTem :: Text -> [Either Lit UnLexed]
+    splitTem = undefined
+
 number :: Fractional a => Parser a
 number = match \case
   Lex.TokenExt (Lex.NumLit n) _ -> Just (fromRational $ toRational n)
@@ -139,11 +159,14 @@ integer = match \case
   Lex.TokenExt (Lex.NumLit n) _ -> toBoundedInteger n
   _ -> Nothing
 
+betweenCurly :: Parser a -> Parser a
+betweenCurly = P.between openCurly closeCurly
+
+betweenParens :: Parser a -> Parser a
+betweenParens = P.between (match_ (== Lex.ParenOpen)) (match_ (== Lex.ParenClose))
+
 template :: Parser a -> Parser a
 template = P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
-
-parens :: Parser a -> Parser a
-parens = P.between (match_ (== Lex.ParenOpen)) (match_ (== Lex.ParenClose))
 
 parseNull :: Parser ValueExt
 parseNull = do
@@ -241,6 +264,14 @@ parserIff = do
   pos2 <- fromSourcePos <$> P.getPosition
   pure $ Iff (pos1, Just pos2) p t1 t2
 
+parserStringInterp :: Parser ValueExt
+parserStringInterp = do
+  tem <- stringTem
+  parsed <- forM tem $ \tem' -> do
+    let x = fmap parser tem'
+    traverse (either _ pure) x
+  pure $ StringInterp parsed
+
 parseJson :: Parser ValueExt
 parseJson = do
   e1 <- start
@@ -254,6 +285,7 @@ start =
   getAlt $ foldMap Alt
     [ parseNull
     , parseString
+    , parserStringInterp
     , parseNumber
     , parseBool
     , parseArray
@@ -264,7 +296,7 @@ start =
     , P.try (template parsePath)
     , P.try parseRange
     , parserIff
-    , parens parseJson
+    , betweenParens parseJson
     ]
 
 end :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))

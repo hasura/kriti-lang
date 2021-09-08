@@ -47,7 +47,6 @@ runEval template source =
   let ctx = M.fromList source
   in runReader (runExceptT (eval template)) ctx
 
--- NOTE: In general where do we want to produce errors and where is it ok to return null?
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
   String str -> pure $ J.String str
@@ -55,6 +54,7 @@ eval = \case
   Boolean p -> pure $ J.Bool p
   Null -> pure J.Null
   Object fields -> J.Object <$> traverse eval fields
+  StringInterp t1 -> undefined
   Array xs -> J.Array <$> traverse eval xs
   Path path -> do
     ctx <- ask
