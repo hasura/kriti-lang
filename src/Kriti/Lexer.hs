@@ -108,7 +108,7 @@ lexer t = do
   where
     go :: (Text, SourcePos) -> Either LexError (Maybe (TokenExt, (Text, SourcePos)))
     go (txt, pos)
-      | T.null t = pure Nothing
+      | T.null txt = pure Nothing
       | Just s <- T.stripPrefix "true"  txt = stepLexer (BoolLit True) s pos
       | Just s <- T.stripPrefix "false" txt = stepLexer (BoolLit False) s pos
       | Just s <- T.stripPrefix "_"     txt = stepLexer Underscore s pos
@@ -131,7 +131,7 @@ lexer t = do
       | Just (str, _, s) <- stringLit   txt = stepLexer (StringLit str) s pos
       | Just (str, _, s) <- identifier  txt = stepLexer (Identifier str) s pos
       | Just (n, matched, s)   <- numberLit   txt = stepLexer (NumLit matched (realToFrac n)) s pos
-      | otherwise = pure Nothing
+      | otherwise = throwLexError pos
 
     stepLexer :: Token -> Text -> SourcePos -> Either LexError (Maybe (TokenExt, (Text, SourcePos)))
     stepLexer tok rest pos = do
