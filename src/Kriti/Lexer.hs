@@ -1,18 +1,22 @@
 module Kriti.Lexer where
 
-import Data.Char (isSpace)
-import Data.List (unfoldr)
-import Data.Maybe (maybeToList)
-import Data.Scientific (Scientific, scientificP)
-import Data.Text (Text)
-import GHC.Generics
-import Text.Parsec.Pos (SourcePos, incSourceLine, incSourceColumn, initialPos, newPos, sourceColumn, sourceLine, setSourceColumn)
-import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
-import Text.Read (lexP, lift, readPrec_to_P)
+import           Kriti.Error
 
-import qualified Data.Text as T
-import qualified Text.Read.Lex as L
-import           Text.Read.Lex.Extended (lexString)
+import           Data.Char                    (isSpace)
+import           Data.Maybe                   (maybeToList)
+import           Data.Scientific              (Scientific, scientificP)
+import           Data.Text                    (Text)
+import           GHC.Generics
+import           Text.Parsec.Pos              (SourcePos, incSourceColumn,
+                                               incSourceLine, initialPos,
+                                               newPos, setSourceColumn,
+                                               sourceColumn, sourceLine)
+import           Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
+import           Text.Read                    (lexP, lift, readPrec_to_P)
+import           Text.Read.Lex.Extended       (lexString)
+
+import qualified Data.Text                    as T
+import qualified Text.Read.Lex                as L
 
 data Token =
     StringLit Text
@@ -53,9 +57,9 @@ serialize = \case
     Colon           -> ":"
     Dot             -> "."
     Comma           -> ","
-    Eq             -> "=="
-    Gt             -> ">"
-    Lt             -> "<"
+    Eq              -> "=="
+    Gt              -> ">"
+    Lt              -> "<"
     And             -> "&&"
     Or              -> "||"
     CurlyOpen       -> "{"
@@ -70,13 +74,30 @@ serialize = \case
 data TokenExt = TokenExt { teType :: Token, tePos :: SourcePos }
   deriving (Show, Eq)
 
-lexer :: Text -> [TokenExt]
-lexer t = unfoldr go (t', iPos)
+data LexError = LexError { lePos :: SourcePos }
+
+instance RenderError LexError where
+  render LexError{lePos} =
+    RenderedError
+      { _code = LexErrorCode
+      , _message = "Invalid Lexeme"
+      , _span = (fromSourcePos lePos, Nothing)
+      }
+
+unfoldrM :: Monad m => (b -> m (Maybe (a, b))) -> b -> m [a]
+unfoldrM f b =  f b >>= \case
+  Just (a, b') -> do
+    as <- unfoldrM f b'
+    pure $ a:as
+  Nothing -> pure []
+
+lexer :: Text -> Either LexError [TokenExt]
+lexer t = unfoldrM go (t', iPos)
   where
     (t', iPos) = advance t (initialPos "sourceName") mempty
-    go :: (Text, SourcePos) -> Maybe (TokenExt, (Text, SourcePos))
+    go :: (Text, SourcePos) -> Either LexError (Maybe (TokenExt, (Text, SourcePos)))
     go (txt, pos)
-      | T.null t = Nothing
+      | T.null t = pure Nothing
       | Just s <- T.stripPrefix "true"  txt = stepLexer (BoolLit True) s pos
       | Just s <- T.stripPrefix "false" txt = stepLexer (BoolLit False) s pos
       | Just s <- T.stripPrefix "_"     txt = stepLexer Underscore s pos
@@ -96,13 +117,13 @@ lexer t = unfoldr go (t', iPos)
       | Just s <- T.stripPrefix "]"     txt = stepLexer SquareClose s pos
       | Just s <- T.stripPrefix ")"     txt = stepLexer ParenClose s pos
       | Just s <- T.stripPrefix "("     txt = stepLexer ParenOpen s pos
-      | Just (str, matched, s) <- stringLit txt  = Just (TokenExt (StringLit str) pos, advance s pos matched)
-      | Just (str, matched, s) <- identifier txt = Just (TokenExt (Identifier str) pos, advance s pos matched)
-      | Just (n, matched, s) <- numberLit txt    = Just (TokenExt (NumLit (realToFrac n)) pos, advance s pos matched)
-      | otherwise = Nothing
+      | Just (str, matched, s) <- stringLit txt  = pure $ Just (TokenExt (StringLit str) pos, advance s pos matched)
+      | Just (str, matched, s) <- identifier txt = pure $ Just (TokenExt (Identifier str) pos, advance s pos matched)
+      | Just (n, matched, s) <- numberLit txt    = pure $ Just (TokenExt (NumLit (realToFrac n)) pos, advance s pos matched)
+      | otherwise = pure Nothing
 
-    stepLexer :: Token -> Text -> SourcePos -> Maybe (TokenExt, (Text, SourcePos))
-    stepLexer tok s pos = Just (TokenExt tok pos, advance s pos (serialize tok))
+    stepLexer :: Token -> Text -> SourcePos -> Either LexError (Maybe (TokenExt, (Text, SourcePos)))
+    stepLexer tok s pos = pure $ Just (TokenExt tok pos, advance s pos (serialize tok))
 
     identifier :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
     identifier = fromRead (readPrec_to_P identLexeme 0) where
@@ -143,5 +164,5 @@ lexer t = unfoldr go (t', iPos)
           newSourcePos = T.foldl' f (newPos "sourceName" (sourceLine pos) col) ws
           f pos' '\n' = setSourceColumn (incSourceLine pos' 1) 0
           f pos' '\r' = pos'
-          f pos' _ = incSourceColumn pos' 1
+          f pos' _    = incSourceColumn pos' 1
        in (rest, newSourcePos)

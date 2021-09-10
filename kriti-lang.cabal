@@ -36,6 +36,7 @@ library
   default-extensions:  BlockArguments
                        InstanceSigs
                        LambdaCase
+                       NamedFieldPuns
                        OverloadedStrings
                        TupleSections
                        DerivingVia

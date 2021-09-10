@@ -32,6 +32,7 @@ import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 import Kriti.Lexer
 import Kriti.Parser
 import Kriti.Eval
+import Kriti.Error
 
 --------------------------------------------------------------------------------
 
@@ -51,7 +52,10 @@ lexerSpec = describe "Lexer" $
     it "lexing serialized tokens yields those tokens" $
       Q.property $ \tokens ->
         let serialized = T.intercalate " " $ fmap serialize tokens
-        in (fmap teType <$> lexer) serialized `shouldBe` (tokens :: [Token])
+            tokens' = lexer serialized
+        in case tokens' of
+          Left lexError -> expectationFailure (show $ render lexError)
+          Right lexemes -> fmap teType lexemes `shouldBe` (tokens :: [Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -66,7 +70,9 @@ parserSpec = describe "Parser" $ do
         let serialized = J.encode @J.Value value
             tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
             viaAeson = fromJust $ J.decode @ValueExt serialized
-        in parser tokens `shouldSatisfy` succeeds viaAeson
+        in case tokens of
+          Left lexError -> expectationFailure (show $ render lexError)
+          Right lexemes -> parser lexemes `shouldSatisfy` succeeds viaAeson
 
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
@@ -74,6 +80,7 @@ parserGoldenSpec :: Spec
 parserGoldenSpec = describe "Golden" $ do
   (dirSuc, pathsSuc) <- runIO $ fetchGoldenFiles "test/data/parser/success"
   (dirFail, pathsFail) <- runIO $ fetchGoldenFiles "test/data/parser/failure"
+
   describe "Success" $ for_ pathsSuc $ \path -> do
     let name = dropExtension $ takeFileName path
     before (parseTemplateSuccess path) $ it ("parses " <> name) $
@@ -89,16 +96,22 @@ parserGoldenSpec = describe "Golden" $ do
 parseTemplateSuccess :: FilePath -> IO ValueExt
 parseTemplateSuccess path = do
   tmpl <- fmap decodeUtf8 . BS.readFile $ path
-  case parser $ lexer tmpl of
-    Left err -> throwString $ "Unexpected parsing failure " <> show err
-    Right valueExt -> pure valueExt
+  case lexer tmpl of
+    Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
+    Right lexemes ->
+      case parser lexemes of
+        Left err -> throwString $ "Unexpected parsing failure " <> show err
+        Right valueExt -> pure valueExt
 
 parseTemplateFailure :: FilePath -> IO ParseError
 parseTemplateFailure path = do
   tmpl <- fmap decodeUtf8 . BS.readFile $ path
-  case parser $ lexer tmpl of
-    Left err -> pure err
-    Right valueExt -> throwString $ "Unexpected parsing success " <> show valueExt
+  case lexer tmpl of
+    Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
+    Right lexemes ->
+      case parser lexemes of
+        Left err -> pure err
+        Right valueExt -> throwString $ "Unexpected parsing success " <> show valueExt
 
 --------------------------------------------------------------------------------
 -- Evaluation tests.
