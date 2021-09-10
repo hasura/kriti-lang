@@ -1,6 +1,7 @@
 module Kriti.Error where
 
 import           Data.Maybe  (catMaybes)
+
 import qualified Data.Aeson  as J
 import qualified Data.Text   as T
 import qualified Text.Parsec as P
@@ -22,8 +23,12 @@ incCol i (SourcePosition n l c) = SourcePosition n l (i+c)
 
 type Span = (SourcePosition, Maybe SourcePosition)
 
-
-data ErrorCode = InvalidPathCode | TypeErrorCode | RangeErrorCode | ParseErrorCode
+data ErrorCode =
+    InvalidPathCode
+  | TypeErrorCode
+  | RangeErrorCode
+  | ParseErrorCode
+  | LexErrorCode
   deriving Show
 
 data RenderedError = RenderedError { _code :: ErrorCode, _message :: T.Text, _span :: Span }

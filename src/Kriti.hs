@@ -10,5 +10,6 @@ import qualified Data.Text         as T
 
 runKriti :: T.Text -> [(T.Text, J.Value)] -> Either RenderedError J.Value
 runKriti template source = do
-  template' <- first render $ parser $ lexer template
+  lexemes <- first render $ lexer template
+  template' <- first render $ parser lexemes
   first render $ runEval template' source
