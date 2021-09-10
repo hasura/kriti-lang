@@ -19,8 +19,9 @@ extra-source-files:  CHANGELOG.md
 library
   build-depends:       base >= 2 && < 5
                      , aeson
+                     , megaparsec
                      , mtl
-                     , parsec
+                     , parser-combinators
                      , scientific
                      , text
                      , unordered-containers
@@ -28,6 +29,7 @@ library
   exposed-modules:     Kriti
                      , Kriti.Error
                      , Kriti.Lexer
+                     , Kriti.Lexer.Token
                      , Kriti.Parser
                      , Kriti.Eval
   hs-source-dirs:      src

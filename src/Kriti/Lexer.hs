@@ -5,76 +5,21 @@ import Data.List (unfoldr)
 import Data.Maybe (maybeToList)
 import Data.Scientific (Scientific, scientificP)
 import Data.Text (Text)
-import GHC.Generics
-import Text.Parsec.Pos (SourcePos, incSourceLine, incSourceColumn, initialPos, newPos, sourceColumn, sourceLine, setSourceColumn)
 import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
 import Text.Read (lexP, lift, readPrec_to_P)
 
 import qualified Data.Text as T
+import qualified Text.Megaparsec as P
 import qualified Text.Read.Lex as L
 import           Text.Read.Lex.Extended (lexString)
 
-data Token =
-    StringLit Text
-    -- ^ String Literal
-  | Identifier Text
-    -- ^ Identifier
-  | NumLit Scientific
-    -- ^ Number literal
-  | BoolLit Bool
-  | Bling
-  | Colon
-  | Dot
-  | Comma
-  | Eq
-  | Gt
-  | Lt
-  | And
-  | Or
-  -- | Member
-  | CurlyOpen
-  | CurlyClose
-  | SquareOpen
-  | SquareClose
-  | ParenOpen
-  | ParenClose
-  | Underscore
-  | Assignment
-  deriving (Show, Eq, Generic)
+import Kriti.Lexer.Token
 
-serialize :: Token -> Text
-serialize = \case
-    StringLit str   -> "\"" <> str <> "\""
-    Identifier iden -> iden
-    NumLit i        -> T.pack $ show i
-    BoolLit True    -> "true"
-    BoolLit False   -> "false"
-    Bling           -> "$"
-    Colon           -> ":"
-    Dot             -> "."
-    Comma           -> ","
-    Eq             -> "=="
-    Gt             -> ">"
-    Lt             -> "<"
-    And             -> "&&"
-    Or              -> "||"
-    CurlyOpen       -> "{"
-    CurlyClose      -> "}"
-    SquareOpen      -> "["
-    SquareClose     -> "]"
-    ParenOpen       -> "("
-    ParenClose      -> ")"
-    Underscore      -> "_"
-    Assignment      -> ":="
-
-data TokenExt = TokenExt { teType :: Token, tePos :: SourcePos }
-  deriving (Show, Eq)
-
-lexer :: Text -> [TokenExt]
-lexer t = unfoldr go (t', iPos)
+lexer :: Text -> TokenStream
+lexer t = TokenStream $ unfoldr go (t', iPos)
   where
-    (t', iPos) = advance t (initialPos "sourceName") mempty
-    go :: (Text, SourcePos) -> Maybe (TokenExt, (Text, SourcePos))
+    (t', iPos) = advance t (P.initialPos "sourceName") mempty
+    go :: (Text, P.SourcePos) -> Maybe (TokenExt, (Text, P.SourcePos))
     go (txt, pos)
       | T.null t = Nothing
       | Just s <- T.stripPrefix "true"  txt = stepLexer (BoolLit True) s pos
@@ -101,7 +46,7 @@ lexer t = unfoldr go (t', iPos)
       | Just (n, matched, s) <- numberLit txt    = Just (TokenExt (NumLit (realToFrac n)) pos, advance s pos matched)
       | otherwise = Nothing
 
-    stepLexer :: Token -> Text -> SourcePos -> Maybe (TokenExt, (Text, SourcePos))
+    stepLexer :: Token -> Text -> P.SourcePos -> Maybe (TokenExt, (Text, P.SourcePos))
     stepLexer tok s pos = Just (TokenExt tok pos, advance s pos (serialize tok))
 
     identifier :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
@@ -136,12 +81,13 @@ lexer t = unfoldr go (t', iPos)
             Nothing -> pure (a, str)
       in maybeToList $ foldr f Nothing xs
 
-    advance :: Text -> SourcePos -> Text -> (Text, SourcePos)
+    advance :: Text -> P.SourcePos -> Text -> (Text, P.SourcePos)
     advance txt pos eaten =
       let (ws, rest) = T.span isSpace txt
-          col = sourceColumn pos + T.length eaten
-          newSourcePos = T.foldl' f (newPos "sourceName" (sourceLine pos) col) ws
-          f pos' '\n' = setSourceColumn (incSourceLine pos' 1) 0
+          col = if T.length eaten == 0 then P.sourceColumn pos else P.sourceColumn pos <> P.mkPos (T.length eaten)
+          newSourcePos = T.foldl' f (P.SourcePos "sourceName" (P.sourceLine pos) col) ws
+          f :: P.SourcePos -> Char -> P.SourcePos
+          f pos' '\n' = setSC (P.mkPos 1) $ incSL 1 pos'
           f pos' '\r' = pos'
-          f pos' _ = incSourceColumn pos' 1
+          f pos' _ = incSC 1 pos'
        in (rest, newSourcePos)
