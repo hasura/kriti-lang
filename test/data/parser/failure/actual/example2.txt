@@ -1,2 +1,2 @@
-ParseError (line 1, column 1):
-unexpected Identifier "True"
+ParseError "sourceName" (line 1, column 8):
+unexpected SquareClose
