@@ -30,6 +30,7 @@ import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 
 import Kriti.Lexer
+import Kriti.Lexer.Token
 import Kriti.Parser
 import Kriti.Eval
 
@@ -51,7 +52,7 @@ lexerSpec = describe "Lexer" $
     it "lexing serialized tokens yields those tokens" $
       Q.property $ \tokens ->
         let serialized = T.intercalate " " $ fmap serialize tokens
-        in (fmap teType <$> lexer) serialized `shouldBe` (tokens :: [Token])
+        in (fmap teType . getTokens <$> lexer) serialized `shouldBe` (tokens :: [Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.

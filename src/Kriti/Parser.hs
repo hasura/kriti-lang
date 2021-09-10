@@ -1,31 +1,32 @@
-module Kriti.Parser ( Accessor(..)
-                    , ValueExt(..)
-                    , SourcePosition(..)
-                    , Span
-                    , ParseError
-                    , parser
-                    , renderPath
-                    , parsePath
-                    ) where
+module Kriti.Parser where--( Accessor(..)
+                    --, ValueExt(..)
+                    --, SourcePosition(..)
+                    --, Span
+                    ----, ParseError
+                    ----, parser
+                    ----, renderPath
+                    ----, parsePath
+                    --) where
 
-import Kriti.Error
-import qualified Kriti.Lexer         as Lex
+import           Kriti.Error
+import qualified Kriti.Lexer.Token      as Lex
 
-import Control.Applicative
-import Control.Monad.Identity
-import Data.Bifunctor                (first)
-import Data.Function                 ((&))
-import Data.List                     (intersperse)
-import Data.Monoid                   (Alt(..))
-import Data.Scientific               (Scientific, toBoundedInteger)
-import Data.Text                     (Text)
+import           Control.Applicative
+import           Control.Monad.Identity
+import           Data.Bifunctor         (first)
+import           Data.Function          ((&))
+import           Data.List              (intersperse)
+import           Data.Monoid            (Alt(..))
+import           Data.Scientific        (Scientific, toBoundedInteger)
+import           Data.Text              (Text)
+import           Data.Void              (Void)
 
-import qualified Data.Aeson          as J
-import qualified Data.HashMap.Strict as M
-import qualified Data.Text           as T
-import qualified Data.Vector         as V
-import qualified Text.Parsec         as P
-import qualified Text.Parsec.Error as PE
+import qualified Data.Aeson             as J
+import qualified Data.HashMap.Strict    as M
+import qualified Data.Text              as T
+import qualified Data.Vector            as V
+import qualified Text.Megaparsec        as P
+import qualified Text.Megaparsec.Error  as PE
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
@@ -71,13 +72,18 @@ instance J.FromJSON ValueExt where
 
 -- {{ range $index, $article := .event.author.articles }}
 
-type Parser a = P.ParsecT [Lex.TokenExt] () Identity a
+type Parser = P.Parsec Void Lex.TokenStream
 
-match :: (Lex.TokenExt -> Maybe a) -> Parser a
-match = P.token (show . Lex.teType) Lex.tePos
+
+match :: (Lex.Token -> Maybe a) -> Parser a
+match f = P.try $ do
+  Lex.TokenExt tok pos <- P.anySingle
+  case f tok of
+    Nothing -> P.unexpected (PE.Tokens $ pure $ Lex.TokenExt tok pos)
+    Just a -> pure a
 
 match_ :: (Lex.Token -> Bool) -> Parser ()
-match_ f = match (guard . f . Lex.teType)
+match_ f = P.satisfy (f . Lex.teType) >> pure ()
 
 colon :: Parser ()
 colon = match_ (== Lex.Colon)
@@ -111,7 +117,7 @@ assignment = match_ (== Lex.Assignment)
 
 ident :: Parser Text
 ident = match \case
-  Lex.TokenExt (Lex.Identifier s) _ -> Just s
+  Lex.Identifier s -> Just s
   _ -> Nothing
 
 ident_ :: Text -> Parser ()
@@ -121,22 +127,22 @@ ident_ s = match_ \case
 
 bool :: Parser Bool
 bool = match \case
-  Lex.TokenExt (Lex.BoolLit p) _ -> Just p
+  Lex.BoolLit p -> Just p
   _ -> Nothing
 
 stringLit :: Parser Text
 stringLit = match \case
-  Lex.TokenExt (Lex.StringLit s) _ -> Just s
+  Lex.StringLit s -> Just s
   _ -> Nothing
 
 number :: Fractional a => Parser a
 number = match \case
-  Lex.TokenExt (Lex.NumLit n) _ -> Just (fromRational $ toRational n)
+  Lex.NumLit n -> Just (fromRational $ toRational n)
   _ -> Nothing
 
 integer :: Parser Int
 integer = match \case
-  Lex.TokenExt (Lex.NumLit n) _ -> toBoundedInteger n
+  Lex.NumLit n -> toBoundedInteger n
   _ -> Nothing
 
 template :: Parser a -> Parser a
@@ -176,14 +182,14 @@ parseObject = do
 blingPrefixedId :: Parser Text
 blingPrefixedId = do
   bling
-  x <- P.optionMaybe ident
+  x <- optional ident
   case x of
     Just x' -> pure $ "$" <> x'
     Nothing -> pure "$"
 
 parsePath :: Parser ValueExt
 parsePath = do
-  startPos <- fromSourcePos <$> P.getPosition
+  startPos <- fromSourcePos <$> P.getSourcePos
   x <- prefix <|> fmap Obj ident
   xs <- many $ obj <|> arr
   let path = ((startPos, x):xs) & fmap \(pos, el) -> ((pos, Just $ incCol (len el) pos), el)
@@ -213,11 +219,11 @@ parseArray = do
 
 parseRange :: Parser ValueExt
 parseRange = do
-  pos1 <- fromSourcePos <$> P.getPosition
+  pos1 <- fromSourcePos <$> P.getSourcePos
   (idx, bndr, Path path) <- range
   body <- parseJson
   end'
-  pos2 <- fromSourcePos <$> P.getPosition
+  pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ Range (pos1, Just pos2) idx bndr path body
   where
     range = template $ do
@@ -232,13 +238,13 @@ parseRange = do
 
 parserIff :: Parser ValueExt
 parserIff = do
-  pos1 <- fromSourcePos <$> P.getPosition
+  pos1 <- fromSourcePos <$> P.getSourcePos
   p <- template $ ident_ "if" *> parsePath
   t1 <- parseJson
   template $ ident_ "else"
   t2 <- parseJson
   template $ ident_ "end"
-  pos2 <- fromSourcePos <$> P.getPosition
+  pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ Iff (pos1, Just pos2) p t1 t2
 
 parseJson :: Parser ValueExt
@@ -283,17 +289,17 @@ end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
       v <- parseJson
       pure $ Just (con (pos1, Just $ incCol size pos1), v)
 
-newtype ParseError = ParseError P.ParseError
+newtype ParseError = ParseError (P.ParseErrorBundle Lex.TokenStream Void)
   deriving Show
 
 instance RenderError ParseError where
   render (ParseError err) =
-    let startPos = fromSourcePos $ PE.errorPos err
-        errorMessage = PE.showErrorMessages "or" "unknown parse error" "expecting" "unexpected" "end of input" $ PE.errorMessages err
+    let startPos = fromSourcePos $ P.pstateSourcePos $ P.bundlePosState err
+        errorMessage = P.errorBundlePretty err
     in RenderedError { _code = ParseErrorCode, _message = T.pack errorMessage, _span = (startPos, Nothing) }
 
 getSourcePos :: Parser SourcePosition
-getSourcePos = fromSourcePos <$> P.getPosition
+getSourcePos = fromSourcePos <$> P.getSourcePos
 
-parser :: [Lex.TokenExt] -> Either ParseError ValueExt
-parser = first ParseError . P.runParser parseJson mempty mempty
+parser :: Lex.TokenStream -> Either ParseError ValueExt
+parser = first ParseError . P.runParser parseJson mempty

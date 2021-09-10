@@ -6,8 +6,7 @@ A minimal json templating language based on Go' template language.
 - Pretty Printer
 - String Interpolation
 - Array Membership Parsing
-- Predicate Operation Parsing
-- CLI Program
+- CLI Interface
 
 ## Uses
 This library exposes the function `runKriti`, the type definition of the function is:

@@ -1,6 +1,6 @@
 Iff
     ( SourcePosition
-        { _sourceName = ""
+        { _sourceName = "sourceName"
         , _line = 1
         , _column = 1
         }
@@ -8,7 +8,7 @@ Iff
         ( SourcePosition
             { _sourceName = "sourceName"
             , _line = 1
-            , _column = 41
+            , _column = 8
             }
         )
     )
