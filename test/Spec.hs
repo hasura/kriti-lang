@@ -56,7 +56,7 @@ lexerSpec = describe "Lexer" $
             tokens' = lexer serialized
         in case tokens' of
           Left lexError -> expectationFailure (show $ render lexError)
-          Right (TokenStream lexemes) -> fmap teType lexemes `shouldBe` (tokens :: [Token])
+          Right (TokenStream _ lexemes) -> fmap teType lexemes `shouldBe` (tokens :: [Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.

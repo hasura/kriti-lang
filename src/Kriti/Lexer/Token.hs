@@ -1,15 +1,13 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE NamedFieldPuns #-}
 module Kriti.Lexer.Token where
 
-import Data.Scientific (Scientific)
-import GHC.Generics
+import           Data.List.NonEmpty (NonEmpty (..))
+import           Data.Proxy
+import           Data.Scientific    (Scientific)
+import           GHC.Generics
 
 import qualified Data.List.NonEmpty as NE
-import qualified Text.Megaparsec    as P
 import qualified Data.Text          as T
+import qualified Text.Megaparsec    as P
 
 viewSC :: P.SourcePos -> P.Pos
 viewSC = P.sourceColumn
@@ -91,23 +89,23 @@ instance Serialize Token where
       Underscore      -> "_"
       Assignment      -> ":="
 
-data TokenExt = TokenExt { teType :: Token, tePos :: P.SourcePos }
+data TokenExt = TokenExt { teType :: Token, teStartPos :: P.SourcePos, teEndPos :: P.SourcePos,  teLength :: Int }
   deriving (Show, Eq, Ord)
 
-newtype TokenStream = TokenStream { getTokens :: [TokenExt] }
+data TokenStream = TokenStream { tsStreamInput :: String, tsTokens :: [TokenExt] }
   deriving (Show, Eq, Ord)
 
 -- | Extract a single line of tokens from the stream
 viewLine :: P.Pos -> TokenStream -> [TokenExt]
-viewLine n (TokenStream toks) = filter (\TokenExt{tePos} -> n == viewSL tePos) toks
+viewLine n (TokenStream _ toks) = filter (\TokenExt{teStartPos} -> n == viewSL teStartPos) toks
 
 instance Serialize TokenStream where
-  serialize (TokenStream []) = mempty
-  serialize (TokenStream toks) =
+  serialize (TokenStream _ []) = mempty
+  serialize (TokenStream _ toks) =
     let colDiff p1 p2 = P.unPos (viewSC p2) - P.unPos (viewSC p1)
         lineDiff p1 p2 = P.unPos (viewSL p2) - P.unPos (viewSL p1)
         f :: (T.Text, P.SourcePos) -> TokenExt -> (T.Text, P.SourcePos)
-        f (txt, pos) (TokenExt tok nextPos) =
+        f (txt, pos) (TokenExt tok nextPos _ _) =
           if viewSL pos == viewSL nextPos
           then (txt <> T.replicate (colDiff pos nextPos) " " <> serialize tok
                , incSC (T.length $ serialize tok) nextPos)
@@ -121,7 +119,7 @@ instance Serialize TokenStream where
     in fst $ foldl f (mempty, P.initialPos mempty) toks
 
 instance Serialize [TokenExt] where
-  serialize = serialize . TokenStream
+  serialize = serialize . TokenStream mempty
 
 instance P.Stream TokenStream where
   type Token TokenStream = TokenExt
@@ -133,36 +131,54 @@ instance P.Stream TokenStream where
   chunkToTokens _ toks = toks
   chunkLength pxy = length . P.chunkToTokens pxy
 
-  take1_ (TokenStream []) = Nothing
-  take1_ (TokenStream (tok : toks)) = Just (tok, TokenStream toks)
+  take1_ (TokenStream _ []) = Nothing
+  take1_ (TokenStream si (tok : toks)) =
+    Just (tok, TokenStream (drop (P.tokensLength (Proxy @TokenStream) (tok :| [])) si) toks)
 
-  takeN_ i (TokenStream toks)
-    | i <= 0           = Just ([], TokenStream toks)
-    | null toks = Nothing
-    | length toks <= i = Just (toks, TokenStream [])
-    | otherwise        = Just (take i toks, TokenStream $ drop 1 toks)
+  takeN_ i (TokenStream si toks)
+    | i <= 0           = Just ([], TokenStream si toks)
+    | null toks        = Nothing
+    | otherwise        =
+       let (prev, rest) = splitAt i toks
+       in case NE.nonEmpty prev of
+         Nothing -> Just (prev, TokenStream si rest)
+         Just next -> Just (prev, TokenStream (drop (P.tokensLength (Proxy @TokenStream) next) si) rest)
 
-  takeWhile_ f (TokenStream toks) = TokenStream <$> span f toks
+  takeWhile_ f (TokenStream si toks) = --TokenStream si <$> span f toks
+    let (prev, rest) = span f toks
+    in case NE.nonEmpty prev of
+         Nothing -> (prev, TokenStream si rest)
+         Just next -> (prev, TokenStream (drop (P.tokensLength (Proxy @TokenStream) next) si) rest)
 
 instance P.TraversableStream TokenStream where
   reachOffset o P.PosState{..} =
-    let (_, post) = splitAt (o - pstateOffset) (getTokens pstateInput)
-        spos = if null post
-          then pstateSourcePos
-          else tePos $ head post
-        addPrefix xs =
-          if viewSL spos == viewSL pstateSourcePos
-          then pstateLinePrefix ++ xs
-          else xs
-    in ( Just $ addPrefix $ T.unpack $ serialize $ viewLine (viewSL spos) pstateInput
+    let (pre, post) = splitAt (o - pstateOffset) (tsTokens pstateInput)
+        tokensConsumed =
+          case NE.nonEmpty pre of
+            Nothing -> 0
+            Just nePre -> P.tokensLength (Proxy @TokenStream) nePre
+        (preStr, postStr) = splitAt tokensConsumed (tsStreamInput pstateInput)
+        preLine = reverse . takeWhile (/= '\n') . reverse $ preStr
+        restOfLine = takeWhile (/= '\n') postStr
+        newSourcePos =
+          case post of
+            [] -> pstateSourcePos
+            (x:_) -> teStartPos x
+        sameLine = P.sourceLine newSourcePos == P.sourceLine pstateSourcePos
+        prefix =
+          if sameLine
+            then pstateLinePrefix ++ preLine
+            else preLine
+
+    in ( Just $ prefix <> restOfLine
        , P.PosState
-           { P.pstateInput = TokenStream post
+           { P.pstateInput = TokenStream postStr post
            , P.pstateOffset = max pstateOffset o
-           , P.pstateSourcePos = spos
+           , P.pstateSourcePos = newSourcePos
            , P.pstateTabWidth = pstateTabWidth
-           , P.pstateLinePrefix = mempty
+           , P.pstateLinePrefix = prefix
            }
        )
 
 instance P.VisualStream TokenStream where
-  showTokens _ = T.unpack . serialize . TokenStream . NE.toList
+  showTokens Proxy = unwords . NE.toList . fmap (show . serialize . teType)

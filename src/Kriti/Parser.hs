@@ -78,9 +78,9 @@ type Parser = P.Parsec Void Lex.TokenStream
 
 match :: (Lex.Token -> Maybe a) -> Parser a
 match f = P.try $ do
-  Lex.TokenExt tok pos <- P.anySingle
-  case f tok of
-    Nothing -> P.unexpected (PE.Tokens $ pure $ Lex.TokenExt tok pos)
+  tokenExt@Lex.TokenExt{teType} <- P.anySingle
+  case f teType of
+    Nothing -> P.unexpected (PE.Tokens $ pure tokenExt)
     Just a -> pure a
 
 match_ :: (Lex.Token -> Bool) -> Parser ()

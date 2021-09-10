@@ -44,7 +44,7 @@ unfoldrM f = go
 lexer :: Text -> Either LexError TokenStream
 lexer t = do
   (t', iPos) <- init t (P.initialPos "sourceName") mempty
-  TokenStream <$> unfoldrM go (t', iPos)
+  TokenStream mempty <$> unfoldrM go (t', iPos)
   where
     go :: (Text, P.SourcePos) -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
     go (txt, pos)
@@ -64,6 +64,7 @@ lexer t = do
       | Just s <- T.stripPrefix "||"    txt = stepLexer Or s pos
       | Just s <- T.stripPrefix "{"     txt = stepLexer CurlyOpen s pos
       | Just s <- T.stripPrefix "}"     txt = stepLexer CurlyClose s pos
+
       | Just s <- T.stripPrefix "["     txt = stepLexer SquareOpen s pos
       | Just s <- T.stripPrefix "]"     txt = stepLexer SquareClose s pos
       | Just s <- T.stripPrefix ")"     txt = stepLexer ParenClose s pos
@@ -75,8 +76,11 @@ lexer t = do
 
     stepLexer :: Token -> Text -> P.SourcePos -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
     stepLexer tok rest pos = do
-      str <- advance rest pos (serialize tok)
-      pure $ Just (TokenExt tok pos, str)
+      let serialized = serialize tok
+          tokLength = T.length serialized
+          endPos = incSC tokLength pos
+      str <- advance rest pos serialized
+      pure $ Just (TokenExt tok pos endPos tokLength, str)
 
     identifier :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
     identifier = fromRead (readPrec_to_P identLexeme 0)
