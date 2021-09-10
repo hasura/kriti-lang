@@ -72,13 +72,17 @@ parserSpec = describe "Parser" $ do
 -- found in the project directory hard-coded into this function.
 parserGoldenSpec :: Spec
 parserGoldenSpec = describe "Golden" $ do
-  (dir, paths) <- runIO $ fetchGoldenFiles "test/data/parser"
-  describe "Success" $ for_ paths $ \path -> do
+  (dirSuc, pathsSuc) <- runIO $ fetchGoldenFiles "test/data/parser/success"
+  (dirFail, pathsFail) <- runIO $ fetchGoldenFiles "test/data/parser/failure"
+  describe "Success" $ for_ pathsSuc $ \path -> do
     let name = dropExtension $ takeFileName path
     before (parseTemplateSuccess path) $ it ("parses " <> name) $
-      \valueExt -> goldenValueExt dir name valueExt
+      \valueExt -> goldenValueExt dirSuc name valueExt
 
-  describe "Failure" $ pure ()
+  describe "Failure" $ for_ pathsFail $ \path -> do
+    let name = dropExtension $ takeFileName path
+    before (parseTemplateFailure path) $ it ("fails to parse " <> name) $
+      \parseError -> goldenParseError dirFail name parseError
 
 -- | Parse a template file that is expected to succeed; parse failures are
 -- rendered as 'String's and thrown in 'IO'.
@@ -88,6 +92,13 @@ parseTemplateSuccess path = do
   case parser $ lexer tmpl of
     Left err -> throwString $ "Unexpected parsing failure " <> show err
     Right valueExt -> pure valueExt
+
+parseTemplateFailure :: FilePath -> IO ParseError
+parseTemplateFailure path = do
+  tmpl <- fmap decodeUtf8 . BS.readFile $ path
+  case parser $ lexer tmpl of
+    Left err -> pure err
+    Right valueExt -> throwString $ "Unexpected parsing success " <> show valueExt
 
 --------------------------------------------------------------------------------
 -- Evaluation tests.
@@ -104,7 +115,7 @@ evalSpec = describe "Eval" $ do
 -- a 'source.json' file at the same path.
 evalGoldenSpec :: Spec
 evalGoldenSpec = describe "Golden" do
-  (dir, paths) <- runIO $ fetchGoldenFiles "test/data/eval"
+  (dir, paths) <- runIO $ fetchGoldenFiles "test/data/eval/success"
   source <- runIO $ do
     eSource <- J.eitherDecodeFileStrict (dir </> "source.json")
     either throwString pure eSource
@@ -150,6 +161,7 @@ goldenReadShow dir name val = Golden {..}
 -- | Alias for 'goldenReadShow' specialized to 'ValueExt's.
 goldenValueExt :: FilePath -> String -> ValueExt -> Golden ValueExt
 goldenValueExt = goldenReadShow
+
 
 -- | Construct a 'Golden' test for 'ParseError's rendered as 'String's.
 --
