@@ -36,8 +36,11 @@ library
   ghc-options:         -Wall
   default-language:    Haskell2010
   default-extensions:  BlockArguments
+                       FlexibleContexts
+                       FlexibleInstances
                        InstanceSigs
                        LambdaCase
+                       NamedFieldPuns
                        OverloadedStrings
                        TupleSections
                        DerivingVia

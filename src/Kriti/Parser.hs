@@ -9,6 +9,7 @@ module Kriti.Parser where--( Accessor(..)
                     --) where
 
 import           Kriti.Error
+import qualified Kriti.Lexer            as Lex
 import qualified Kriti.Lexer.Token      as Lex
 
 import           Control.Applicative
@@ -137,12 +138,12 @@ stringLit = match \case
 
 number :: Fractional a => Parser a
 number = match \case
-  Lex.NumLit n -> Just (fromRational $ toRational n)
+  Lex.NumLit _ n -> Just (fromRational $ toRational n)
   _ -> Nothing
 
 integer :: Parser Int
 integer = match \case
-  Lex.NumLit n -> toBoundedInteger n
+  Lex.NumLit _ n -> toBoundedInteger n
   _ -> Nothing
 
 template :: Parser a -> Parser a
@@ -303,3 +304,8 @@ getSourcePos = fromSourcePos <$> P.getSourcePos
 
 parser :: Lex.TokenStream -> Either ParseError ValueExt
 parser = first ParseError . P.runParser parseJson mempty
+
+parserAndLexer :: Text -> Either RenderedError ValueExt
+parserAndLexer t = do
+  lexemes <- first render $ Lex.lexer t
+  first render $ parser lexemes

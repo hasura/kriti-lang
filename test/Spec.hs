@@ -33,6 +33,7 @@ import Kriti.Lexer
 import Kriti.Lexer.Token
 import Kriti.Parser
 import Kriti.Eval
+import Kriti.Error
 
 --------------------------------------------------------------------------------
 
@@ -52,7 +53,10 @@ lexerSpec = describe "Lexer" $
     it "lexing serialized tokens yields those tokens" $
       Q.property $ \tokens ->
         let serialized = T.intercalate " " $ fmap serialize tokens
-        in (fmap teType . getTokens <$> lexer) serialized `shouldBe` (tokens :: [Token])
+            tokens' = lexer serialized
+        in case tokens' of
+          Left lexError -> expectationFailure (show $ render lexError)
+          Right (TokenStream lexemes) -> fmap teType lexemes `shouldBe` (tokens :: [Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -67,28 +71,49 @@ parserSpec = describe "Parser" $ do
         let serialized = J.encode @J.Value value
             tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
             viaAeson = fromJust $ J.decode @ValueExt serialized
-        in parser tokens `shouldSatisfy` succeeds viaAeson
+        in case tokens of
+          Left lexError -> expectationFailure (show $ render lexError)
+          Right lexemes -> parser lexemes `shouldSatisfy` succeeds viaAeson
 
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
 parserGoldenSpec :: Spec
 parserGoldenSpec = describe "Golden" $ do
-  (dir, paths) <- runIO $ fetchGoldenFiles "test/data/parser"
-  describe "Success" $ for_ paths $ \path -> do
+  (dirSuc, pathsSuc) <- runIO $ fetchGoldenFiles "test/data/parser/success"
+  (dirFail, pathsFail) <- runIO $ fetchGoldenFiles "test/data/parser/failure"
+
+  describe "Success" $ for_ pathsSuc $ \path -> do
     let name = dropExtension $ takeFileName path
     before (parseTemplateSuccess path) $ it ("parses " <> name) $
-      \valueExt -> goldenValueExt dir name valueExt
+      \valueExt -> goldenValueExt dirSuc name valueExt
 
-  describe "Failure" $ pure ()
+  describe "Failure" $ for_ pathsFail $ \path -> do
+    let name = dropExtension $ takeFileName path
+    before (parseTemplateFailure path) $ it ("fails to parse " <> name) $
+      \parseError -> goldenParseError dirFail name parseError
 
 -- | Parse a template file that is expected to succeed; parse failures are
 -- rendered as 'String's and thrown in 'IO'.
 parseTemplateSuccess :: FilePath -> IO ValueExt
 parseTemplateSuccess path = do
   tmpl <- fmap decodeUtf8 . BS.readFile $ path
-  case parser $ lexer tmpl of
-    Left err -> throwString $ "Unexpected parsing failure " <> show err
-    Right valueExt -> pure valueExt
+  case lexer tmpl of
+    Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
+    Right lexemes ->
+      case parser lexemes of
+        Left err -> throwString $ "Unexpected parsing failure " <> show err
+        Right valueExt -> pure valueExt
+
+-- | Parse a template file that is expected to fail.
+parseTemplateFailure :: FilePath -> IO ParseError
+parseTemplateFailure path = do
+  tmpl <- fmap decodeUtf8 . BS.readFile $ path
+  case lexer tmpl of
+    Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
+    Right lexemes ->
+      case parser lexemes of
+        Left err -> pure err
+        Right valueExt -> throwString $ "Unexpected parsing success " <> show valueExt
 
 --------------------------------------------------------------------------------
 -- Evaluation tests.
@@ -105,7 +130,7 @@ evalSpec = describe "Eval" $ do
 -- a 'source.json' file at the same path.
 evalGoldenSpec :: Spec
 evalGoldenSpec = describe "Golden" do
-  (dir, paths) <- runIO $ fetchGoldenFiles "test/data/eval"
+  (dir, paths) <- runIO $ fetchGoldenFiles "test/data/eval/success"
   source <- runIO $ do
     eSource <- J.eitherDecodeFileStrict (dir </> "source.json")
     either throwString pure eSource
@@ -152,6 +177,7 @@ goldenReadShow dir name val = Golden {..}
 goldenValueExt :: FilePath -> String -> ValueExt -> Golden ValueExt
 goldenValueExt = goldenReadShow
 
+
 -- | Construct a 'Golden' test for 'ParseError's rendered as 'String's.
 --
 -- Since 'ParseError' doesn't export a 'Show' instance that satisfies the
@@ -160,7 +186,7 @@ goldenValueExt = goldenReadShow
 goldenParseError :: FilePath -> String -> ParseError -> Golden String
 goldenParseError dir name parseError = Golden{..}
   where
-    output = show parseError
+    output = show $ render parseError
     encodePretty = id
     writeToFile path actual = BS.writeFile path . BS8.pack $ actual
     readFromFile path = BS8.unpack <$> BS.readFile path
@@ -219,7 +245,9 @@ instance Q.Arbitrary Scientific where
   arbitrary = ((fromRational . toRational) :: Int -> Scientific) <$> Q.arbitrary
 
 instance Q.Arbitrary Token where
-  arbitrary = QAG.genericArbitrary
+  arbitrary = QAG.genericArbitrary >>= \case
+    NumLit _ i -> pure $ NumLit (T.pack $ show i) i
+    val -> pure val
 
 instance Q.Arbitrary J.Value where
   arbitrary = Q.sized sizedArbitraryValue

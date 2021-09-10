@@ -21,7 +21,7 @@ overSC :: (P.Pos -> P.Pos) -> P.SourcePos -> P.SourcePos
 overSC f pos = pos { P.sourceColumn = f (viewSC pos) }
 
 incSC :: Int -> P.SourcePos -> P.SourcePos
-incSC i pos = overSC (<> (P.mkPos i)) pos
+incSC i = overSC (<> P.mkPos i)
 
 viewSL :: P.SourcePos -> P.Pos
 viewSL = P.sourceLine
@@ -33,7 +33,7 @@ overSL :: (P.Pos -> P.Pos) -> P.SourcePos -> P.SourcePos
 overSL f pos = pos { P.sourceLine = f (viewSL pos) }
 
 incSL :: Int -> P.SourcePos -> P.SourcePos
-incSL i pos = overSL (<> (P.mkPos i)) pos
+incSL i = overSL (<> P.mkPos i)
 
 class Serialize t where
   serialize :: t -> T.Text
@@ -43,8 +43,8 @@ data Token =
     -- ^ String Literal
   | Identifier T.Text
     -- ^ Identifier
-  | NumLit Scientific
-    -- ^ Number literal
+  | NumLit T.Text Scientific
+    -- ^ Number literal with original string
   | BoolLit Bool
   | Bling
   | Colon
@@ -70,16 +70,16 @@ instance Serialize Token where
   serialize = \case
       StringLit str   -> "\"" <> str <> "\""
       Identifier iden -> iden
-      NumLit i        -> T.pack $ show i
+      NumLit str _    -> str
       BoolLit True    -> "true"
       BoolLit False   -> "false"
       Bling           -> "$"
       Colon           -> ":"
       Dot             -> "."
       Comma           -> ","
-      Eq             -> "=="
-      Gt             -> ">"
-      Lt             -> "<"
+      Eq              -> "=="
+      Gt              -> ">"
+      Lt              -> "<"
       And             -> "&&"
       Or              -> "||"
       CurlyOpen       -> "{"

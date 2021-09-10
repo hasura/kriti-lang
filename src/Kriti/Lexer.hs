@@ -1,27 +1,54 @@
 module Kriti.Lexer where
 
-import Data.Char (isSpace)
-import Data.List (unfoldr)
-import Data.Maybe (maybeToList)
-import Data.Scientific (Scientific, scientificP)
-import Data.Text (Text)
-import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
-import Text.Read (lexP, lift, readPrec_to_P)
+import           Kriti.Error
+import           Kriti.Lexer.Token
 
-import qualified Data.Text as T
-import qualified Text.Megaparsec as P
-import qualified Text.Read.Lex as L
-import           Text.Read.Lex.Extended (lexString)
+import           Control.Monad.Except         (MonadError, throwError)
+import           Data.Char                    (isSpace)
+import           Data.Maybe                   (maybeToList)
+import           Data.Scientific              (Scientific, scientificP)
+import           Data.Text                    (Text)
+import           Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
+import           Text.Read                    (lexP, lift, readPrec_to_P)
+import           Text.Read.Lex.Extended       (lexString)
 
-import Kriti.Lexer.Token
+import qualified Data.Text                    as T
+import qualified Text.Megaparsec              as P
+import qualified Text.Read.Lex                as L
 
-lexer :: Text -> TokenStream
-lexer t = TokenStream $ unfoldr go (t', iPos)
+newtype LexError = LexError { lePos :: P.SourcePos }
+  deriving Show
+
+instance RenderError LexError where
+  render LexError{lePos} =
+    RenderedError
+      { _code = LexErrorCode
+      , _message = "Invalid Lexeme"
+      , _span = (fromSourcePos lePos, Nothing)
+      }
+
+throwLexError :: MonadError LexError m => P.SourcePos -> m a
+throwLexError = throwError . LexError
+
+unfoldrM :: Monad m => (b -> m (Maybe (a, b))) -> b -> m [a]
+unfoldrM f = go
   where
-    (t', iPos) = advance t (P.initialPos "sourceName") mempty
-    go :: (Text, P.SourcePos) -> Maybe (TokenExt, (Text, P.SourcePos))
+    go b = f b >>= \case
+      Just (a, b') -> do
+        as <- go b'
+        pure $ a:as
+      Nothing -> pure []
+{-# inlineable unfoldrM #-}
+{-# LANGUAGE FlexibleContexts #-}
+
+lexer :: Text -> Either LexError TokenStream
+lexer t = do
+  (t', iPos) <- init t (P.initialPos "sourceName") mempty
+  TokenStream <$> unfoldrM go (t', iPos)
+  where
+    go :: (Text, P.SourcePos) -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
     go (txt, pos)
-      | T.null t = Nothing
+      | T.null txt = pure Nothing
       | Just s <- T.stripPrefix "true"  txt = stepLexer (BoolLit True) s pos
       | Just s <- T.stripPrefix "false" txt = stepLexer (BoolLit False) s pos
       | Just s <- T.stripPrefix "_"     txt = stepLexer Underscore s pos
@@ -41,16 +68,19 @@ lexer t = TokenStream $ unfoldr go (t', iPos)
       | Just s <- T.stripPrefix "]"     txt = stepLexer SquareClose s pos
       | Just s <- T.stripPrefix ")"     txt = stepLexer ParenClose s pos
       | Just s <- T.stripPrefix "("     txt = stepLexer ParenOpen s pos
-      | Just (str, matched, s) <- stringLit txt  = Just (TokenExt (StringLit str) pos, advance s pos matched)
-      | Just (str, matched, s) <- identifier txt = Just (TokenExt (Identifier str) pos, advance s pos matched)
-      | Just (n, matched, s) <- numberLit txt    = Just (TokenExt (NumLit (realToFrac n)) pos, advance s pos matched)
-      | otherwise = Nothing
+      | Just (str, _, s) <- stringLit   txt = stepLexer (StringLit str) s pos
+      | Just (str, _, s) <- identifier  txt = stepLexer (Identifier str) s pos
+      | Just (n, matched, s)   <- numberLit   txt = stepLexer (NumLit matched (realToFrac n)) s pos
+      | otherwise = throwLexError pos
 
-    stepLexer :: Token -> Text -> P.SourcePos -> Maybe (TokenExt, (Text, P.SourcePos))
-    stepLexer tok s pos = Just (TokenExt tok pos, advance s pos (serialize tok))
+    stepLexer :: Token -> Text -> P.SourcePos -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
+    stepLexer tok rest pos = do
+      str <- advance rest pos (serialize tok)
+      pure $ Just (TokenExt tok pos, str)
 
     identifier :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
-    identifier = fromRead (readPrec_to_P identLexeme 0) where
+    identifier = fromRead (readPrec_to_P identLexeme 0)
+      where
         identLexeme = do
           L.Ident s <- lexP
           pure (T.pack s)
@@ -68,10 +98,10 @@ lexer t = TokenStream $ unfoldr go (t', iPos)
     fromRead :: ReadP a -> Text -> Maybe (a, Text, Text) -- (value, lit, remainder)
     fromRead rp txt =
       let matchS = maxParsed <$> readP_to_S (gather rp)
-       in case matchS (T.unpack txt) of
-            (((lit, value), rest):_) ->
-              pure (value, T.pack lit, T.pack rest)
-            _ -> Nothing
+      in case matchS (T.unpack txt) of
+           (((lit, value), rest):_) ->
+             pure (value, T.pack lit, T.pack rest)
+           _ -> Nothing
 
     -- | Choose the parse result which consumed the maximum number of bytes.
     maxParsed :: [(a, String)] -> [(a, String)]
@@ -81,13 +111,25 @@ lexer t = TokenStream $ unfoldr go (t', iPos)
             Nothing -> pure (a, str)
       in maybeToList $ foldr f Nothing xs
 
-    advance :: Text -> P.SourcePos -> Text -> (Text, P.SourcePos)
-    advance txt pos eaten =
+    init :: Text -> P.SourcePos -> Text -> Either LexError (Text, P.SourcePos)
+    init txt pos eaten =
       let (ws, rest) = T.span isSpace txt
           col = if T.length eaten == 0 then P.sourceColumn pos else P.sourceColumn pos <> P.mkPos (T.length eaten)
           newSourcePos = T.foldl' f (P.SourcePos "sourceName" (P.sourceLine pos) col) ws
           f :: P.SourcePos -> Char -> P.SourcePos
           f pos' '\n' = setSC (P.mkPos 1) $ incSL 1 pos'
           f pos' '\r' = pos'
-          f pos' _ = incSC 1 pos'
-       in (rest, newSourcePos)
+          f pos' _    = incSC 1 pos'
+      in pure (rest, newSourcePos)
+
+    advance :: Text -> P.SourcePos -> Text -> Either LexError (Text, P.SourcePos)
+    advance txt pos eaten =
+      case T.span isSpace txt of
+       --("", rest) | not (T.null rest) && isAlpha (T.head rest) -> throwLexError pos
+       (ws, rest) ->
+         let col = viewSC pos <> P.mkPos (T.length eaten)
+             newSourcePos = T.foldl' f (P.SourcePos "sourceName" (viewSL pos) col) ws
+             f pos' '\n' = setSC (P.mkPos 1) (incSL 1 pos')
+             f pos' '\r' = pos'
+             f pos' _    = incSC 1 pos'
+         in pure (rest, newSourcePos)
