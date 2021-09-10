@@ -243,7 +243,9 @@ instance Q.Arbitrary Scientific where
   arbitrary = ((fromRational . toRational) :: Int -> Scientific) <$> Q.arbitrary
 
 instance Q.Arbitrary Token where
-  arbitrary = QAG.genericArbitrary
+  arbitrary = QAG.genericArbitrary >>= \case
+    NumLit _ i -> pure $ NumLit (T.pack $ show i) i
+    val -> pure val
 
 instance Q.Arbitrary J.Value where
   arbitrary = Q.sized sizedArbitraryValue

@@ -1,2 +1,2 @@
 ParseError "sourceName" (line 1, column 3):
-unexpected NumLit 1.0
+unexpected NumLit "1" 1.0

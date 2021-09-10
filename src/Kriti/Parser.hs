@@ -4,6 +4,7 @@ module Kriti.Parser ( Accessor(..)
                     , Span
                     , ParseError
                     , parser
+                    , parserAndLexer
                     , renderPath
                     , parsePath
                     ) where
@@ -131,12 +132,12 @@ stringLit = match \case
 
 number :: Fractional a => Parser a
 number = match \case
-  Lex.TokenExt (Lex.NumLit n) _ -> Just (fromRational $ toRational n)
+  Lex.TokenExt (Lex.NumLit _ n) _ -> Just (fromRational $ toRational n)
   _ -> Nothing
 
 integer :: Parser Int
 integer = match \case
-  Lex.TokenExt (Lex.NumLit n) _ -> toBoundedInteger n
+  Lex.TokenExt (Lex.NumLit _ n) _ -> toBoundedInteger n
   _ -> Nothing
 
 template :: Parser a -> Parser a
@@ -297,3 +298,9 @@ getSourcePos = fromSourcePos <$> P.getPosition
 
 parser :: [Lex.TokenExt] -> Either ParseError ValueExt
 parser = first ParseError . P.runParser parseJson mempty mempty
+
+parserAndLexer :: Text -> Either RenderedError ValueExt
+parserAndLexer t = do
+  lexemes <- first render $ Lex.lexer t
+  first render $ parser lexemes
+
