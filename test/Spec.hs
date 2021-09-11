@@ -30,6 +30,7 @@ import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 
 import Kriti.Lexer
+import Kriti.Lexer.Token
 import Kriti.Parser
 import Kriti.Eval
 import Kriti.Error
@@ -55,7 +56,7 @@ lexerSpec = describe "Lexer" $
             tokens' = lexer serialized
         in case tokens' of
           Left lexError -> expectationFailure (show $ render lexError)
-          Right lexemes -> fmap teType lexemes `shouldBe` (tokens :: [Token])
+          Right (TokenStream _ lexemes) -> fmap teType lexemes `shouldBe` (tokens :: [Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -103,6 +104,7 @@ parseTemplateSuccess path = do
         Left err -> throwString $ "Unexpected parsing failure " <> show err
         Right valueExt -> pure valueExt
 
+-- | Parse a template file that is expected to fail.
 parseTemplateFailure :: FilePath -> IO ParseError
 parseTemplateFailure path = do
   tmpl <- fmap decodeUtf8 . BS.readFile $ path
@@ -184,7 +186,7 @@ goldenValueExt = goldenReadShow
 goldenParseError :: FilePath -> String -> ParseError -> Golden String
 goldenParseError dir name parseError = Golden{..}
   where
-    output = show parseError
+    output = show $ render parseError
     encodePretty = id
     writeToFile path actual = BS.writeFile path . BS8.pack $ actual
     readFromFile path = BS8.unpack <$> BS.readFile path

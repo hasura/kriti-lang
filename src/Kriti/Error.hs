@@ -4,7 +4,7 @@ import           Data.Maybe  (catMaybes)
 
 import qualified Data.Aeson  as J
 import qualified Data.Text   as T
-import qualified Text.Parsec as P
+import qualified Text.Megaparsec.Pos as Pos
 
 type SourceName = String
 type Line = Int
@@ -15,8 +15,8 @@ type Column = Int
 data SourcePosition = SourcePosition { _sourceName :: SourceName, _line :: Line, _column :: Column }
   deriving (Show, Eq, Read)
 
-fromSourcePos :: P.SourcePos -> SourcePosition
-fromSourcePos pos = SourcePosition (P.sourceName pos) (P.sourceLine pos) (P.sourceColumn pos)
+fromSourcePos :: Pos.SourcePos -> SourcePosition
+fromSourcePos pos = SourcePosition (Pos.sourceName pos) (Pos.unPos $ Pos.sourceLine pos) (Pos.unPos $ Pos.sourceColumn pos)
 
 incCol :: Int -> SourcePosition -> SourcePosition
 incCol i (SourcePosition n l c) = SourcePosition n l (i+c)

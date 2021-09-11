@@ -1,82 +1,22 @@
 module Kriti.Lexer where
 
 import           Kriti.Error
+import           Kriti.Lexer.Token
 
 import           Control.Monad.Except         (MonadError, throwError)
-import           Data.Char                    (isAlpha, isSpace)
+import           Data.Char                    (isSpace)
 import           Data.Maybe                   (maybeToList)
 import           Data.Scientific              (Scientific, scientificP)
 import           Data.Text                    (Text)
-import           GHC.Generics
-import           Text.Parsec.Pos              (SourcePos, incSourceColumn,
-                                               incSourceLine, initialPos,
-                                               newPos, setSourceColumn,
-                                               sourceColumn, sourceLine)
 import           Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
 import           Text.Read                    (lexP, lift, readPrec_to_P)
 import           Text.Read.Lex.Extended       (lexString)
 
 import qualified Data.Text                    as T
+import qualified Text.Megaparsec              as P
 import qualified Text.Read.Lex                as L
-import Text.ParserCombinators.Parsec.Expr (Operator(Postfix))
 
-data Token =
-    StringLit Text
-    -- ^ String Literal
-  | Identifier Text
-    -- ^ Identifier
-  | NumLit Text Scientific
-    -- ^ Number literal with original string
-  | BoolLit Bool
-  | Bling
-  | Colon
-  | Dot
-  | Comma
-  | Eq
-  | Gt
-  | Lt
-  | And
-  | Or
-  -- | Member
-  | CurlyOpen
-  | CurlyClose
-  | SquareOpen
-  | SquareClose
-  | ParenOpen
-  | ParenClose
-  | Underscore
-  | Assignment
-  deriving (Show, Eq, Generic)
-
-serialize :: Token -> Text
-serialize = \case
-    StringLit str   -> "\"" <> str <> "\""
-    Identifier iden -> iden
-    NumLit str _    -> str
-    BoolLit True    -> "true"
-    BoolLit False   -> "false"
-    Bling           -> "$"
-    Colon           -> ":"
-    Dot             -> "."
-    Comma           -> ","
-    Eq              -> "=="
-    Gt              -> ">"
-    Lt              -> "<"
-    And             -> "&&"
-    Or              -> "||"
-    CurlyOpen       -> "{"
-    CurlyClose      -> "}"
-    SquareOpen      -> "["
-    SquareClose     -> "]"
-    ParenOpen       -> "("
-    ParenClose      -> ")"
-    Underscore      -> "_"
-    Assignment      -> ":="
-
-data TokenExt = TokenExt { teType :: Token, tePos :: SourcePos }
-  deriving (Show, Eq)
-
-newtype LexError = LexError { lePos :: SourcePos }
+newtype LexError = LexError { lePos :: P.SourcePos }
   deriving Show
 
 instance RenderError LexError where
@@ -87,7 +27,7 @@ instance RenderError LexError where
       , _span = (fromSourcePos lePos, Nothing)
       }
 
-throwLexError :: MonadError LexError m => SourcePos -> m a
+throwLexError :: MonadError LexError m => P.SourcePos -> m a
 throwLexError = throwError . LexError
 
 unfoldrM :: Monad m => (b -> m (Maybe (a, b))) -> b -> m [a]
@@ -99,14 +39,13 @@ unfoldrM f = go
         pure $ a:as
       Nothing -> pure []
 {-# inlineable unfoldrM #-}
-{-# LANGUAGE FlexibleContexts #-}
 
-lexer :: Text -> Either LexError [TokenExt]
+lexer :: Text -> Either LexError TokenStream
 lexer t = do
-  (t', iPos) <- init t (initialPos "sourceName") mempty
-  unfoldrM go (t', iPos)
+  (t', iPos) <- initialize t (P.initialPos "sourceName") mempty
+  TokenStream mempty <$> unfoldrM go (t', iPos)
   where
-    go :: (Text, SourcePos) -> Either LexError (Maybe (TokenExt, (Text, SourcePos)))
+    go :: (Text, P.SourcePos) -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
     go (txt, pos)
       | T.null txt = pure Nothing
       | Just s <- T.stripPrefix "true"  txt = stepLexer (BoolLit True) s pos
@@ -124,6 +63,7 @@ lexer t = do
       | Just s <- T.stripPrefix "||"    txt = stepLexer Or s pos
       | Just s <- T.stripPrefix "{"     txt = stepLexer CurlyOpen s pos
       | Just s <- T.stripPrefix "}"     txt = stepLexer CurlyClose s pos
+
       | Just s <- T.stripPrefix "["     txt = stepLexer SquareOpen s pos
       | Just s <- T.stripPrefix "]"     txt = stepLexer SquareClose s pos
       | Just s <- T.stripPrefix ")"     txt = stepLexer ParenClose s pos
@@ -133,10 +73,13 @@ lexer t = do
       | Just (n, matched, s)   <- numberLit   txt = stepLexer (NumLit matched (realToFrac n)) s pos
       | otherwise = throwLexError pos
 
-    stepLexer :: Token -> Text -> SourcePos -> Either LexError (Maybe (TokenExt, (Text, SourcePos)))
+    stepLexer :: Token -> Text -> P.SourcePos -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
     stepLexer tok rest pos = do
-      str <- advance rest pos (serialize tok)
-      pure $ Just (TokenExt tok pos, str)
+      let serialized = serialize tok
+          tokLength = T.length serialized
+          endPos = incSC tokLength pos
+      str <- advance rest pos serialized
+      pure $ Just (TokenExt tok pos endPos tokLength, str)
 
     identifier :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
     identifier = fromRead (readPrec_to_P identLexeme 0)
@@ -171,24 +114,25 @@ lexer t = do
             Nothing -> pure (a, str)
       in maybeToList $ foldr f Nothing xs
 
-    init :: Text -> SourcePos -> Text -> Either LexError (Text, SourcePos)
-    init txt pos eaten =
+    initialize :: Text -> P.SourcePos -> Text -> Either LexError (Text, P.SourcePos)
+    initialize txt pos eaten =
       let (ws, rest) = T.span isSpace txt
-          col = sourceColumn pos + T.length eaten
-          newSourcePos = T.foldl' f (newPos "sourceName" (sourceLine pos) col) ws
-          f pos' '\n' = setSourceColumn (incSourceLine pos' 1) 0
+          col = if T.length eaten == 0 then P.sourceColumn pos else P.sourceColumn pos <> P.mkPos (T.length eaten)
+          newSourcePos = T.foldl' f (P.SourcePos "sourceName" (P.sourceLine pos) col) ws
+          f :: P.SourcePos -> Char -> P.SourcePos
+          f pos' '\n' = setSC (P.mkPos 1) $ incSL 1 pos'
           f pos' '\r' = pos'
-          f pos' _    = incSourceColumn pos' 1
+          f pos' _    = incSC 1 pos'
       in pure (rest, newSourcePos)
 
-    advance :: Text -> SourcePos -> Text -> Either LexError (Text, SourcePos)
+    advance :: Text -> P.SourcePos -> Text -> Either LexError (Text, P.SourcePos)
     advance txt pos eaten =
       case T.span isSpace txt of
        --("", rest) | not (T.null rest) && isAlpha (T.head rest) -> throwLexError pos
        (ws, rest) ->
-         let col = sourceColumn pos + T.length eaten
-             newSourcePos = T.foldl' f (newPos "sourceName" (sourceLine pos) col) ws
-             f pos' '\n' = setSourceColumn (incSourceLine pos' 1) 0
+         let col = viewSC pos <> P.mkPos (T.length eaten)
+             newSourcePos = T.foldl' f (P.SourcePos "sourceName" (viewSL pos) col) ws
+             f pos' '\n' = setSC (P.mkPos 1) (incSL 1 pos')
              f pos' '\r' = pos'
-             f pos' _    = incSourceColumn pos' 1
+             f pos' _    = incSC 1 pos'
          in pure (rest, newSourcePos)
