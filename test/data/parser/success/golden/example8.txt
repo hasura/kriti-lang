@@ -5,96 +5,23 @@ Object
             , Object
                 ( fromList
                     [
-                        ( "name"
-                        , Path
-                            [
-                                (
-                                    ( SourcePosition
-                                        { _sourceName = "sourceName"
-                                        , _line = 3
-                                        , _column = 14
-                                        }
-                                    , Just
-                                        ( SourcePosition
-                                            { _sourceName = "sourceName"
-                                            , _line = 3
-                                            , _column = 15
-                                            }
-                                        )
-                                    )
-                                , Obj "$"
-                                )
-                            ,
-                                (
-                                    ( SourcePosition
-                                        { _sourceName = "sourceName"
-                                        , _line = 3
-                                        , _column = 15
-                                        }
-                                    , Just
-                                        ( SourcePosition
-                                            { _sourceName = "sourceName"
-                                            , _line = 3
-                                            , _column = 20
-                                            }
-                                        )
-                                    )
-                                , Obj "event"
-                                )
-                            ,
-                                (
-                                    ( SourcePosition
-                                        { _sourceName = "sourceName"
-                                        , _line = 3
-                                        , _column = 21
-                                        }
-                                    , Just
-                                        ( SourcePosition
-                                            { _sourceName = "sourceName"
-                                            , _line = 3
-                                            , _column = 25
-                                            }
-                                        )
-                                    )
-                                , Obj "name"
-                                )
-                            ]
-                        )
-                    ,
                         ( "articles"
                         , Array
                             [ Range
                                 ( SourcePosition
                                     { _sourceName = "sourceName"
                                     , _line = 6
-                                    , _column = 0
+                                    , _column = 1
                                     }
                                 , Just
                                     ( SourcePosition
                                         { _sourceName = "sourceName"
                                         , _line = 16
-                                        , _column = 4
+                                        , _column = 5
                                         }
                                     )
                                 ) Nothing "x"
                                 [
-                                    (
-                                        ( SourcePosition
-                                            { _sourceName = "sourceName"
-                                            , _line = 6
-                                            , _column = 17
-                                            }
-                                        , Just
-                                            ( SourcePosition
-                                                { _sourceName = "sourceName"
-                                                , _line = 6
-                                                , _column = 18
-                                                }
-                                            )
-                                        )
-                                    , Obj "$"
-                                    )
-                                ,
                                     (
                                         ( SourcePosition
                                             { _sourceName = "sourceName"
@@ -105,7 +32,24 @@ Object
                                             ( SourcePosition
                                                 { _sourceName = "sourceName"
                                                 , _line = 6
-                                                , _column = 23
+                                                , _column = 19
+                                                }
+                                            )
+                                        )
+                                    , Obj "$"
+                                    )
+                                ,
+                                    (
+                                        ( SourcePosition
+                                            { _sourceName = "sourceName"
+                                            , _line = 6
+                                            , _column = 19
+                                            }
+                                        , Just
+                                            ( SourcePosition
+                                                { _sourceName = "sourceName"
+                                                , _line = 6
+                                                , _column = 24
                                                 }
                                             )
                                         )
@@ -116,13 +60,13 @@ Object
                                         ( SourcePosition
                                             { _sourceName = "sourceName"
                                             , _line = 6
-                                            , _column = 24
+                                            , _column = 25
                                             }
                                         , Just
                                             ( SourcePosition
                                                 { _sourceName = "sourceName"
                                                 , _line = 6
-                                                , _column = 30
+                                                , _column = 31
                                                 }
                                             )
                                         )
@@ -133,13 +77,13 @@ Object
                                         ( SourcePosition
                                             { _sourceName = "sourceName"
                                             , _line = 6
-                                            , _column = 31
+                                            , _column = 32
                                             }
                                         , Just
                                             ( SourcePosition
                                                 { _sourceName = "sourceName"
                                                 , _line = 6
-                                                , _column = 39
+                                                , _column = 40
                                                 }
                                             )
                                         )
@@ -150,35 +94,18 @@ Object
                                     ( SourcePosition
                                         { _sourceName = "sourceName"
                                         , _line = 7
-                                        , _column = 2
+                                        , _column = 3
                                         }
                                     , Just
                                         ( SourcePosition
                                             { _sourceName = "sourceName"
                                             , _line = 15
-                                            , _column = 0
+                                            , _column = 1
                                             }
                                         )
                                     )
                                     ( Path
                                         [
-                                            (
-                                                ( SourcePosition
-                                                    { _sourceName = "sourceName"
-                                                    , _line = 7
-                                                    , _column = 8
-                                                    }
-                                                , Just
-                                                    ( SourcePosition
-                                                        { _sourceName = "sourceName"
-                                                        , _line = 7
-                                                        , _column = 9
-                                                        }
-                                                    )
-                                                )
-                                            , Obj "x"
-                                            )
-                                        ,
                                             (
                                                 ( SourcePosition
                                                     { _sourceName = "sourceName"
@@ -189,7 +116,24 @@ Object
                                                     ( SourcePosition
                                                         { _sourceName = "sourceName"
                                                         , _line = 7
-                                                        , _column = 18
+                                                        , _column = 10
+                                                        }
+                                                    )
+                                                )
+                                            , Obj "x"
+                                            )
+                                        ,
+                                            (
+                                                ( SourcePosition
+                                                    { _sourceName = "sourceName"
+                                                    , _line = 7
+                                                    , _column = 10
+                                                    }
+                                                , Just
+                                                    ( SourcePosition
+                                                        { _sourceName = "sourceName"
+                                                        , _line = 7
+                                                        , _column = 19
                                                         }
                                                     )
                                                 )
@@ -207,13 +151,13 @@ Object
                                                             ( SourcePosition
                                                                 { _sourceName = "sourceName"
                                                                 , _line = 10
-                                                                , _column = 19
+                                                                , _column = 20
                                                                 }
                                                             , Just
                                                                 ( SourcePosition
                                                                     { _sourceName = "sourceName"
                                                                     , _line = 10
-                                                                    , _column = 20
+                                                                    , _column = 21
                                                                     }
                                                                 )
                                                             )
@@ -224,13 +168,13 @@ Object
                                                             ( SourcePosition
                                                                 { _sourceName = "sourceName"
                                                                 , _line = 10
-                                                                , _column = 20
+                                                                , _column = 21
                                                                 }
                                                             , Just
                                                                 ( SourcePosition
                                                                     { _sourceName = "sourceName"
                                                                     , _line = 10
-                                                                    , _column = 25
+                                                                    , _column = 26
                                                                     }
                                                                 )
                                                             )
@@ -246,13 +190,13 @@ Object
                                                             ( SourcePosition
                                                                 { _sourceName = "sourceName"
                                                                 , _line = 9
-                                                                , _column = 16
+                                                                , _column = 17
                                                                 }
                                                             , Just
                                                                 ( SourcePosition
                                                                     { _sourceName = "sourceName"
                                                                     , _line = 9
-                                                                    , _column = 17
+                                                                    , _column = 18
                                                                     }
                                                                 )
                                                             )
@@ -263,13 +207,13 @@ Object
                                                             ( SourcePosition
                                                                 { _sourceName = "sourceName"
                                                                 , _line = 9
-                                                                , _column = 17
+                                                                , _column = 18
                                                                 }
                                                             , Just
                                                                 ( SourcePosition
                                                                     { _sourceName = "sourceName"
                                                                     , _line = 9
-                                                                    , _column = 19
+                                                                    , _column = 20
                                                                     }
                                                                 )
                                                             )
@@ -284,26 +228,65 @@ Object
                             ]
                         )
                     ,
-                        ( "age"
+                        ( "name"
                         , Path
                             [
                                 (
                                     ( SourcePosition
                                         { _sourceName = "sourceName"
-                                        , _line = 4
-                                        , _column = 13
+                                        , _line = 3
+                                        , _column = 15
                                         }
                                     , Just
                                         ( SourcePosition
                                             { _sourceName = "sourceName"
-                                            , _line = 4
-                                            , _column = 14
+                                            , _line = 3
+                                            , _column = 16
                                             }
                                         )
                                     )
                                 , Obj "$"
                                 )
                             ,
+                                (
+                                    ( SourcePosition
+                                        { _sourceName = "sourceName"
+                                        , _line = 3
+                                        , _column = 16
+                                        }
+                                    , Just
+                                        ( SourcePosition
+                                            { _sourceName = "sourceName"
+                                            , _line = 3
+                                            , _column = 21
+                                            }
+                                        )
+                                    )
+                                , Obj "event"
+                                )
+                            ,
+                                (
+                                    ( SourcePosition
+                                        { _sourceName = "sourceName"
+                                        , _line = 3
+                                        , _column = 22
+                                        }
+                                    , Just
+                                        ( SourcePosition
+                                            { _sourceName = "sourceName"
+                                            , _line = 3
+                                            , _column = 26
+                                            }
+                                        )
+                                    )
+                                , Obj "name"
+                                )
+                            ]
+                        )
+                    ,
+                        ( "age"
+                        , Path
+                            [
                                 (
                                     ( SourcePosition
                                         { _sourceName = "sourceName"
@@ -314,7 +297,24 @@ Object
                                         ( SourcePosition
                                             { _sourceName = "sourceName"
                                             , _line = 4
-                                            , _column = 19
+                                            , _column = 15
+                                            }
+                                        )
+                                    )
+                                , Obj "$"
+                                )
+                            ,
+                                (
+                                    ( SourcePosition
+                                        { _sourceName = "sourceName"
+                                        , _line = 4
+                                        , _column = 15
+                                        }
+                                    , Just
+                                        ( SourcePosition
+                                            { _sourceName = "sourceName"
+                                            , _line = 4
+                                            , _column = 20
                                             }
                                         )
                                     )
@@ -325,13 +325,13 @@ Object
                                     ( SourcePosition
                                         { _sourceName = "sourceName"
                                         , _line = 4
-                                        , _column = 20
+                                        , _column = 21
                                         }
                                     , Just
                                         ( SourcePosition
                                             { _sourceName = "sourceName"
                                             , _line = 4
-                                            , _column = 23
+                                            , _column = 24
                                             }
                                         )
                                     )

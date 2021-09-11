@@ -3,11 +3,13 @@
 A minimal json templating language based on Go' template language.
 
 ## TODO
-- Pretty Printer
-- String Interpolation
-- Array Membership Parsing
-- Predicate Operation Parsing
-- CLI Program
+- String interpolation
+- Improve and extend lexer errors
+- Pretty printer
+- Improve span generation
+- Array membership parsing
+- CLI interface
+- List flatten operation
 
 ## Uses
 This library exposes the function `runKriti`, the type definition of the function is:

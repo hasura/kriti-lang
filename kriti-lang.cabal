@@ -19,8 +19,9 @@ extra-source-files:  CHANGELOG.md
 library
   build-depends:       base >= 2 && < 5
                      , aeson
+                     , megaparsec
                      , mtl
-                     , parsec
+                     , parser-combinators
                      , scientific
                      , text
                      , unordered-containers
@@ -28,18 +29,25 @@ library
   exposed-modules:     Kriti
                      , Kriti.Error
                      , Kriti.Lexer
+                     , Kriti.Lexer.Token
                      , Kriti.Parser
                      , Kriti.Eval
   hs-source-dirs:      src
   ghc-options:         -Wall
   default-language:    Haskell2010
   default-extensions:  BlockArguments
+                       DeriveGeneric
+                       FlexibleContexts
+                       FlexibleInstances
                        InstanceSigs
                        LambdaCase
+                       NamedFieldPuns
                        OverloadedStrings
+                       RecordWildCards
                        TupleSections
                        DerivingVia
-                       DeriveGeneric
+                       TypeApplications
+                       TypeFamilies
   other-modules:       Text.Read.Lex.Extended
 
 test-suite kriti-lang-test

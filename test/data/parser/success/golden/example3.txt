@@ -5,13 +5,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 2
-                    , _column = 5
+                    , _column = 6
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 2
-                        , _column = 6
+                        , _column = 7
                         }
                     )
                 )
@@ -22,13 +22,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 2
-                    , _column = 6
+                    , _column = 7
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 2
-                        , _column = 10
+                        , _column = 11
                         }
                     )
                 )
@@ -41,13 +41,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 3
-                    , _column = 5
+                    , _column = 6
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 3
-                        , _column = 9
+                        , _column = 10
                         }
                     )
                 )
@@ -58,13 +58,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 3
-                    , _column = 9
+                    , _column = 10
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 3
-                        , _column = 13
+                        , _column = 14
                         }
                     )
                 )
@@ -77,13 +77,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 4
-                    , _column = 5
+                    , _column = 6
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 4
-                        , _column = 6
+                        , _column = 7
                         }
                     )
                 )
@@ -94,13 +94,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 4
-                    , _column = 6
+                    , _column = 7
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 4
-                        , _column = 10
+                        , _column = 11
                         }
                     )
                 )
@@ -111,13 +111,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 4
-                    , _column = 11
+                    , _column = 12
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 4
-                        , _column = 14
+                        , _column = 15
                         }
                     )
                 )
@@ -130,13 +130,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 5
-                    , _column = 5
+                    , _column = 6
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 5
-                        , _column = 6
+                        , _column = 7
                         }
                     )
                 )
@@ -147,13 +147,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 5
-                    , _column = 6
+                    , _column = 7
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 5
-                        , _column = 10
+                        , _column = 11
                         }
                     )
                 )
@@ -164,13 +164,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 5
-                    , _column = 11
+                    , _column = 12
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 5
-                        , _column = 14
+                        , _column = 15
                         }
                     )
                 )
@@ -181,13 +181,13 @@ Array
                 ( SourcePosition
                     { _sourceName = "sourceName"
                     , _line = 5
-                    , _column = 15
+                    , _column = 16
                     }
                 , Just
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 5
-                        , _column = 17
+                        , _column = 18
                         }
                     )
                 )
