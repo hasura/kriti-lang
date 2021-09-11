@@ -16,9 +16,10 @@ import qualified Kriti.Lexer            as Lex
 import qualified Kriti.Lexer.Token      as Lex
 
 import           Control.Applicative
-import           Control.Monad.Identity
 import           Control.Monad.Except
-import           Data.Bifunctor         (first, bimap)
+import           Control.Monad.Identity
+import           Data.Bifunctor         (bimap, first)
+import           Data.Either            (lefts, rights)
 import           Data.Function          ((&))
 import           Data.List              (intersperse)
 import           Data.Monoid            (Alt (..))
@@ -27,6 +28,7 @@ import           Data.Text              (Text)
 import           Data.Void              (Void)
 
 import qualified Data.Aeson             as J
+import           Data.Foldable
 import qualified Data.HashMap.Strict    as M
 import qualified Data.Text              as T
 import qualified Data.Vector            as V
@@ -49,7 +51,7 @@ data ValueExt =
     Object (M.HashMap Text ValueExt)
   | Array (V.Vector ValueExt)
   | String Text
-  | StringInterp [Either Text ValueExt]
+  | StringInterp [ValueExt]
   | Number Scientific
   | Boolean Bool
   | Null
@@ -147,14 +149,30 @@ stringLit = match \case
 type Lit = Text
 type UnLexed = Text
 
-stringTem :: Parser [Either Text [Lex.TokenExt]]
+stringTem :: Parser [Either Text Lex.TokenStream]
 stringTem = match \case
-  Lex.TokenExt (Lex.StringTem s) _ ->
-    Just $ fmap (fmap Lex.lexer) (splitTem s)
-  _ -> Nothing
+  Lex.StringTem s -> Just $ splitIt s
+  _               -> Nothing
   where
-    splitTem :: Text -> [Either Lit UnLexed]
-    splitTem = undefined
+    -- TODO: Identify Strings vs ${..} wrapped TokenStreams and apply Lexer
+    -- Mutual Recursion:
+    -- chars til ${
+    -- tokens til }
+    splitIt :: Text -> [Either Text Lex.TokenStream]
+    splitIt str = case T.uncons  str of
+      Nothing -> []
+      Just ('$', _) -> splitVal str []
+      Just _ -> splitText str []
+
+    splitText :: Text -> [Either Text Lex.TokenStream] -> [Either Text Lex.TokenStream]
+    splitText str acc =
+      let (txt, rest) = T.breakOn "${" str
+      in splitVal rest (Left txt : acc)
+
+    splitVal :: Text -> [Either Text Lex.TokenStream] -> [Either Text Lex.TokenStream]
+    splitVal str acc =
+      let (txt, rest) = T.breakOn "}" str
+      in splitText rest (Right undefined : acc)
 
 number :: Fractional a => Parser a
 number = match \case
@@ -271,13 +289,20 @@ parserIff = do
   pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ Iff (pos1, Just pos2) p t1 t2
 
+registerParseErrorBundle :: P.MonadParsec e s m => P.ParseErrorBundle s e -> m ()
+registerParseErrorBundle (P.ParseErrorBundle errs _) =
+  traverse_ P.registerParseError errs
+
 parserStringInterp :: Parser ValueExt
 parserStringInterp = do
   tem <- stringTem
-  parsed <- forM tem $ \tem' -> do
-    let x = fmap parser tem'
-    traverse (either _ pure) x
-  pure $ StringInterp parsed
+  x <- traverse (pure . traverse parser) tem
+
+  let errs = lefts x
+  traverse_ (registerParseErrorBundle . _peErrorBundle) errs
+
+  let vals = either String id <$> rights x
+  pure $ StringInterp vals
 
 parseJson :: Parser ValueExt
 parseJson = do
@@ -322,7 +347,7 @@ end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
       v <- parseJson
       pure $ Just (con (pos1, Just $ incCol size pos1), v)
 
-newtype ParseError = ParseError (P.ParseErrorBundle Lex.TokenStream Void)
+newtype ParseError = ParseError { _peErrorBundle :: P.ParseErrorBundle Lex.TokenStream Void }
   deriving Show
 
 instance RenderError ParseError where
