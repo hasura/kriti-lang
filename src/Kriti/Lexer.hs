@@ -39,11 +39,10 @@ unfoldrM f = go
         pure $ a:as
       Nothing -> pure []
 {-# inlineable unfoldrM #-}
-{-# LANGUAGE FlexibleContexts #-}
 
 lexer :: Text -> Either LexError TokenStream
 lexer t = do
-  (t', iPos) <- init t (P.initialPos "sourceName") mempty
+  (t', iPos) <- initialize t (P.initialPos "sourceName") mempty
   TokenStream mempty <$> unfoldrM go (t', iPos)
   where
     go :: (Text, P.SourcePos) -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
@@ -115,8 +114,8 @@ lexer t = do
             Nothing -> pure (a, str)
       in maybeToList $ foldr f Nothing xs
 
-    init :: Text -> P.SourcePos -> Text -> Either LexError (Text, P.SourcePos)
-    init txt pos eaten =
+    initialize :: Text -> P.SourcePos -> Text -> Either LexError (Text, P.SourcePos)
+    initialize txt pos eaten =
       let (ws, rest) = T.span isSpace txt
           col = if T.length eaten == 0 then P.sourceColumn pos else P.sourceColumn pos <> P.mkPos (T.length eaten)
           newSourcePos = T.foldl' f (P.SourcePos "sourceName" (P.sourceLine pos) col) ws

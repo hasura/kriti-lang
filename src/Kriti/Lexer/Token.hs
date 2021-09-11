@@ -155,14 +155,14 @@ instance P.TraversableStream TokenStream where
     let (pre, post) = splitAt (o - pstateOffset) (tsTokens pstateInput)
         tokensConsumed =
           case NE.nonEmpty pre of
-            Nothing -> 0
+            Nothing    -> 0
             Just nePre -> P.tokensLength (Proxy @TokenStream) nePre
         (preStr, postStr) = splitAt tokensConsumed (tsStreamInput pstateInput)
         preLine = reverse . takeWhile (/= '\n') . reverse $ preStr
         restOfLine = takeWhile (/= '\n') postStr
         newSourcePos =
           case post of
-            [] -> pstateSourcePos
+            []    -> pstateSourcePos
             (x:_) -> teStartPos x
         sameLine = P.sourceLine newSourcePos == P.sourceLine pstateSourcePos
         prefix =

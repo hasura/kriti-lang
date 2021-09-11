@@ -1,12 +1,13 @@
-module Kriti.Parser where--( Accessor(..)
-                    --, ValueExt(..)
-                    --, SourcePosition(..)
-                    --, Span
-                    ----, ParseError
-                    ----, parser
-                    ----, renderPath
-                    ----, parsePath
-                    --) where
+module Kriti.Parser ( Accessor(..)
+                    , ValueExt(..)
+                    , SourcePosition(..)
+                    , Span
+                    , ParseError
+                    , parser
+                    , parserAndLexer
+                    , renderPath
+                    , parsePath
+                    ) where
 
 import           Kriti.Error
 import qualified Kriti.Lexer            as Lex
@@ -17,7 +18,7 @@ import           Control.Monad.Identity
 import           Data.Bifunctor         (first)
 import           Data.Function          ((&))
 import           Data.List              (intersperse)
-import           Data.Monoid            (Alt(..))
+import           Data.Monoid            (Alt (..))
 import           Data.Scientific        (Scientific, toBoundedInteger)
 import           Data.Text              (Text)
 import           Data.Void              (Void)
@@ -35,7 +36,7 @@ data Accessor = Obj Text | Arr Int
 renderAccessor :: Accessor -> Text
 renderAccessor = \case
   Obj txt -> txt
-  Arr i -> T.pack $ show i
+  Arr i   -> T.pack $ show i
 
 renderPath :: [(Span, Accessor)] -> Text
 renderPath = mconcat . intersperse "." . fmap (renderAccessor . snd)
@@ -63,13 +64,13 @@ data ValueExt =
 
 instance J.FromJSON ValueExt where
   parseJSON = \case
-    J.Null       -> pure   Null
-    J.String s   -> pure $ String s
-    J.Number i   -> pure $ Number i
-    J.Bool p     -> pure $ Boolean p
-    J.Array arr  -> Array <$> traverse J.parseJSON arr
+    J.Null                  -> pure   Null
+    J.String s              -> pure $ String s
+    J.Number i              -> pure $ Number i
+    J.Bool p                -> pure $ Boolean p
+    J.Array arr             -> Array <$> traverse J.parseJSON arr
     J.Object obj | null obj -> pure Null
-    J.Object obj -> Object <$> traverse J.parseJSON obj
+    J.Object obj            -> Object <$> traverse J.parseJSON obj
 
 -- {{ range $index, $article := .event.author.articles }}
 
@@ -81,7 +82,7 @@ match f = P.try $ do
   tokenExt@Lex.TokenExt{teType} <- P.anySingle
   case f teType of
     Nothing -> P.unexpected (PE.Tokens $ pure tokenExt)
-    Just a -> pure a
+    Just a  -> pure a
 
 match_ :: (Lex.Token -> Bool) -> Parser ()
 match_ f = P.satisfy (f . Lex.teType) >> pure ()
@@ -119,32 +120,32 @@ assignment = match_ (== Lex.Assignment)
 ident :: Parser Text
 ident = match \case
   Lex.Identifier s -> Just s
-  _ -> Nothing
+  _                -> Nothing
 
 ident_ :: Text -> Parser ()
 ident_ s = match_ \case
   Lex.Identifier s' -> s == s'
-  _ -> False
+  _                 -> False
 
 bool :: Parser Bool
 bool = match \case
   Lex.BoolLit p -> Just p
-  _ -> Nothing
+  _             -> Nothing
 
 stringLit :: Parser Text
 stringLit = match \case
   Lex.StringLit s -> Just s
-  _ -> Nothing
+  _               -> Nothing
 
 number :: Fractional a => Parser a
 number = match \case
   Lex.NumLit _ n -> Just (fromRational $ toRational n)
-  _ -> Nothing
+  _              -> Nothing
 
 integer :: Parser Int
 integer = match \case
   Lex.NumLit _ n -> toBoundedInteger n
-  _ -> Nothing
+  _              -> Nothing
 
 template :: Parser a -> Parser a
 template = P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
@@ -253,7 +254,7 @@ parseJson = do
   e1 <- start
   mE2 <- end
   case mE2 of
-    Nothing -> pure e1
+    Nothing      -> pure e1
     Just (f, e2) -> pure (f e1 e2)
 
 start :: Parser ValueExt

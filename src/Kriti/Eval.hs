@@ -5,7 +5,7 @@ import           Control.Monad.Reader
 import           Data.Foldable        (foldlM)
 import           Data.Maybe           (maybeToList)
 import           Kriti.Error
-import           Kriti.Parser         (Accessor(..), ValueExt(..), renderPath)
+import           Kriti.Parser         (Accessor (..), ValueExt (..), renderPath)
 
 import qualified Data.Aeson           as J
 import qualified Data.HashMap.Strict  as M
