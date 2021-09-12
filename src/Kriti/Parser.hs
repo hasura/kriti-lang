@@ -1,39 +1,38 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module Kriti.Parser ( Accessor(..)
-                    , ValueExt(..)
-                    , SourcePosition(..)
-                    , Span
-                    , ParseError
-                    , parser
-                    , parserAndLexer
-                    , renderPath
-                    , parsePath
-                    , parserStringInterp
-                    ) where
+{-# LANGUAGE TemplateHaskell     #-}
+module Kriti.Parser where--( Accessor(..)
+                    --, ValueExt(..)
+                    --, SourcePosition(..)
+                    --, Span
+                    --, ParseError
+                    --, parser
+                    --, parserAndLexer
+                    --, renderPath
+                    --, parsePath
+                    --, parserStringInterp
+                    --) where
 
 import           Kriti.Error
-import qualified Kriti.Lexer            as Lex
-import qualified Kriti.Lexer.Token      as Lex
+import qualified Kriti.Lexer           as Lex
+import qualified Kriti.Lexer.Token     as Lex
 
 import           Control.Applicative
-import           Control.Monad.Except
-import           Control.Monad.Identity
-import           Data.Bifunctor         (bimap, first)
-import           Data.Either            (lefts, rights)
-import           Data.Function          ((&))
-import           Data.List              (intersperse)
-import           Data.Monoid            (Alt (..))
-import           Data.Scientific        (Scientific, toBoundedInteger)
-import           Data.Text              (Text)
-import           Data.Void              (Void)
+import           Control.Lens          hiding (Context, op)
+import           Control.Monad
+import           Data.Bifunctor        (first)
+import           Data.Either           (lefts, rights)
+import           Data.List             (intersperse)
+import           Data.Monoid           (Alt (..))
+import           Data.Scientific       (Scientific, toBoundedInteger)
+import           Data.Text             (Text)
 
-import qualified Data.Aeson             as J
+import qualified Data.Aeson            as J
 import           Data.Foldable
-import qualified Data.HashMap.Strict    as M
-import qualified Data.Text              as T
-import qualified Data.Vector            as V
-import qualified Text.Megaparsec        as P
-import qualified Text.Megaparsec.Error  as PE
+import qualified Data.HashMap.Strict   as M
+import qualified Data.Text             as T
+import qualified Data.Vector           as V
+import qualified Text.Megaparsec       as P
+import qualified Text.Megaparsec.Error as PE
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
@@ -51,7 +50,7 @@ data ValueExt =
     Object (M.HashMap Text ValueExt)
   | Array (V.Vector ValueExt)
   | String Text
-  | StringInterp [ValueExt]
+  | StringInterp Span [ValueExt]
   | Number Scientific
   | Boolean Bool
   | Null
@@ -80,7 +79,7 @@ instance J.FromJSON ValueExt where
 
 -- {{ range $index, $article := .event.author.articles }}
 
-type Parser = P.Parsec Void Lex.TokenStream
+type Parser = P.Parsec Lex.LexError Lex.TokenStream
 
 
 match :: (Lex.Token -> Maybe a) -> Parser a
@@ -94,7 +93,7 @@ match_ :: (Lex.Token -> Bool) -> Parser ()
 match_ f = P.satisfy (f . Lex.teType) >> pure ()
 
 eitherP :: Parser a -> Parser b -> Parser (Either a b)
-eitherP a b = (Left <$> a) <|> (Right <$> b)
+eitherP a b = Left <$> a <|> Right <$> b
 
 colon :: Parser ()
 colon = match_ (== Lex.Colon)
@@ -146,33 +145,31 @@ stringLit = match \case
   Lex.StringLit s -> Just s
   _               -> Nothing
 
-type Lit = Text
-type UnLexed = Text
-
 stringTem :: Parser [Either Text Lex.TokenStream]
-stringTem = match \case
-  Lex.StringTem s -> Just $ splitIt s
-  _               -> Nothing
+stringTem = do
+  res <- match \case
+    Lex.StringTem s -> Just $ traverse (traverse Lex.lexer) $ splitText s
+    _               -> Nothing
+  case res of
+    Left err  -> P.customFailure err
+    Right tem -> pure tem
+
+splitText :: Text -> [Either Text Text]
+splitText t = reverse $ go t []
   where
-    -- TODO: Identify Strings vs ${..} wrapped TokenStreams and apply Lexer
-    -- Mutual Recursion:
-    -- chars til ${
-    -- tokens til }
-    splitIt :: Text -> [Either Text Lex.TokenStream]
-    splitIt str = case T.uncons  str of
-      Nothing -> []
-      Just ('$', _) -> splitVal str []
-      Just _ -> splitText str []
-
-    splitText :: Text -> [Either Text Lex.TokenStream] -> [Either Text Lex.TokenStream]
-    splitText str acc =
-      let (txt, rest) = T.breakOn "${" str
-      in splitVal rest (Left txt : acc)
-
-    splitVal :: Text -> [Either Text Lex.TokenStream] -> [Either Text Lex.TokenStream]
-    splitVal str acc =
-      let (txt, rest) = T.breakOn "}" str
-      in splitText rest (Right undefined : acc)
+    go str acc =
+      if T.null str
+        then acc
+        else
+          let (txt, rest) = T.breakOn "${" str
+          in if T.null rest || T.length rest == 2
+            then Left str : acc
+            else
+              case T.findIndex (== '}') (T.drop 2 rest) of
+                Nothing -> Left str : acc
+                Just i ->
+                  let (tok, rest') = T.splitAt i (T.drop 2 rest)
+                  in go (T.drop 1 rest') (Right tok : Left txt : acc)
 
 number :: Fractional a => Parser a
 number = match \case
@@ -270,7 +267,7 @@ parseRange = do
   where
     range = template $ do
       ident_ "range"
-      idx <- (Just <$> (blingPrefixedId <|> ident)) <|> (Nothing <$ underscore)
+      idx <- Just <$> (blingPrefixedId <|> ident) <|> Nothing <$ underscore
       comma
       bndr <- blingPrefixedId <|> ident
       assignment
@@ -295,14 +292,19 @@ registerParseErrorBundle (P.ParseErrorBundle errs _) =
 
 parserStringInterp :: Parser ValueExt
 parserStringInterp = do
+  pos1 <- fromSourcePos <$> P.getSourcePos
   tem <- stringTem
-  x <- traverse (pure . traverse parser) tem
+  pos2 <- fromSourcePos <$> P.getSourcePos
+  -- TODO: Recursively parsing like this will result in a junk
+  -- `SourcePosition`
+  let p = first ParseError . P.runParser parsePath mempty
+  x <- traverse (pure . traverse p) tem
 
   let errs = lefts x
   traverse_ (registerParseErrorBundle . _peErrorBundle) errs
 
   let vals = either String id <$> rights x
-  pure $ StringInterp vals
+  pure $ StringInterp (pos1, Just pos2) vals
 
 parseJson :: Parser ValueExt
 parseJson = do
@@ -347,7 +349,7 @@ end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
       v <- parseJson
       pure $ Just (con (pos1, Just $ incCol size pos1), v)
 
-newtype ParseError = ParseError { _peErrorBundle :: P.ParseErrorBundle Lex.TokenStream Void }
+newtype ParseError = ParseError { _peErrorBundle :: P.ParseErrorBundle Lex.TokenStream Lex.LexError }
   deriving Show
 
 instance RenderError ParseError where

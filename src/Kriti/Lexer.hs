@@ -17,7 +17,10 @@ import qualified Text.Megaparsec              as P
 import qualified Text.Read.Lex                as L
 
 newtype LexError = LexError { lePos :: P.SourcePos }
-  deriving Show
+  deriving (Show, Eq, Ord)
+
+instance P.ShowErrorComponent LexError where
+  showErrorComponent = show
 
 instance RenderError LexError where
   render LexError{lePos} =
