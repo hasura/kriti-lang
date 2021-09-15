@@ -13,26 +13,26 @@ module Kriti.Parser where--( Accessor(..)
                     --) where
 
 import           Kriti.Error
-import qualified Kriti.Lexer           as Lex
-import qualified Kriti.Lexer.Token     as Lex
+import qualified Kriti.Lexer                     as Lex
+import qualified Kriti.Lexer.Token               as Lex
 
 import           Control.Applicative
-import           Control.Lens          hiding (Context, op)
+import           Control.Lens                    hiding (Context, op)
 import           Control.Monad
-import           Data.Bifunctor        (first)
-import           Data.Either           (lefts, rights)
-import           Data.List             (intersperse)
-import           Data.Monoid           (Alt (..))
-import           Data.Scientific       (Scientific, toBoundedInteger)
-import           Data.Text             (Text)
-
-import qualified Data.Aeson            as J
+import           Data.Bifunctor                  (first)
+import           Data.Either                     (lefts, rights)
 import           Data.Foldable
-import qualified Data.HashMap.Strict   as M
-import qualified Data.Text             as T
-import qualified Data.Vector           as V
-import qualified Text.Megaparsec       as P
-import qualified Text.Megaparsec.Error as PE
+import           Data.List                       (intersperse)
+import           Data.Monoid                     (Alt (..))
+import           Data.Scientific                 (Scientific, toBoundedInteger)
+import           Data.Text                       (Text)
+
+import qualified Data.Aeson                      as J
+import qualified Data.HashMap.Strict             as M
+import qualified Data.Text                       as T
+import qualified Data.Vector                     as V
+import qualified Text.Megaparsec                 as P
+import qualified Text.Megaparsec.Error           as PE
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
@@ -154,6 +154,29 @@ stringTem = do
     Left err  -> P.customFailure err
     Right tem -> pure tem
 
+-- | Split Template Literal into unlexed string literals and unlexed
+-- expressions.
+--
+-- We could use a parser combinators here but at this point they don't
+-- provide much advantage. If the template syntax ${..} is incorrect
+-- then it will be treated as a string literal and the content of the
+-- template expressions is lexed and parsed downstream from this
+-- function call.
+--
+-- Using parser combinators would require writing a second Parser
+-- alias and a run function:
+--
+-- type ParserTemplate = P.Parsec Void Text
+-- runTemParser :: Text -> Either TemplateParseError [Either Text Text]
+--
+-- `runTemParser` would run the parser then convert the
+-- `ParseErrorBundle` into a custom error type `TemplateParseError`
+-- which we can then register with our main parser as a custom error
+-- field.
+--
+-- If we are not okay with bad template syntax, eg., `foo${bar`, being
+-- treated as string literals then we ought switch to parser
+-- combinators here.
 splitText :: Text -> [Either Text Text]
 splitText t = reverse $ go t []
   where
