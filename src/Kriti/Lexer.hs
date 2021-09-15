@@ -8,7 +8,7 @@ import           Data.Char                    (isSpace)
 import           Data.Maybe                   (maybeToList)
 import           Data.Scientific              (Scientific, scientificP)
 import           Data.Text                    (Text)
-import           Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
+import           Text.ParserCombinators.ReadP (ReadP, char, gather, many, readP_to_S, satisfy)
 import           Text.Read                    (lexP, lift, readPrec_to_P)
 import           Text.Read.Lex.Extended       (lexString)
 
@@ -17,7 +17,10 @@ import qualified Text.Megaparsec              as P
 import qualified Text.Read.Lex                as L
 
 newtype LexError = LexError { lePos :: P.SourcePos }
-  deriving Show
+  deriving (Show, Eq, Ord)
+
+instance P.ShowErrorComponent LexError where
+  showErrorComponent = show
 
 instance RenderError LexError where
   render LexError{lePos} =
@@ -69,8 +72,9 @@ lexer t = do
       | Just s <- T.stripPrefix ")"     txt = stepLexer ParenClose s pos
       | Just s <- T.stripPrefix "("     txt = stepLexer ParenOpen s pos
       | Just (str, _, s) <- stringLit   txt = stepLexer (StringLit str) s pos
+      | Just (str, _, s) <- stringTem   txt = stepLexer (StringTem str) s pos
       | Just (str, _, s) <- identifier  txt = stepLexer (Identifier str) s pos
-      | Just (n, matched, s)   <- numberLit   txt = stepLexer (NumLit matched (realToFrac n)) s pos
+      | Just (n, matched, s) <- numberLit txt = stepLexer (NumLit matched (realToFrac n)) s pos
       | otherwise = throwLexError pos
 
     stepLexer :: Token -> Text -> P.SourcePos -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
@@ -93,6 +97,17 @@ lexer t = do
       where
         stringLexeme = do
           L.String s <- lift lexString
+          pure (T.pack s)
+
+    stringTem :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
+    stringTem = fromRead (readPrec_to_P stringLexeme 0)
+      where
+        stringLexeme = do
+          L.String s <- lift do
+            _ <- char '`'
+            tem <- many $ satisfy (/= '`')
+            _ <- char '`'
+            pure $ L.String tem
           pure (T.pack s)
 
     numberLit :: Text -> Maybe (Scientific, Text, Text) -- (value, lit, remainder)

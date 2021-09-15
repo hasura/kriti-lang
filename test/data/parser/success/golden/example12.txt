@@ -1,0 +1,60 @@
+Object
+    ( fromList
+        [
+            ( "foo"
+            , StringInterp
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 10
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 26
+                        }
+                    )
+                )
+                [ String "bar-"
+                , Path
+                    [
+                        (
+                            ( SourcePosition
+                                { _sourceName = "sourceName"
+                                , _line = 1
+                                , _column = 1
+                                }
+                            , Just
+                                ( SourcePosition
+                                    { _sourceName = "sourceName"
+                                    , _line = 1
+                                    , _column = 2
+                                    }
+                                )
+                            )
+                        , Obj "$"
+                        )
+                    ,
+                        (
+                            ( SourcePosition
+                                { _sourceName = "sourceName"
+                                , _line = 1
+                                , _column = 2
+                                }
+                            , Just
+                                ( SourcePosition
+                                    { _sourceName = "sourceName"
+                                    , _line = 1
+                                    , _column = 5
+                                    }
+                                )
+                            )
+                        , Obj "baz"
+                        )
+                    ]
+                , String "1"
+                ]
+            )
+        ]
+    )

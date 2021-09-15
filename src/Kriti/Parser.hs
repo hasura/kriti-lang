@@ -1,34 +1,38 @@
-module Kriti.Parser ( Accessor(..)
-                    , ValueExt(..)
-                    , SourcePosition(..)
-                    , Span
-                    , ParseError
-                    , parser
-                    , parserAndLexer
-                    , renderPath
-                    , parsePath
-                    ) where
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell     #-}
+module Kriti.Parser where--( Accessor(..)
+                    --, ValueExt(..)
+                    --, SourcePosition(..)
+                    --, Span
+                    --, ParseError
+                    --, parser
+                    --, parserAndLexer
+                    --, renderPath
+                    --, parsePath
+                    --, parserStringInterp
+                    --) where
 
 import           Kriti.Error
-import qualified Kriti.Lexer            as Lex
-import qualified Kriti.Lexer.Token      as Lex
+import qualified Kriti.Lexer                     as Lex
+import qualified Kriti.Lexer.Token               as Lex
 
 import           Control.Applicative
-import           Control.Monad.Identity
-import           Data.Bifunctor         (first)
-import           Data.Function          ((&))
-import           Data.List              (intersperse)
-import           Data.Monoid            (Alt (..))
-import           Data.Scientific        (Scientific, toBoundedInteger)
-import           Data.Text              (Text)
-import           Data.Void              (Void)
+import           Control.Lens                    hiding (Context, op)
+import           Control.Monad
+import           Data.Bifunctor                  (first)
+import           Data.Either                     (lefts, rights)
+import           Data.Foldable
+import           Data.List                       (intersperse)
+import           Data.Monoid                     (Alt (..))
+import           Data.Scientific                 (Scientific, toBoundedInteger)
+import           Data.Text                       (Text)
 
-import qualified Data.Aeson             as J
-import qualified Data.HashMap.Strict    as M
-import qualified Data.Text              as T
-import qualified Data.Vector            as V
-import qualified Text.Megaparsec        as P
-import qualified Text.Megaparsec.Error  as PE
+import qualified Data.Aeson                      as J
+import qualified Data.HashMap.Strict             as M
+import qualified Data.Text                       as T
+import qualified Data.Vector                     as V
+import qualified Text.Megaparsec                 as P
+import qualified Text.Megaparsec.Error           as PE
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
@@ -46,6 +50,7 @@ data ValueExt =
     Object (M.HashMap Text ValueExt)
   | Array (V.Vector ValueExt)
   | String Text
+  | StringInterp Span [ValueExt]
   | Number Scientific
   | Boolean Bool
   | Null
@@ -74,7 +79,7 @@ instance J.FromJSON ValueExt where
 
 -- {{ range $index, $article := .event.author.articles }}
 
-type Parser = P.Parsec Void Lex.TokenStream
+type Parser = P.Parsec Lex.LexError Lex.TokenStream
 
 
 match :: (Lex.Token -> Maybe a) -> Parser a
@@ -86,6 +91,9 @@ match f = P.try $ do
 
 match_ :: (Lex.Token -> Bool) -> Parser ()
 match_ f = P.satisfy (f . Lex.teType) >> pure ()
+
+eitherP :: Parser a -> Parser b -> Parser (Either a b)
+eitherP a b = Left <$> a <|> Right <$> b
 
 colon :: Parser ()
 colon = match_ (== Lex.Colon)
@@ -137,6 +145,52 @@ stringLit = match \case
   Lex.StringLit s -> Just s
   _               -> Nothing
 
+stringTem :: Parser [Either Text Lex.TokenStream]
+stringTem = do
+  res <- match \case
+    Lex.StringTem s -> Just $ traverse (traverse Lex.lexer) $ splitText s
+    _               -> Nothing
+  case res of
+    Left err  -> P.customFailure err
+    Right tem -> pure tem
+
+-- | Split Template Literal into unlexed string literals and unlexed
+-- expressions.
+--
+-- We could use a parser combinators here but at this point they don't
+-- provide much advantage. If the template syntax ${..} is incorrect
+-- then it will be treated as a string literal and the content of the
+-- template expressions is lexed and parsed downstream from this
+-- function call.
+--
+-- Using parser combinators would require writing a second Parser
+-- alias and a run function:
+--
+-- type ParserTemplate = P.Parsec Void Text
+-- runTemParser :: Text -> Either TemplateParseError [Either Text Text]
+--
+-- `runTemParser` would run the parser then convert the
+-- `ParseErrorBundle` into a custom error type `TemplateParseError`
+-- which we can then register with our main parser as a custom error
+-- field.
+--
+-- If we are not okay with bad template syntax, eg., `foo${bar`, being
+-- treated as string literals then we ought switch to parser
+-- combinators here.
+splitText :: Text -> [Either Text Text]
+splitText t = reverse $ go t []
+  where
+    go str acc
+      | T.null str = acc
+      | let (_, rest) = T.breakOn "${" str,
+            T.null rest || T.length rest == 2
+              = Left str : acc
+      | let (txt, rest) = T.breakOn "${" str,
+            Just i <- T.findIndex (== '}') (T.drop 2 rest)
+              = let (tok, rest') = T.splitAt i (T.drop 2 rest)
+                in go (T.drop 1 rest') (Right tok : Left txt : acc)
+      | otherwise = Left str : acc
+
 number :: Fractional a => Parser a
 number = match \case
   Lex.NumLit _ n -> Just (fromRational $ toRational n)
@@ -147,11 +201,14 @@ integer = match \case
   Lex.NumLit _ n -> toBoundedInteger n
   _              -> Nothing
 
+betweenCurly :: Parser a -> Parser a
+betweenCurly = P.between openCurly closeCurly
+
+betweenParens :: Parser a -> Parser a
+betweenParens = P.between (match_ (== Lex.ParenOpen)) (match_ (== Lex.ParenClose))
+
 template :: Parser a -> Parser a
 template = P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
-
-parens :: Parser a -> Parser a
-parens = P.between (match_ (== Lex.ParenOpen)) (match_ (== Lex.ParenClose))
 
 parseNull :: Parser ValueExt
 parseNull = do
@@ -230,7 +287,7 @@ parseRange = do
   where
     range = template $ do
       ident_ "range"
-      idx <- (Just <$> (blingPrefixedId <|> ident)) <|> (Nothing <$ underscore)
+      idx <- Just <$> (blingPrefixedId <|> ident) <|> Nothing <$ underscore
       comma
       bndr <- blingPrefixedId <|> ident
       assignment
@@ -249,6 +306,26 @@ parserIff = do
   pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ Iff (pos1, Just pos2) p t1 t2
 
+registerParseErrorBundle :: P.MonadParsec e s m => P.ParseErrorBundle s e -> m ()
+registerParseErrorBundle (P.ParseErrorBundle errs _) =
+  traverse_ P.registerParseError errs
+
+parserStringInterp :: Parser ValueExt
+parserStringInterp = do
+  pos1 <- fromSourcePos <$> P.getSourcePos
+  tem <- stringTem
+  pos2 <- fromSourcePos <$> P.getSourcePos
+  -- TODO: Recursively parsing like this will result in a junk
+  -- `SourcePosition`
+  let p = first ParseError . P.runParser parsePath mempty
+  x <- traverse (pure . traverse p) tem
+
+  let errs = lefts x
+  traverse_ (registerParseErrorBundle . _peErrorBundle) errs
+
+  let vals = either String id <$> rights x
+  pure $ StringInterp (pos1, Just pos2) vals
+
 parseJson :: Parser ValueExt
 parseJson = do
   e1 <- start
@@ -262,6 +339,7 @@ start =
   getAlt $ foldMap Alt
     [ parseNull
     , parseString
+    , parserStringInterp
     , parseNumber
     , parseBool
     , parseArray
@@ -272,7 +350,7 @@ start =
     , P.try (template parsePath)
     , P.try parseRange
     , parserIff
-    , parens parseJson
+    , betweenParens parseJson
     ]
 
 end :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
@@ -291,7 +369,7 @@ end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
       v <- parseJson
       pure $ Just (con (pos1, Just $ incCol size pos1), v)
 
-newtype ParseError = ParseError (P.ParseErrorBundle Lex.TokenStream Void)
+newtype ParseError = ParseError { _peErrorBundle :: P.ParseErrorBundle Lex.TokenStream Lex.LexError }
   deriving Show
 
 instance RenderError ParseError where

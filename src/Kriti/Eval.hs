@@ -3,6 +3,7 @@ module Kriti.Eval where
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.Foldable        (foldlM)
+import           Data.Function
 import           Data.Maybe           (maybeToList)
 import           Kriti.Error
 import           Kriti.Parser         (Accessor (..), ValueExt (..), renderPath)
@@ -42,12 +43,15 @@ evalPath ctx path =
       step _ (pos, Arr _) = throwError $ TypeError pos "Expected array"
   in foldlM step ctx path
 
+isString :: J.Value -> Bool
+isString J.String{} = True
+isString _          = False
+
 runEval :: ValueExt -> [(T.Text, J.Value)] -> Either EvalError J.Value
 runEval template source =
   let ctx = M.fromList source
   in runReader (runExceptT (eval template)) ctx
 
--- NOTE: In general where do we want to produce errors and where is it ok to return null?
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
   String str -> pure $ J.String str
@@ -55,6 +59,12 @@ eval = \case
   Boolean p -> pure $ J.Bool p
   Null -> pure J.Null
   Object fields -> J.Object <$> traverse eval fields
+  StringInterp span' ts -> do
+    vals <- traverse eval ts
+    vals & flip foldlM (J.String mempty) \(J.String acc) -> \case
+      J.String val' -> pure $ J.String $ acc <> val'
+      -- TODO: Improve Span Construction/Reporting for StringInterp
+      _             -> throwError $ InvalidPath span' []
   Array xs -> J.Array <$> traverse eval xs
   Path path -> do
     ctx <- ask

@@ -1,0 +1,35 @@
+StringInterp
+    ( SourcePosition
+        { _sourceName = "sourceName"
+        , _line = 1
+        , _column = 1
+        }
+    , Just
+        ( SourcePosition
+            { _sourceName = "sourceName"
+            , _line = 1
+            , _column = 1
+            }
+        )
+    )
+    [ String "foo"
+    , Path
+        [
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 1
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 4
+                        }
+                    )
+                )
+            , Obj "bar"
+            )
+        ]
+    ]
