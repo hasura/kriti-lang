@@ -3,7 +3,6 @@
 A minimal json templating language based on Go' template language.
 
 ## TODO
-- String interpolation
 - Improve and extend lexer errors
 - Pretty printer
 - Improve span generation
