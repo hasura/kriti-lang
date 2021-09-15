@@ -157,19 +157,16 @@ stringTem = do
 splitText :: Text -> [Either Text Text]
 splitText t = reverse $ go t []
   where
-    go str acc =
-      if T.null str
-        then acc
-        else
-          let (txt, rest) = T.breakOn "${" str
-          in if T.null rest || T.length rest == 2
-            then Left str : acc
-            else
-              case T.findIndex (== '}') (T.drop 2 rest) of
-                Nothing -> Left str : acc
-                Just i ->
-                  let (tok, rest') = T.splitAt i (T.drop 2 rest)
-                  in go (T.drop 1 rest') (Right tok : Left txt : acc)
+    go str acc
+      | T.null str = acc
+      | let (_, rest) = T.breakOn "${" str,
+            T.null rest || T.length rest == 2
+              = Left str : acc
+      | let (txt, rest) = T.breakOn "${" str,
+            Just i <- T.findIndex (== '}') (T.drop 2 rest)
+              = let (tok, rest') = T.splitAt i (T.drop 2 rest)
+                in go (T.drop 1 rest') (Right tok : Left txt : acc)
+      | otherwise = Left str : acc
 
 number :: Fractional a => Parser a
 number = match \case
