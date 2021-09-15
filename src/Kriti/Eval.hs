@@ -62,7 +62,7 @@ eval = \case
   StringInterp span' ts -> do
     vals <- traverse eval ts
     vals & flip foldlM (J.String mempty) \(J.String acc) -> \case
-      J.String val' -> pure $ J.String $ acc <> val' 
+      J.String val' -> pure $ J.String $ acc <> val'
       -- TODO: Improve Span Construction/Reporting for StringInterp
       _             -> throwError $ InvalidPath span' []
   Array xs -> J.Array <$> traverse eval xs
