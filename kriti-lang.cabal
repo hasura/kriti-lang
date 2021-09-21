@@ -22,7 +22,7 @@ library
                      , lens
                      , megaparsec
                      , mtl
-                     , parser-combinators
+                     , parser-combinators == 1.3.0
                      , scientific
                      , text
                      , unordered-containers
