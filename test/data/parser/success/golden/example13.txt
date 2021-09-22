@@ -1,0 +1,40 @@
+Object
+    ( fromList
+        [
+            ( "bar"
+            , StringInterp
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 24
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 33
+                        }
+                    )
+                )
+                [ String "x${}x" ]
+            )
+        ,
+            ( "foo"
+            , StringInterp
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 10
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 15
+                        }
+                    )
+                )
+                [ String "x`x" ]
+            )
+        ]
+    )

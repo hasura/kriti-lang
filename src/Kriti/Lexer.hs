@@ -8,9 +8,9 @@ import           Data.Char                    (isSpace)
 import           Data.Maybe                   (maybeToList)
 import           Data.Scientific              (Scientific, scientificP)
 import           Data.Text                    (Text)
-import           Text.ParserCombinators.ReadP (ReadP, char, gather, many, readP_to_S, satisfy)
+import           Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
 import           Text.Read                    (lexP, lift, readPrec_to_P)
-import           Text.Read.Lex.Extended       (lexString)
+import           Text.Read.Lex.Extended       (lexTemplate)
 
 import qualified Data.Text                    as T
 import qualified Text.Megaparsec              as P
@@ -96,18 +96,14 @@ lexer t = do
     stringLit = fromRead (readPrec_to_P stringLexeme 0)
       where
         stringLexeme = do
-          L.String s <- lift lexString
+          L.String s <- lexP
           pure (T.pack s)
 
     stringTem :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
     stringTem = fromRead (readPrec_to_P stringLexeme 0)
       where
         stringLexeme = do
-          L.String s <- lift do
-            _ <- char '`'
-            tem <- many $ satisfy (/= '`')
-            _ <- char '`'
-            pure $ L.String tem
+          L.String s <- lift lexTemplate
           pure (T.pack s)
 
     numberLit :: Text -> Maybe (Scientific, Text, Text) -- (value, lit, remainder)

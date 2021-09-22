@@ -182,6 +182,9 @@ splitText t = reverse $ go t []
   where
     go str acc
       | T.null str = acc
+      | let (txt, rest) = T.breakOn "\\$" str,
+           not (T.null rest)
+              = Left (txt <> T.drop 1 rest) : acc
       | let (_, rest) = T.breakOn "${" str,
             T.null rest || T.length rest == 2
               = Left str : acc

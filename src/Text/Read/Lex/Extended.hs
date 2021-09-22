@@ -1,4 +1,4 @@
-module Text.Read.Lex.Extended ( lexString ) where
+module Text.Read.Lex.Extended ( lexTemplate ) where
 
 import Text.ParserCombinators.ReadP
 
@@ -11,15 +11,15 @@ guard           :: (MonadPlus m) => Bool -> m ()
 guard True      =  return ()
 guard False     =  mzero
 
-lexString :: ReadP Lexeme
-lexString =
-  do quoteChar <- char '"' <|> char '\''
-     body id quoteChar
+lexTemplate :: ReadP Lexeme
+lexTemplate =
+  do quoteChar <- char '`'
+     body id [quoteChar]
  where
   body f quoteChar =
     do (c,esc) <- lexStrItem
        if c /= quoteChar || esc
-         then body (f.(c:)) quoteChar
+         then body (f.(c <>)) quoteChar
          else let s = f "" in
               return (String s)
 
@@ -34,32 +34,34 @@ lexString =
          _ | isSpace c -> do skipSpaces; _ <- char '\\'; return ()
          _             -> do pfail
 
-lexCharE :: ReadP (Char, Bool)  -- "escaped or not"?
+lexCharE :: ReadP (String, Bool)  -- "escaped or not"?
 lexCharE =
   do c1 <- get
      if c1 == '\\'
        then do c2 <- lexEsc; return (c2, True)
-       else do return (c1, False)
+       else do return (pure c1, False)
  where
   lexEsc =
     lexEscChar
-      +++ lexNumeric
-        +++ lexCntrlChar
-          +++ lexAscii
+      +++ fmap pure lexNumeric
+        +++ fmap pure lexCntrlChar
+          +++ fmap pure lexAscii
 
   lexEscChar =
     do c <- get
        case c of
-         'a'  -> return '\a'
-         'b'  -> return '\b'
-         'f'  -> return '\f'
-         'n'  -> return '\n'
-         'r'  -> return '\r'
-         't'  -> return '\t'
-         'v'  -> return '\v'
-         '\\' -> return '\\'
-         '\"' -> return '\"'
-         '\'' -> return '\''
+         'a'  -> return "\a"
+         'b'  -> return "\b"
+         'f'  -> return "\f"
+         'n'  -> return "\n"
+         'r'  -> return "\r"
+         't'  -> return "\t"
+         'v'  -> return "\v"
+         '\\' -> return "\\"
+         '\"' -> return "\""
+         '\'' -> return "\'"
+         '$'  -> return "\\$"
+         '`'  -> return "`"
          _    -> pfail
 
   lexNumeric =
