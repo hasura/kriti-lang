@@ -50,11 +50,11 @@ data ValueExt =
     Object (M.HashMap Text ValueExt)
   | Array (V.Vector ValueExt)
   | String Text
-  | StringInterp Span [ValueExt]
   | Number Scientific
   | Boolean Bool
   | Null
   -- Extended Terms
+  | StringInterp Span [ValueExt]
   | Path [(Span, Accessor)]
   | Iff Span ValueExt ValueExt ValueExt
   | Eq Span ValueExt ValueExt
@@ -142,7 +142,7 @@ bool = match \case
 
 stringLit :: Parser Text
 stringLit = match \case
-  Lex.StringLit s -> Just s
+  Lex.StringTem s -> Just s
   _               -> Nothing
 
 stringTem :: Parser [Either Text Lex.TokenStream]
@@ -182,16 +182,16 @@ splitText t = reverse $ go t []
   where
     go str acc
       | T.null str = acc
-      | let (txt, rest) = T.breakOn "\\$" str,
+      | let (txt, rest) = T.breakOn "\\{" str,
            not (T.null rest)
               = Left (txt <> T.drop 1 rest) : acc
-      | let (_, rest) = T.breakOn "${" str,
+      | let (_, rest) = T.breakOn "{{" str,
             T.null rest || T.length rest == 2
               = Left str : acc
-      | let (txt, rest) = T.breakOn "${" str,
-            Just i <- T.findIndex (== '}') (T.drop 2 rest)
-              = let (tok, rest') = T.splitAt i (T.drop 2 rest)
-                in go (T.drop 1 rest') (Right tok : Left txt : acc)
+      | let (txt, str') = T.breakOn "{{" str
+            (expr, rest) = T.breakOn "}}" (T.drop 2 str'),
+            not (T.null expr) && not (T.null rest)
+              = go (T.drop 2 rest) (Right expr : Left txt : acc)
       | otherwise = Left str : acc
 
 number :: Fractional a => Parser a
@@ -313,6 +313,13 @@ registerParseErrorBundle :: P.MonadParsec e s m => P.ParseErrorBundle s e -> m (
 registerParseErrorBundle (P.ParseErrorBundle errs _) =
   traverse_ P.registerParseError errs
 
+isLeft :: Either a b -> Bool
+isLeft (Left _) = True
+isLeft _ = False
+
+removeRights :: [Either a b] -> [a]
+removeRights ls = [x | Left x <- ls]
+
 parserStringInterp :: Parser ValueExt
 parserStringInterp = do
   pos1 <- fromSourcePos <$> P.getSourcePos
@@ -326,8 +333,11 @@ parserStringInterp = do
   let errs = lefts x
   traverse_ (registerParseErrorBundle . _peErrorBundle) errs
 
-  let vals = either String id <$> rights x
-  pure $ StringInterp (pos1, Just pos2) vals
+  let vals = rights x
+  let vals' = either String id <$> vals
+  if all isLeft vals
+    then pure $ String $ foldl (<>) mempty $ removeRights vals
+    else pure $ StringInterp (pos1, Just pos2) vals'
 
 parseJson :: Parser ValueExt
 parseJson = do
@@ -341,7 +351,6 @@ start :: Parser ValueExt
 start =
   getAlt $ foldMap Alt
     [ parseNull
-    , parseString
     , parserStringInterp
     , parseNumber
     , parseBool
