@@ -12,7 +12,7 @@ Object
                     ( SourcePosition
                         { _sourceName = "sourceName"
                         , _line = 1
-                        , _column = 26
+                        , _column = 27
                         }
                     )
                 )

@@ -13,7 +13,7 @@ guard False     =  mzero
 
 lexTemplate :: ReadP Lexeme
 lexTemplate =
-  do quoteChar <- char '`'
+  do quoteChar <- char '"'
      body id [quoteChar]
  where
   body f quoteChar =
@@ -60,7 +60,7 @@ lexCharE =
          '\\' -> return "\\"
          '\"' -> return "\""
          '\'' -> return "\'"
-         '$'  -> return "\\$"
+         '{'  -> return "\\{"
          '`'  -> return "`"
          _    -> pfail
 
