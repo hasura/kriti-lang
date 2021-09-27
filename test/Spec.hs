@@ -1,39 +1,39 @@
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE RecordWildCards, ScopedTypeVariables #-}
+
 module Main where
 
 import Control.Exception.Safe (throwString)
 import Control.Monad (replicateM)
-import Data.Foldable (for_)
-import Data.Maybe (fromJust)
-import Data.Scientific (Scientific)
-import Data.Text (Text)
-import Data.Text.Encoding (decodeUtf8)
-import System.Directory (listDirectory)
-import System.FilePath
-import Test.Hspec
-import Test.Hspec.Golden
-import Text.Pretty.Simple (pShowNoColor)
-import Text.Read (readEither)
-
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Encode.Pretty as JEP (encodePretty)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
+import Data.Foldable (for_)
 import qualified Data.HashMap.Strict as M
+import Data.Maybe (fromJust)
+import Data.Scientific (Scientific)
+import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text.Encoding (decodeUtf8)
 import qualified Data.Text.Lazy as TL
 import qualified Data.Vector as V
-import qualified Test.QuickCheck as Q
-import qualified Test.QuickCheck.Arbitrary.Generic as QAG
-
+import Kriti.Error
+import Kriti.Eval
 import Kriti.Lexer
 import Kriti.Lexer.Token
 import Kriti.Parser
-import Kriti.Eval
-import Kriti.Error
+import System.Directory (listDirectory)
+import System.FilePath
+import Test.Hspec
+import Test.Hspec.Golden
+import qualified Test.QuickCheck as Q
+import qualified Test.QuickCheck.Arbitrary.Generic as QAG
+import Text.Pretty.Simple (pShowNoColor)
+import Text.Read (readEither)
 
 --------------------------------------------------------------------------------
 
@@ -54,9 +54,9 @@ lexerSpec = describe "Lexer" $
       Q.property $ \tokens ->
         let serialized = T.intercalate " " $ fmap serialize tokens
             tokens' = lexer serialized
-        in case tokens' of
-          Left lexError -> expectationFailure (show $ render lexError)
-          Right (TokenStream _ lexemes) -> fmap teType lexemes `shouldBe` (tokens :: [Token])
+         in case tokens' of
+              Left lexError -> expectationFailure (show $ render lexError)
+              Right (TokenStream _ lexemes) -> fmap teType lexemes `shouldBe` (tokens :: [Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -71,9 +71,9 @@ parserSpec = describe "Parser" $ do
         let serialized = J.encode @J.Value value
             tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
             viaAeson = fromJust $ J.decode @ValueExt serialized
-        in case tokens of
-          Left lexError -> expectationFailure (show $ render lexError)
-          Right lexemes -> parser lexemes `shouldSatisfy` succeeds viaAeson
+         in case tokens of
+              Left lexError -> expectationFailure (show $ render lexError)
+              Right lexemes -> parser lexemes `shouldSatisfy` succeeds viaAeson
 
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
@@ -82,15 +82,19 @@ parserGoldenSpec = describe "Golden" $ do
   (dirSuc, pathsSuc) <- runIO $ fetchGoldenFiles "test/data/parser/success"
   (dirFail, pathsFail) <- runIO $ fetchGoldenFiles "test/data/parser/failure"
 
-  describe "Success" $ for_ pathsSuc $ \path -> do
-    let name = dropExtension $ takeFileName path
-    before (parseTemplateSuccess path) $ it ("parses " <> name) $
-      \valueExt -> goldenValueExt dirSuc name valueExt
+  describe "Success" $
+    for_ pathsSuc $ \path -> do
+      let name = dropExtension $ takeFileName path
+      before (parseTemplateSuccess path) $
+        it ("parses " <> name) $
+          \valueExt -> goldenValueExt dirSuc name valueExt
 
-  describe "Failure" $ for_ pathsFail $ \path -> do
-    let name = dropExtension $ takeFileName path
-    before (parseTemplateFailure path) $ it ("fails to parse " <> name) $
-      \parseError -> goldenParseError dirFail name parseError
+  describe "Failure" $
+    for_ pathsFail $ \path -> do
+      let name = dropExtension $ takeFileName path
+      before (parseTemplateFailure path) $
+        it ("fails to parse " <> name) $
+          \parseError -> goldenParseError dirFail name parseError
 
 -- | Parse a template file that is expected to succeed; parse failures are
 -- rendered as 'String's and thrown in 'IO'.
@@ -134,10 +138,12 @@ evalGoldenSpec = describe "Golden" do
   source <- runIO $ do
     eSource <- J.eitherDecodeFileStrict (dir </> "source.json")
     either throwString pure eSource
-  describe "Success" $ for_ paths $ \path -> do
-    let name = dropExtension $ takeFileName path
-    before (evalSuccess source path) $ it ("evaluates " <> name) $
-      \json -> goldenAesonValue dir name json
+  describe "Success" $
+    for_ paths $ \path -> do
+      let name = dropExtension $ takeFileName path
+      before (evalSuccess source path) $
+        it ("evaluates " <> name) $
+          \json -> goldenAesonValue dir name json
 
 -- | Parse an example file and evaluate it against the provided JSON source
 -- file; any parsing or evaluation failures will be rendered as 'String's
@@ -158,8 +164,8 @@ evalSuccess source path = do
 --
 -- NOTE: This function uses the 'goldenDir' function defined within this module
 -- to read/write files from/to a shared directory within the project.
-goldenReadShow
-  :: (Read val, Show val) => FilePath -> String -> val -> Golden val
+goldenReadShow ::
+  (Read val, Show val) => FilePath -> String -> val -> Golden val
 goldenReadShow dir name val = Golden {..}
   where
     output = val
@@ -177,14 +183,13 @@ goldenReadShow dir name val = Golden {..}
 goldenValueExt :: FilePath -> String -> ValueExt -> Golden ValueExt
 goldenValueExt = goldenReadShow
 
-
 -- | Construct a 'Golden' test for 'ParseError's rendered as 'String's.
 --
 -- Since 'ParseError' doesn't export a 'Show' instance that satisfies the
 -- 'Read' <-> 'Show' roundtrip law, we must deal with its errors in terms of
 -- the text it produces.
 goldenParseError :: FilePath -> String -> ParseError -> Golden String
-goldenParseError dir name parseError = Golden{..}
+goldenParseError dir name parseError = Golden {..}
   where
     output = show $ render parseError
     encodePretty = id
@@ -201,8 +206,8 @@ goldenParseError dir name parseError = Golden{..}
 -- 'J.fromJSON'.
 --
 -- NOTE: If
-goldenAeson
-  :: (J.FromJSON val, J.ToJSON val) => FilePath -> String -> val -> Golden val
+goldenAeson ::
+  (J.FromJSON val, J.ToJSON val) => FilePath -> String -> val -> Golden val
 goldenAeson dir name val = Golden {..}
   where
     output = val
@@ -224,7 +229,7 @@ goldenAesonValue = goldenAeson
 -- QuickCheck helpers and orphan instances.
 
 alphabet :: String
-alphabet = ['a'..'z'] ++ ['A'..'Z']
+alphabet = ['a' .. 'z'] ++ ['A' .. 'Z']
 
 alphaNumerics :: String
 alphaNumerics = alphabet ++ "0123456789"
@@ -245,9 +250,10 @@ instance Q.Arbitrary Scientific where
   arbitrary = ((fromRational . toRational) :: Int -> Scientific) <$> Q.arbitrary
 
 instance Q.Arbitrary Token where
-  arbitrary = QAG.genericArbitrary >>= \case
-    NumLit _ i -> pure $ NumLit (T.pack $ show i) i
-    val -> pure val
+  arbitrary =
+    QAG.genericArbitrary >>= \case
+      NumLit _ i -> pure $ NumLit (T.pack $ show i) i
+      val -> pure val
 
 instance Q.Arbitrary J.Value where
   arbitrary = Q.sized sizedArbitraryValue

@@ -1,17 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+
 module Main where
 
-import qualified    Data.Aeson              as J
-import qualified    Data.ByteString.Lazy    as BL
-import              Data.Text               (Text)
-import              Data.Maybe
-import              Network.HTTP.Client
-import              Text.RawString.QQ
-import              Kriti                   (runKriti)
+import qualified Data.Aeson as J
+import qualified Data.ByteString.Lazy as BL
+import Data.Maybe
+import Data.Text (Text)
+import Kriti (runKriti)
+import Network.HTTP.Client
+import Text.RawString.QQ
 
 exampleTemplate :: Text
-exampleTemplate = [r|
+exampleTemplate =
+  [r|
 {
    'id': {{$.id}},
    'name': {{$.name.english}},
