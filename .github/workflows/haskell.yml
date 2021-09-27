@@ -19,6 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: mrkkrp/ormolu-action@v4
+        with:
+          respect-cabal-files: false
 
   build-test:
     runs-on: ubuntu-latest
