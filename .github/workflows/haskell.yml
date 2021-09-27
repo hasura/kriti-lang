@@ -1,4 +1,7 @@
-name: build, test and format
+# NOTE: This should be a good reference for github actions w.r.t haskell
+# https://markkarpov.com/post/github-actions-for-haskell-ci.html
+
+name: Build, Test
 on:
   push:
     branches:
@@ -14,22 +17,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
+#   NOTE: once the library is ready to be released into the wild
+#   we could use this code block to run the tests and build the exe.
+#   on multiple GHC versions and perhaps even multiple cabal versions
+
 #     strategy:
 #       matrix:
-#         cabal: ["3.4"]
-#         ghc: ["8.8.4", "8.10.5", "9.0.1"]
+#         cabal: ["3.2"]
+#         ghc: ["8.10.4", "8.10.5", "9.0.1"]
 
     env:
       CONFIG: "--enable-tests --enable-benchmarks"
     steps:
       - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v1.2
         id: setup-haskell-cabal
         with:
           ghc-version: "8.10.5"
           cabal-version: "3.2"
+
       - run: cabal v2-update
       - run: cabal v2-freeze $CONFIG
+      
       - uses: actions/cache@v2
         with:
           path: |
@@ -38,11 +48,13 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.ghc }}-
-      - run: cabal v2-build $CONFIG
-      - run: cabal v2-test $CONFIG
       
-      - name: format check
-        uses: mrkkrp/ormolu-action@v4
+      - name: Build project
+        run: cabal v2-build $CONFIG
 
+      - name: Test project
+        run: cabal v2-test $CONFIG
+
+# NOTE: keeping these here for future versions
 #       - run: cabal v2-haddock $CONFIG
 #       - run: cabal v2-sdist
