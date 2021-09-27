@@ -42,5 +42,5 @@ jobs:
       run: cabal test all
       
     - name: check formatting
-    - uses: mrkkrp/ormolu-action@v4
+      uses: mrkkrp/ormolu-action@v4
 
