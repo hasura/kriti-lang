@@ -1,5 +1,10 @@
-# Revision history for go-basic
+# Revision history for Kriti-Lang
 
-## 0.1.0.0 -- YYYY-mm-dd
+## 0.1.0.0 -- 2021-09-28
 
-* First version. Released on an unsuspecting world.
+* First release.
+
+  - A basic CLI tool
+  - String Interpolation
+  - Loops
+  - If statements with `>`, `<`, `==`, `||`, `&&` operations.
