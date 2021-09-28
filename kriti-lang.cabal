@@ -85,20 +85,20 @@ test-suite kriti-lang-test
                        QuasiQuotes
                        TypeApplications
 
-executable example
-    main-is:          Example.hs
-
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:    base >=4.14.1.0
-                    , kriti-lang
-                    , aeson
-                    , bytestring
-                    , http-client
-                    , raw-strings-qq
-                    , text
-    hs-source-dirs:   examples
-    default-language: Haskell2010
+executable kriti
+  main-is:            Main.hs
+  ghc-options:        -Wall
+  default-extensions: BlockArguments
+                      DeriveGeneric
+                      FlexibleInstances
+                      LambdaCase
+                      OverloadedStrings
+                      RecordWildCards
+                      ScopedTypeVariables
+  build-depends:      base >= 2 && < 5
+                      , aeson
+                      , bytestring
+                      , text
+                      , optparse-applicative
+                      , kriti-lang
+  default-language:   Haskell2010
