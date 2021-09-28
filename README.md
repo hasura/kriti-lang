@@ -1,5 +1,7 @@
 # Kriti Lang
 
+[![kriti-lang::CI](https://github.com/hasura/kriti-lang/actions/workflows/haskell.yml/badge.svg)](https://github.com/hasura/kriti-lang/actions/workflows/haskell.yml)
+
 A minimal json templating language based on Go' template language.
 
 ## TODO

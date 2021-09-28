@@ -1,38 +1,37 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
-module Kriti.Parser where--( Accessor(..)
-                    --, ValueExt(..)
-                    --, SourcePosition(..)
-                    --, Span
-                    --, ParseError
-                    --, parser
-                    --, parserAndLexer
-                    --, renderPath
-                    --, parsePath
-                    --, parserStringInterp
-                    --) where
+{-# LANGUAGE TemplateHaskell #-}
 
-import           Kriti.Error
-import qualified Kriti.Lexer                     as Lex
-import qualified Kriti.Lexer.Token               as Lex
+module Kriti.Parser where --( Accessor(..)
+--, ValueExt(..)
+--, SourcePosition(..)
+--, Span
+--, ParseError
+--, parser
+--, parserAndLexer
+--, renderPath
+--, parsePath
+--, parserStringInterp
+--) where
 
-import           Control.Applicative
-import           Control.Lens                    hiding (Context, op)
-import           Control.Monad
-import           Data.Bifunctor                  (first)
-import           Data.Either                     (lefts, rights)
-import           Data.Foldable
-import           Data.List                       (intersperse)
-import           Data.Monoid                     (Alt (..))
-import           Data.Scientific                 (Scientific, toBoundedInteger)
-import           Data.Text                       (Text)
-
-import qualified Data.Aeson                      as J
-import qualified Data.HashMap.Strict             as M
-import qualified Data.Text                       as T
-import qualified Data.Vector                     as V
-import qualified Text.Megaparsec                 as P
-import qualified Text.Megaparsec.Error           as PE
+import Control.Applicative
+import Control.Lens hiding (Context, op)
+import Control.Monad
+import qualified Data.Aeson as J
+import Data.Bifunctor (first)
+import Data.Either (lefts, rights)
+import Data.Foldable
+import qualified Data.HashMap.Strict as M
+import Data.List (intersperse)
+import Data.Monoid (Alt (..))
+import Data.Scientific (Scientific, toBoundedInteger)
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Vector as V
+import Kriti.Error
+import qualified Kriti.Lexer as Lex
+import qualified Kriti.Lexer.Token as Lex
+import qualified Text.Megaparsec as P
+import qualified Text.Megaparsec.Error as PE
 
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
@@ -40,21 +39,21 @@ data Accessor = Obj Text | Arr Int
 renderAccessor :: Accessor -> Text
 renderAccessor = \case
   Obj txt -> txt
-  Arr i   -> T.pack $ show i
+  Arr i -> T.pack $ show i
 
 renderPath :: [(Span, Accessor)] -> Text
 renderPath = mconcat . intersperse "." . fmap (renderAccessor . snd)
 
-data ValueExt =
-  -- Core Aeson Terms
+data ValueExt
+  = -- Core Aeson Terms
     Object (M.HashMap Text ValueExt)
   | Array (V.Vector ValueExt)
   | String Text
   | Number Scientific
   | Boolean Bool
   | Null
-  -- Extended Terms
-  | StringInterp Span [ValueExt]
+  | -- Extended Terms
+    StringInterp Span [ValueExt]
   | Path [(Span, Accessor)]
   | Iff Span ValueExt ValueExt ValueExt
   | Eq Span ValueExt ValueExt
@@ -63,31 +62,30 @@ data ValueExt =
   | And Span ValueExt ValueExt
   | Or Span ValueExt ValueExt
   | Member Span ValueExt ValueExt
-  | Range Span (Maybe Text) Text [(Span, Accessor)] ValueExt
-  -- ^ {{ range i, x := $.foo.bar }}
+  | -- | {{ range i, x := $.foo.bar }}
+    Range Span (Maybe Text) Text [(Span, Accessor)] ValueExt
   deriving (Show, Eq, Read)
 
 instance J.FromJSON ValueExt where
   parseJSON = \case
-    J.Null                  -> pure   Null
-    J.String s              -> pure $ String s
-    J.Number i              -> pure $ Number i
-    J.Bool p                -> pure $ Boolean p
-    J.Array arr             -> Array <$> traverse J.parseJSON arr
+    J.Null -> pure Null
+    J.String s -> pure $ String s
+    J.Number i -> pure $ Number i
+    J.Bool p -> pure $ Boolean p
+    J.Array arr -> Array <$> traverse J.parseJSON arr
     J.Object obj | null obj -> pure Null
-    J.Object obj            -> Object <$> traverse J.parseJSON obj
+    J.Object obj -> Object <$> traverse J.parseJSON obj
 
 -- {{ range $index, $article := .event.author.articles }}
 
 type Parser = P.Parsec Lex.LexError Lex.TokenStream
 
-
 match :: (Lex.Token -> Maybe a) -> Parser a
 match f = P.try $ do
-  tokenExt@Lex.TokenExt{teType} <- P.anySingle
+  tokenExt@Lex.TokenExt {teType} <- P.anySingle
   case f teType of
     Nothing -> P.unexpected (PE.Tokens $ pure tokenExt)
-    Just a  -> pure a
+    Just a -> pure a
 
 match_ :: (Lex.Token -> Bool) -> Parser ()
 match_ f = P.satisfy (f . Lex.teType) >> pure ()
@@ -128,30 +126,30 @@ assignment = match_ (== Lex.Assignment)
 ident :: Parser Text
 ident = match \case
   Lex.Identifier s -> Just s
-  _                -> Nothing
+  _ -> Nothing
 
 ident_ :: Text -> Parser ()
 ident_ s = match_ \case
   Lex.Identifier s' -> s == s'
-  _                 -> False
+  _ -> False
 
 bool :: Parser Bool
 bool = match \case
   Lex.BoolLit p -> Just p
-  _             -> Nothing
+  _ -> Nothing
 
 stringLit :: Parser Text
 stringLit = match \case
   Lex.StringTem s -> Just s
-  _               -> Nothing
+  _ -> Nothing
 
 stringTem :: Parser [Either Text Lex.TokenStream]
 stringTem = do
   res <- match \case
     Lex.StringTem s -> Just $ traverse (traverse Lex.lexer) $ splitText s
-    _               -> Nothing
+    _ -> Nothing
   case res of
-    Left err  -> P.customFailure err
+    Left err -> P.customFailure err
     Right tem -> pure tem
 
 -- | Split Template Literal into unlexed string literals and unlexed
@@ -183,26 +181,26 @@ splitText t = reverse $ go t []
     go str acc
       | T.null str = acc
       | let (txt, rest) = T.breakOn "\\{" str,
-           not (T.null rest)
-              = Left (txt <> T.drop 1 rest) : acc
+        not (T.null rest) =
+        Left (txt <> T.drop 1 rest) : acc
       | let (_, rest) = T.breakOn "{{" str,
-            T.null rest || T.length rest == 2
-              = Left str : acc
+        T.null rest || T.length rest == 2 =
+        Left str : acc
       | let (txt, str') = T.breakOn "{{" str
             (expr, rest) = T.breakOn "}}" (T.drop 2 str'),
-            not (T.null expr) && not (T.null rest)
-              = go (T.drop 2 rest) (Right expr : Left txt : acc)
+        not (T.null expr) && not (T.null rest) =
+        go (T.drop 2 rest) (Right expr : Left txt : acc)
       | otherwise = Left str : acc
 
 number :: Fractional a => Parser a
 number = match \case
   Lex.NumLit _ n -> Just (fromRational $ toRational n)
-  _              -> Nothing
+  _ -> Nothing
 
 integer :: Parser Int
 integer = match \case
   Lex.NumLit _ n -> toBoundedInteger n
-  _              -> Nothing
+  _ -> Nothing
 
 betweenCurly :: Parser a -> Parser a
 betweenCurly = P.between openCurly closeCurly
@@ -254,7 +252,7 @@ parsePath = do
   startPos <- fromSourcePos <$> P.getSourcePos
   x <- prefix <|> fmap Obj ident
   xs <- many $ obj <|> arr
-  let path = ((startPos, x):xs) & fmap \(pos, el) -> ((pos, Just $ incCol (len el) pos), el)
+  let path = ((startPos, x) : xs) & fmap \(pos, el) -> ((pos, Just $ incCol (len el) pos), el)
   pure $ Path path
   where
     len (Obj x) = T.length x
@@ -344,36 +342,38 @@ parseJson = do
   e1 <- start
   mE2 <- end
   case mE2 of
-    Nothing      -> pure e1
+    Nothing -> pure e1
     Just (f, e2) -> pure (f e1 e2)
 
 start :: Parser ValueExt
 start =
-  getAlt $ foldMap Alt
-    [ parseNull
-    , parserStringInterp
-    , parseNumber
-    , parseBool
-    , parseArray
-    -- NOTE: This isn't a very elegant solution. It would be better to
-    -- factor out the initial `{` but `parseRange` and `parseIff` have
-    -- nested `template` parsers which makes this difficult.
-    , P.try parseObject
-    , P.try (template parsePath)
-    , P.try parseRange
-    , parserIff
-    , betweenParens parseJson
-    ]
+  getAlt $
+    foldMap
+      Alt
+      [ parseNull,
+        parserStringInterp,
+        parseNumber,
+        parseBool,
+        parseArray,
+        -- NOTE: This isn't a very elegant solution. It would be better to
+        -- factor out the initial `{` but `parseRange` and `parseIff` have
+        -- nested `template` parsers which makes this difficult.
+        P.try parseObject,
+        P.try (template parsePath),
+        P.try parseRange,
+        parserIff,
+        betweenParens parseJson
+      ]
 
 end :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
 end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
   where
     lt, gt, eq :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
-    lt   = op Lex.Lt Lt 0
-    gt   = op Lex.Gt Gt 0
-    eq   = op Lex.Eq Eq 1
+    lt = op Lex.Lt Lt 0
+    gt = op Lex.Gt Gt 0
+    eq = op Lex.Eq Eq 1
     and' = op Lex.And And 1
-    or'  = op Lex.Or Or 1
+    or' = op Lex.Or Or 1
 
     op tok con size = do
       pos1 <- getSourcePos
@@ -381,14 +381,14 @@ end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
       v <- parseJson
       pure $ Just (con (pos1, Just $ incCol size pos1), v)
 
-newtype ParseError = ParseError { _peErrorBundle :: P.ParseErrorBundle Lex.TokenStream Lex.LexError }
-  deriving Show
+newtype ParseError = ParseError {_peErrorBundle :: P.ParseErrorBundle Lex.TokenStream Lex.LexError}
+  deriving (Show)
 
 instance RenderError ParseError where
   render (ParseError err) =
     let startPos = fromSourcePos $ P.pstateSourcePos $ P.bundlePosState err
         errorMessage = P.errorBundlePretty err
-    in RenderedError { _code = ParseErrorCode, _message = T.pack errorMessage, _span = (startPos, Nothing) }
+     in RenderedError {_code = ParseErrorCode, _message = T.pack errorMessage, _span = (startPos, Nothing)}
 
 getSourcePos :: Parser SourcePosition
 getSourcePos = fromSourcePos <$> P.getSourcePos

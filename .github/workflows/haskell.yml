@@ -1,7 +1,7 @@
 # NOTE: This should be a good reference for github actions w.r.t haskell
 # https://markkarpov.com/post/github-actions-for-haskell-ci.html
 
-name: Build, Test
+name: kriti-lang::CI
 on:
   push:
     branches:
@@ -14,7 +14,15 @@ on:
       - synchronize
 
 jobs:
-  build:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: mrkkrp/ormolu-action@v4
+        with:
+          respect-cabal-files: false
+
+  build-test:
     runs-on: ubuntu-latest
     
 #   NOTE: once the library is ready to be released into the wild

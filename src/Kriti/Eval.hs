@@ -1,37 +1,36 @@
 module Kriti.Eval where
 
-import           Control.Monad.Except
-import           Control.Monad.Reader
-import           Data.Foldable        (foldlM)
-import           Data.Function
-import           Data.Maybe           (maybeToList)
-import           Kriti.Error
-import           Kriti.Parser         (Accessor (..), ValueExt (..), renderPath)
+import Control.Monad.Except
+import Control.Monad.Reader
+import qualified Data.Aeson as J
+import Data.Foldable (foldlM)
+import Data.Function
+import qualified Data.HashMap.Strict as M
+import Data.Maybe (maybeToList)
+import qualified Data.Text as T
+import qualified Data.Vector as V
+import Kriti.Error
+import Kriti.Parser (Accessor (..), ValueExt (..), renderPath)
 
-import qualified Data.Aeson           as J
-import qualified Data.HashMap.Strict  as M
-import qualified Data.Text            as T
-import qualified Data.Vector          as V
-
-data EvalError =
+data EvalError
+  = -- | The first SourcePosition is the point where the lookup failed
     InvalidPath Span [(Span, Accessor)]
-  -- ^ The first SourcePosition is the point where the lookup failed
   | TypeError Span T.Text
   | RangeError Span
-  deriving Show
+  deriving (Show)
 
 instance RenderError EvalError where
   render :: EvalError -> RenderedError
-  render (InvalidPath span' path) = RenderedError { _code = InvalidPathCode, _message = "Path Lookup Error: \"" <> renderPath path <> "\"", _span = span' }
-  render (TypeError span' txt)    = RenderedError { _code = TypeErrorCode,   _message = "Type Error: " <> txt, _span = span' }
-  render (RangeError span')       = RenderedError { _code = RangeErrorCode,  _message = "Range Error: Can only range over an array", _span = span' }
+  render (InvalidPath span' path) = RenderedError {_code = InvalidPathCode, _message = "Path Lookup Error: \"" <> renderPath path <> "\"", _span = span'}
+  render (TypeError span' txt) = RenderedError {_code = TypeErrorCode, _message = "Type Error: " <> txt, _span = span'}
+  render (RangeError span') = RenderedError {_code = RangeErrorCode, _message = "Range Error: Can only range over an array", _span = span'}
 
 type Ctxt = M.HashMap T.Text J.Value
 
 getSourcePos :: EvalError -> Span
 getSourcePos (InvalidPath pos _) = pos
-getSourcePos (TypeError pos _)   = pos
-getSourcePos (RangeError pos)    = pos
+getSourcePos (TypeError pos _) = pos
+getSourcePos (RangeError pos) = pos
 
 evalPath :: J.Value -> [(Span, Accessor)] -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath ctx path =
@@ -41,16 +40,16 @@ evalPath ctx path =
       -- TODO: Should we extend this error message with the local Context?
       step _ (pos, Obj _) = throwError $ TypeError pos "Expected object"
       step _ (pos, Arr _) = throwError $ TypeError pos "Expected array"
-  in foldlM step ctx path
+   in foldlM step ctx path
 
 isString :: J.Value -> Bool
-isString J.String{} = True
-isString _          = False
+isString J.String {} = True
+isString _ = False
 
 runEval :: ValueExt -> [(T.Text, J.Value)] -> Either EvalError J.Value
 runEval template source =
   let ctx = M.fromList source
-  in runReader (runExceptT (eval template)) ctx
+   in runReader (runExceptT (eval template)) ctx
 
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
@@ -64,7 +63,7 @@ eval = \case
     vals & flip foldlM (J.String mempty) \(J.String acc) -> \case
       J.String val' -> pure $ J.String $ acc <> val'
       -- TODO: Improve Span Construction/Reporting for StringInterp
-      _             -> throwError $ InvalidPath span' []
+      _ -> throwError $ InvalidPath span' []
   Array xs -> J.Array <$> traverse eval xs
   Path path -> do
     ctx <- ask
@@ -111,6 +110,6 @@ eval = \case
     pathResult <- evalPath (J.Object ctx) path
     case pathResult of
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
-        let newScope = [(binder, val)] <> [ (idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx ]
-        in local (M.fromList newScope <>) (eval body)
+        let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
+         in local (M.fromList newScope <>) (eval body)
       _ -> throwError $ RangeError pos
