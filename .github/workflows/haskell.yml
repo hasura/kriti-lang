@@ -1,0 +1,64 @@
+# NOTE: This should be a good reference for github actions w.r.t haskell
+# https://markkarpov.com/post/github-actions-for-haskell-ci.html
+
+name: Build, Test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+#   NOTE: once the library is ready to be released into the wild
+#   we could use this code block to run the tests and build the exe.
+#   on multiple GHC versions and perhaps even multiple cabal versions
+
+#     strategy:
+#       matrix:
+#         cabal: ["3.2"]
+#         ghc: ["8.10.4", "8.10.5", "9.0.1"]
+
+    env:
+      CONFIG: "--enable-tests --enable-benchmarks"
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: haskell/actions/setup@v1.2
+        id: setup-haskell-cabal
+        with:
+          ghc-version: "8.10.5"
+          cabal-version: "3.2"
+
+      - run: cabal v2-update
+      - run: cabal v2-freeze $CONFIG
+      
+      - uses: actions/cache@v2
+        env:
+          cache-name: cache-cabal
+        with:
+          path: |
+            ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+            dist-newstyle
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      
+      - name: Build project
+        run: cabal v2-build $CONFIG
+
+      - name: Test project
+        run: cabal v2-test $CONFIG
+
+# NOTE: keeping these here for future versions
+#       - run: cabal v2-haddock $CONFIG
+#       - run: cabal v2-sdist

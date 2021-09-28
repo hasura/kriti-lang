@@ -11,7 +11,7 @@ version:             0.1.0.0
 license-file:        LICENSE
 author:              Solomon Bothwell
 maintainer:          solomon@hasura.io
-copyright:           2017 Hasura Systems Private Limited
+copyright:           2021 Hasura Systems Private Limited
 category:            Compiler
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
@@ -93,7 +93,7 @@ executable example
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base >=4.14.1.0
+    build-depends:    base >=4.14.2.0
                     , kriti-lang
                     , aeson
                     , bytestring
