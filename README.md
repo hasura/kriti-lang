@@ -129,3 +129,11 @@ JSON Output 2:
   }
 }
 ```
+
+## Contributing
+
+Thank you for considering to contribute to `kriti-lang`!
+
+- We use `ormolu` for formatting. The minimum version of ormolu required is `0.3.0.0`.
+- Use `GHC` version `8.10.4` or above.
+- Use `cabal` version `3.2.0.0` or above.
