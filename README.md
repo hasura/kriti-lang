@@ -19,7 +19,7 @@ Values can be looked up in bound json expressions using the standard path lookup
 
 * `.` is used to look up object fields
 * `[x]` is used to lookup array indices
-* `['a b c']` is used to lookup string literal object fields.
+* `['a b c']` is used to lookup string literal object fields
 
 #### Loops
 
