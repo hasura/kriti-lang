@@ -2,11 +2,11 @@ Object
     ( fromList
         [
             ( "bar"
-            , String "a b cde-fgh"
+            , String "obj['a b cde-fgh']"
             )
         ,
             ( "foo"
-            , String "x-y"
+            , String "obj['x-y']"
             )
         ]
     )
