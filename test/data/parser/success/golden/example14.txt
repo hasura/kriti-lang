@@ -1,0 +1,12 @@
+Object
+    ( fromList
+        [
+            ( "bar"
+            , String "a b cde-fgh"
+            )
+        ,
+            ( "foo"
+            , String "x-y"
+            )
+        ]
+    )
