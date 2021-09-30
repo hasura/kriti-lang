@@ -2,11 +2,113 @@ Object
     ( fromList
         [
             ( "bar"
-            , String "obj['a b cde-fgh']"
+            , StringInterp
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 35
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 60
+                        }
+                    )
+                )
+                [ String ""
+                , Path
+                    [
+                        (
+                            ( SourcePosition
+                                { _sourceName = "sourceName"
+                                , _line = 1
+                                , _column = 1
+                                }
+                            , Just
+                                ( SourcePosition
+                                    { _sourceName = "sourceName"
+                                    , _line = 1
+                                    , _column = 4
+                                    }
+                                )
+                            )
+                        , Obj "obj"
+                        )
+                    ,
+                        (
+                            ( SourcePosition
+                                { _sourceName = "sourceName"
+                                , _line = 1
+                                , _column = 4
+                                }
+                            , Just
+                                ( SourcePosition
+                                    { _sourceName = "sourceName"
+                                    , _line = 1
+                                    , _column = 15
+                                    }
+                                )
+                            )
+                        , Obj "a b cde-fgh"
+                        )
+                    ]
+                ]
             )
         ,
             ( "foo"
-            , String "obj['x-y']"
+            , StringInterp
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 10
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 26
+                        }
+                    )
+                )
+                [ String ""
+                , Path
+                    [
+                        (
+                            ( SourcePosition
+                                { _sourceName = "sourceName"
+                                , _line = 1
+                                , _column = 1
+                                }
+                            , Just
+                                ( SourcePosition
+                                    { _sourceName = "sourceName"
+                                    , _line = 1
+                                    , _column = 4
+                                    }
+                                )
+                            )
+                        , Obj "obj"
+                        )
+                    ,
+                        (
+                            ( SourcePosition
+                                { _sourceName = "sourceName"
+                                , _line = 1
+                                , _column = 4
+                                }
+                            , Just
+                                ( SourcePosition
+                                    { _sourceName = "sourceName"
+                                    , _line = 1
+                                    , _column = 7
+                                    }
+                                )
+                            )
+                        , Obj "x-y"
+                        )
+                    ]
+                ]
             )
         ]
     )
