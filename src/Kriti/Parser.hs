@@ -76,8 +76,6 @@ instance J.FromJSON ValueExt where
     J.Object obj | null obj -> pure Null
     J.Object obj -> Object <$> traverse J.parseJSON obj
 
--- {{ range $index, $article := .event.author.articles }}
-
 type Parser = P.Parsec Lex.LexError Lex.TokenStream
 
 match :: (Lex.Token -> Maybe a) -> Parser a
@@ -140,6 +138,11 @@ bool = match \case
 
 stringLit :: Parser Text
 stringLit = match \case
+  Lex.StringLit s -> Just s
+  _ -> Nothing
+
+stringTemSimple :: Parser Text
+stringTemSimple = match \case
   Lex.StringTem s -> Just s
   _ -> Nothing
 
@@ -217,7 +220,7 @@ parseNull = do
   pure Null
 
 parseString :: Parser ValueExt
-parseString = String <$> stringLit
+parseString = String <$> stringTemSimple
 
 parseNumber :: Parser ValueExt
 parseNumber = Number <$> number
@@ -234,7 +237,7 @@ parseObject = do
   where
     parseField :: Parser (Text, ValueExt)
     parseField = do
-      key <- stringLit
+      key <- stringTemSimple
       colon
       value <- parseJson
       pure (key, value)
@@ -251,20 +254,20 @@ parsePath :: Parser ValueExt
 parsePath = do
   startPos <- fromSourcePos <$> P.getSourcePos
   x <- prefix <|> fmap Obj ident
-  xs <- many $ obj <|> arr
+  xs <- many $ dotP <|> bracketP
   let path = ((startPos, x) : xs) & fmap \(pos, el) -> ((pos, Just $ incCol (len el) pos), el)
   pure $ Path path
   where
     len (Obj x) = T.length x
     len (Arr i) = length (show i) + 1
     prefix = P.try $ Obj <$> blingPrefixedId
-    arr = do
+    bracketP = do
       pos <- getSourcePos
       squareOpen
-      x <- Arr <$> integer
+      x <- (Arr <$> integer) <|> (Obj <$> stringLit)
       squareClose
       pure (pos, x)
-    obj = do
+    dotP = do
       pos <- getSourcePos
       dot
       x <- Obj <$> ident

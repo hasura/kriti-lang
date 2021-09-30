@@ -12,7 +12,7 @@ import qualified Text.Megaparsec as P
 import Text.ParserCombinators.ReadP (ReadP, gather, readP_to_S)
 import Text.Read (lexP, lift, readPrec_to_P)
 import qualified Text.Read.Lex as L
-import Text.Read.Lex.Extended (lexTemplate)
+import Text.Read.Lex.Extended (lexString, lexTemplate)
 
 newtype LexError = LexError {lePos :: P.SourcePos}
   deriving (Show, Eq, Ord)
@@ -69,6 +69,7 @@ lexer t = do
       | Just s <- T.stripPrefix "]" txt = stepLexer SquareClose s pos
       | Just s <- T.stripPrefix ")" txt = stepLexer ParenClose s pos
       | Just s <- T.stripPrefix "(" txt = stepLexer ParenOpen s pos
+      | Just (str, _, s) <- stringLit txt = stepLexer (StringLit str) s pos
       | Just (str, _, s) <- stringTem txt = stepLexer (StringTem str) s pos
       | Just (str, _, s) <- identifier txt = stepLexer (Identifier str) s pos
       | Just (n, matched, s) <- numberLit txt = stepLexer (NumLit matched (realToFrac n)) s pos
@@ -87,6 +88,13 @@ lexer t = do
       where
         identLexeme = do
           L.Ident s <- lexP
+          pure (T.pack s)
+
+    stringLit :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
+    stringLit = fromRead (readPrec_to_P stringLexeme 0)
+      where
+        stringLexeme = do
+          L.String s <- lift lexString
           pure (T.pack s)
 
     stringTem :: Text -> Maybe (Text, Text, Text) -- (value, lit, remainder)
