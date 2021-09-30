@@ -251,7 +251,7 @@ parsePath :: Parser ValueExt
 parsePath = do
   startPos <- fromSourcePos <$> P.getSourcePos
   x <- prefix <|> fmap Obj ident
-  xs <- many $ obj_dot <|> P.try obj_brackets <|> arr
+  xs <- many $ obj_dot <|> P.try arr <|> obj_brackets
   let path = ((startPos, x) : xs) & fmap \(pos, el) -> ((pos, Just $ incCol (len el) pos), el)
   pure $ Path path
   where
