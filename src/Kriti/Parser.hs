@@ -251,7 +251,7 @@ parsePath :: Parser ValueExt
 parsePath = do
   startPos <- fromSourcePos <$> P.getSourcePos
   x <- prefix <|> fmap Obj ident
-  xs <- many $ obj <|> arr
+  xs <- many $ obj_dot <|> P.try obj_brackets <|> arr
   let path = ((startPos, x) : xs) & fmap \(pos, el) -> ((pos, Just $ incCol (len el) pos), el)
   pure $ Path path
   where
@@ -264,10 +264,16 @@ parsePath = do
       x <- Arr <$> integer
       squareClose
       pure (pos, x)
-    obj = do
+    obj_dot = do
       pos <- getSourcePos
       dot
       x <- Obj <$> ident
+      pure (pos, x)
+    obj_brackets = do
+      pos <- getSourcePos
+      squareOpen
+      x <- Obj . mconcat . map (either id (T.pack . Lex.tsStreamInput)) <$> stringTem
+      squareClose
       pure (pos, x)
 
 parseArray :: Parser ValueExt
