@@ -16,7 +16,10 @@ Values can be looked up in bound json expressions using the standard path lookup
 ```
 {{ $.foo.bar[0]['my key'] }}
 ```
-`.` is used to look up object fields and `[x]` is used to lookup array indices and string literal object fields.
+
+* `.` is used to look up object fields
+* `[x]` is used to lookup array indices
+* `['a b c']` is used to lookup string literal object fields.
 
 #### Loops
 
