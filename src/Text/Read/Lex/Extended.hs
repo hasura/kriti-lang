@@ -37,6 +37,7 @@ lexString =
           '&' -> do return ()
           _ | isSpace c -> do skipSpaces; _ <- char '\\'; return ()
           _ -> do pfail
+
 lexTemplate :: ReadP Lexeme
 lexTemplate =
   do
