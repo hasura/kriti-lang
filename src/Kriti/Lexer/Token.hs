@@ -38,6 +38,7 @@ class Serialize t where
 data Token
   = -- | String Template
     StringTem T.Text
+  | StringLit T.Text
   | -- | Identifier
     Identifier T.Text
   | -- | Number literal with original string
@@ -66,6 +67,7 @@ data Token
 instance Serialize Token where
   serialize = \case
     StringTem str -> "\"" <> str <> "\""
+    StringLit str -> "\'" <> str <> "\'"
     Identifier iden -> iden
     NumLit str _ -> str
     BoolLit True -> "true"

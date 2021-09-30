@@ -1,0 +1,1 @@
+{ "foo": "{{obj['x-y']}}", "bar": "{{obj['a b cde-fgh']}}" }

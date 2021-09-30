@@ -1,4 +1,4 @@
-module Text.Read.Lex.Extended (lexTemplate) where
+module Text.Read.Lex.Extended (lexString, lexTemplate) where
 
 import GHC.Base
 import GHC.Char
@@ -9,6 +9,34 @@ import Text.Read.Lex
 guard :: (MonadPlus m) => Bool -> m ()
 guard True = return ()
 guard False = mzero
+
+lexString :: ReadP Lexeme
+lexString =
+  do
+    quoteChar <- char '\''
+    body id [quoteChar]
+  where
+    body f quoteChar =
+      do
+        (c, esc) <- lexStrItem
+        if c /= quoteChar || esc
+          then body (f . (c <>)) quoteChar
+          else
+            let s = f ""
+             in return (String s)
+
+    lexStrItem =
+      (lexEmpty >> lexStrItem)
+        +++ lexCharE
+
+    lexEmpty =
+      do
+        _ <- char '\\'
+        c <- get
+        case c of
+          '&' -> do return ()
+          _ | isSpace c -> do skipSpaces; _ <- char '\\'; return ()
+          _ -> do pfail
 
 lexTemplate :: ReadP Lexeme
 lexTemplate =
