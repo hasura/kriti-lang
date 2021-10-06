@@ -59,6 +59,12 @@ stringTemplate s = do
     Left  e -> fail $ "Couldn't parse string template: " <> show s <> " (" <> show e <> ")"
     Right v -> kure v
 
+-- | Helper to ensure that values are interpreted as Kontrol structures instead of Aeson wrapped in Kriti
+(.:) :: J.Object -> Text -> J.Parser K.ValueExt
+o .: k = do
+  v <- o J..: k
+  pure $ unKontrol v
+
 -- TODO: Find a way to be more precise with spans
 interpret :: J.Object -> Text -> J.Parser Kontrol
 interpret o = \case
@@ -77,9 +83,9 @@ interpret o = \case
     -- [(Span, Accessor)]
 
   "Iff" -> do
-    condition <- o J..: "condition" -- TODO: Use Kontrol instead of Kriti - Maybe a custom .: would help
-    true      <- o J..: "true"
-    false     <- o J..: "false"
+    condition <- o .: "condition" -- TODO: Use Kontrol instead of Kriti - Maybe a custom .: would help
+    true      <- o .: "true"
+    false     <- o .: "false"
     kure $ K.Iff jsonSpan condition true false
 
   "Eq"           -> binary o K.Eq
@@ -90,14 +96,14 @@ interpret o = \case
 
   "Member" -> do
     item       <- o J..: "item"
-    collection <- o J..: "collection"
+    collection <- o .: "collection"
     kure $ K.Member jsonSpan item collection
 
   "Range" -> do
     indexVM    <- o J..: "index"
     valueV     <- o J..: "value"
     collection <- o J..: "collection"
-    body       <- o J..: "body"
+    body       <- o .: "body"
     kure $ K.Range jsonSpan indexVM valueV (map (jsonSpan,) collection) body
 
   "JSON" -> do
