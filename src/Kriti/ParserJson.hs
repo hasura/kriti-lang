@@ -49,6 +49,10 @@ binary o k = do
   right <- o J..: "right"
   kure $ k jsonSpan left right
 
+stringTemplate s = do
+  case K.parserAndLexer s of
+    _ -> fail "oops@!"
+
 -- TODO: Find a way to be more precise with spans
 interpret :: J.Object -> Text -> J.Parser Kontrol
 interpret o = \case
