@@ -32,7 +32,7 @@ library
                      , Kriti.Lexer
                      , Kriti.Lexer.Token
                      , Kriti.Parser
-                     , Kriti.ParserJSON
+                     , Kriti.ParserJson
                      , Kriti.Eval
   hs-source-dirs:      src
   ghc-options:         -Wall
