@@ -22,6 +22,7 @@ fromSourcePos pos = SourcePosition (Pos.sourceName pos) (Pos.unPos $ Pos.sourceL
 incCol :: Int -> SourcePosition -> SourcePosition
 incCol i (SourcePosition n l c) = SourcePosition n l (i + c)
 
+-- TODO: What do the two different positions represent here?
 type Span = (SourcePosition, Maybe SourcePosition)
 
 data ErrorCode

@@ -36,6 +36,12 @@ import qualified Text.Megaparsec.Error as PE
 data Accessor = Obj Text | Arr Int
   deriving (Show, Eq, Read)
 
+instance J.FromJSON Accessor where
+  parseJSON = \case
+    J.String s     -> pure $ Obj s
+    n@(J.Number _) -> Arr <$> J.parseJSON n
+    _ -> fail "Accessor must be represented by a Number (Array index) or String (Object field)"
+
 renderAccessor :: Accessor -> Text
 renderAccessor = \case
   Obj txt -> txt
