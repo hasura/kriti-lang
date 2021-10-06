@@ -40,6 +40,15 @@ instance J.FromJSON Kontrol where
 jsonSpan :: (K.SourcePosition, Maybe a)
 jsonSpan = (K.SourcePosition "JSON Data" 0 0, Nothing)
 
+binary :: (J.FromJSON t1, J.FromJSON t2) =>
+  J.Object
+  -> ((K.SourcePosition, Maybe a) -> t1 -> t2 -> K.ValueExt)
+  -> J.Parser Kontrol
+binary o k = do
+  left  <- o J..: "left"
+  right <- o J..: "right"
+  kure $ k jsonSpan left right
+
 -- TODO: Find a way to be more precise with spans
 interpret :: J.Object -> Text -> J.Parser Kontrol
 interpret o = \case
@@ -47,32 +56,44 @@ interpret o = \case
     value :: J.Value <- o J..: "value"
     case value of
       J.String s -> undefined -- Parse template
-      J.Object o -> do
-        exts <- o J..: "exts"
+      J.Object obj -> do
+        exts <- obj J..: "exts"
         kure $ K.StringInterp jsonSpan exts
       _ -> fail "StringInterp values must be Strings (templates) or Objects {exts: [...]}"
 
-  "Path"         -> do
+  "Path" -> do
     accessors <- o J..: "accessors" -- TODO: Aeson instance for accessors
     kure $ K.Path $ map (jsonSpan,) accessors
     -- [(Span, Accessor)]
 
-  "Iff"          -> do
-    condition <- o J..: "condition" -- TODO: Aeson instance for accessors
-    true      <- o J..: "true" -- TODO: Aeson instance for accessors
-    false     <- o J..: "false" -- TODO: Aeson instance for accessors
+  "Iff" -> do
+    condition <- o J..: "condition" -- TODO: Use Kontrol instead of Kriti - Maybe a custom .: would help
+    true      <- o J..: "true"
+    false     <- o J..: "false"
     kure $ K.Iff jsonSpan condition true false
 
-  "Eq"           -> undefined -- Span ValueExt ValueExt
-  "Gt"           -> undefined -- Span ValueExt ValueExt
-  "Lt"           -> undefined -- Span ValueExt ValueExt
-  "And"          -> undefined -- Span ValueExt ValueExt
-  "Or"           -> undefined -- Span ValueExt ValueExt
-  "Member"       -> undefined -- Span ValueExt ValueExt
-  "Range"        -> undefined -- Span (Maybe Text) Text [(Span, Accessor)] ValueExt
-  "JSON"         -> do
+  "Eq"           -> binary o K.Eq
+  "Gt"           -> binary o K.Gt
+  "Lt"           -> binary o K.Lt
+  "And"          -> binary o K.And
+  "Or"           -> binary o K.Or
+
+  "Member" -> do
+    item       <- o J..: "item"
+    collection <- o J..: "collection"
+    kure $ K.Member jsonSpan item collection
+
+  "Range" -> do
+    indexVM    <- o J..: "index"
+    valueV     <- o J..: "value"
+    collection <- o J..: "collection"
+    body       <- o J..: "body"
+    kure $ K.Range jsonSpan indexVM valueV (map (jsonSpan,) collection) body
+
+  "JSON" -> do
     -- Literal JSON that is subject to no further interpretation
     v <- o J..: "value"
     j <- J.parseJSON v
     kure j
-  i -> fail $ "Can't interpret kriti-interpretation type: " <> show i
+
+  i -> fail $ "Invalid kriti-interpretation type: " <> show i
