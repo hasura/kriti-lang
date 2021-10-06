@@ -38,7 +38,7 @@ data Accessor = Obj Text | Arr Int
 
 instance J.FromJSON Accessor where
   parseJSON = \case
-    J.String s     -> pure $ Obj s
+    J.String s -> pure $ Obj s
     n@(J.Number _) -> Arr <$> J.parseJSON n
     _ -> fail "Accessor must be represented by a Number (Array index) or String (Object field)"
 
