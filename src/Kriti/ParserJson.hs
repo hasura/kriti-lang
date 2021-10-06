@@ -40,13 +40,13 @@ instance J.FromJSON Kontrol where
 jsonSpan :: (K.SourcePosition, Maybe a)
 jsonSpan = (K.SourcePosition "JSON Data" 0 0, Nothing)
 
-binary :: (J.FromJSON t1, J.FromJSON t2) =>
-  J.Object
-  -> ((K.SourcePosition, Maybe a) -> t1 -> t2 -> K.ValueExt)
+binary :: J.Object
+  -> ((K.SourcePosition, Maybe a)
+  -> K.ValueExt -> K.ValueExt -> K.ValueExt)
   -> J.Parser Kontrol
 binary o k = do
-  left  <- o J..: "left"
-  right <- o J..: "right"
+  left  <- o .: "left"
+  right <- o .: "right"
   kure $ k jsonSpan left right
 
 -- | TODO: make this more robust
@@ -95,7 +95,7 @@ interpret o = \case
   "Or"           -> binary o K.Or
 
   "Member" -> do
-    item       <- o J..: "item"
+    item       <- o .: "item"
     collection <- o .: "collection"
     kure $ K.Member jsonSpan item collection
 
