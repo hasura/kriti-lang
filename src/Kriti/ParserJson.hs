@@ -49,9 +49,15 @@ binary o k = do
   right <- o J..: "right"
   kure $ k jsonSpan left right
 
+-- | TODO: make this more robust
+quote :: Text -> Text
+quote t = "\"" <> t <> "\""
+
+stringTemplate :: Text -> J.Parser Kontrol
 stringTemplate s = do
-  case K.parserAndLexer s of
-    _ -> fail "oops@!"
+  case K.parserAndLexer (quote s) of
+    Left  e -> fail $ "Couldn't parse string template: " <> show s <> " (" <> show e <> ")"
+    Right v -> kure v
 
 -- TODO: Find a way to be more precise with spans
 interpret :: J.Object -> Text -> J.Parser Kontrol
@@ -59,7 +65,7 @@ interpret o = \case
   "StringInterp" -> do
     value :: J.Value <- o J..: "value"
     case value of
-      J.String s -> undefined -- Parse template
+      J.String s -> stringTemplate s
       J.Object obj -> do
         exts <- obj J..: "exts"
         kure $ K.StringInterp jsonSpan exts
