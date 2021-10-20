@@ -1,0 +1,68 @@
+Iff
+    ( SourcePosition
+        { _sourceName = "sourceName"
+        , _line = 1
+        , _column = 1
+        }
+    , Just
+        ( SourcePosition
+            { _sourceName = "sourceName"
+            , _line = 1
+            , _column = 11
+            }
+        )
+    )
+    ( Path
+        [
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 7
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 8
+                        }
+                    )
+                )
+            , Obj "$"
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 8
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 10
+                        }
+                    )
+                )
+            , Arr 0
+            )
+        ,
+            (
+                ( SourcePosition
+                    { _sourceName = "sourceName"
+                    , _line = 1
+                    , _column = 11
+                    }
+                , Just
+                    ( SourcePosition
+                        { _sourceName = "sourceName"
+                        , _line = 1
+                        , _column = 19
+                        }
+                    )
+                )
+            , Obj "isActive"
+            )
+        ]
+    ) ( Boolean True ) ( Boolean False )
