@@ -62,8 +62,8 @@ data ValueExt
   | And Span ValueExt ValueExt
   | Or Span ValueExt ValueExt
   | Member Span ValueExt ValueExt
-  | -- | {{ range i, x := $.foo.bar }}
-    Range Span (Maybe Text) Text [(Span, Accessor)] ValueExt
+  | Range Span (Maybe Text) Text [(Span, Accessor)] ValueExt
+  | EscapeURI Span ValueExt
   deriving (Show, Eq, Read)
 
 instance J.FromJSON ValueExt where
@@ -123,14 +123,27 @@ underscore = match_ (== Lex.Underscore)
 assignment :: Parser ()
 assignment = match_ (== Lex.Assignment)
 
+reservedWords :: [Text]
+reservedWords = [ "escapeUri" ]
+
 ident :: Parser Text
 ident = match \case
-  Lex.Identifier s -> Just s
+  Lex.Identifier s | s `notElem` reservedWords -> Just s
   _ -> Nothing
 
 ident_ :: Text -> Parser ()
 ident_ s = match_ \case
-  Lex.Identifier s' -> s == s'
+  Lex.Identifier s' | s' `notElem` reservedWords -> s == s'
+  _ -> False
+
+reserved :: Parser Text
+reserved = match \case
+  Lex.Identifier s | s `elem` reservedWords -> Just s
+  _ -> Nothing
+
+reserved_ :: Text -> Parser ()
+reserved_ s = match_ \case
+  Lex.Identifier s' | s' `elem` reservedWords -> s == s'
   _ -> False
 
 bool :: Parser Bool
@@ -337,6 +350,14 @@ parserStringInterp = do
     then pure $ String $ foldl (<>) mempty $ removeRights vals
     else pure $ StringInterp (pos1, Just pos2) vals'
 
+parseEscape :: Parser ValueExt
+parseEscape = do
+  pos1 <- fromSourcePos <$> P.getSourcePos
+  reserved_ "escapeUri"
+  t1 <- parseJson
+  pos2 <- fromSourcePos <$> P.getSourcePos
+  pure $ EscapeURI (pos1, Just pos2) t1
+
 parseJson :: Parser ValueExt
 parseJson = do
   e1 <- start
@@ -361,6 +382,7 @@ start =
         P.try parseObject,
         P.try (template parsePath),
         P.try parseRange,
+        P.try (template parseEscape),
         parserIff,
         betweenParens parseJson
       ]
