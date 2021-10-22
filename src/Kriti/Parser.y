@@ -94,16 +94,25 @@ operator
   | predicate '&&' predicate { And $1 $3 }
   | predicate '||' predicate { Or $1 $3 }
 
-functions
-  : '{{' 'escapeUri' path_vector '}}' { EscapeURI (Path $3) }
-
 iff
   : '{{' 'if' predicate '}}' value '{{' 'else' '}}' value '{{' 'end' '}}' { Iff $3 $5 $9 }
 
--- function_params
---   : bool
---   | path_vector
---   | object
+function_call
+  : '{{' functions function_params '}}' { $2 $3 }
+
+functions
+  : 'escapeUri' { \p -> EscapeURI p }
+
+function_params
+  : null { $1 }
+  | boolean { $1 }
+  | string_lit { $1 }
+  | num_lit { $1 }
+  | path_vector { Path $1 }
+  | array { $1 }
+  | object { $1 }
+  | functions function_params { $1 $2 }
+  | '(' function_params ')' { $2 }
 
 predicate
   : path_vector { Path $1 }
@@ -145,12 +154,11 @@ value : string_lit    { $1 }
       | object        { $1 }
       | path          { $1 }
       | iff           { $1 }
-      | functions     { $1 }
+      | function_call { $1 }
       | range         { $1 }
       | '(' value ')' { $2 }
 
 {
-
 data ParseError = EmptyTokenStream | UnexpectedToken L.TokenExt
   deriving Show
 
