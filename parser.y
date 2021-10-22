@@ -25,13 +25,15 @@ number      { NumLit $$ }
 'false'     { BoolLit False }
 '\''        { SingleQuote}
 ':'         { Colon }
-'.'         { Colon }
+'.'         { Dot }
 ','         { Comma }
 '=='        { Eq }
 '>'         { Gt }
 '<'         { Lt }
 '&&'        { And}
 '||'        { Or }
+'_'         { Underscore }
+':='        { Assignment }
 '{'         { CurlyOpen }
 '}'         { CurlyClose }
 '{{'        { DoubleCurlyOpen }
@@ -40,8 +42,6 @@ number      { NumLit $$ }
 ']'         { SquareClose }
 '('         { ParenOpen }
 ')'         { ParenClose }
-'_'         { Underscore }
-':='        { Assignment }
 
 %left '<' '>' '==' '||' '&&' functions
 
