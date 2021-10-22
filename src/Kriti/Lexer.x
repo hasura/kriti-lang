@@ -68,12 +68,9 @@ false                                             { mkTok (const $ BoolLit False
 
 {
 data Token
-  = -- | String Template
-    StringTem T.Text
-  | -- | Identifier
-    Identifier T.Text
-  | -- | Number literal with original string
-    NumLit T.Text Scientific
+  = StringTem T.Text
+  | Identifier T.Text
+  | NumLit T.Text Scientific
   | IntLit T.Text Int
   | BoolLit Bool
   | Bling
@@ -85,7 +82,6 @@ data Token
   | Lt
   | And
   | Or
-  -- | Member
   | SingleQuote
   | CurlyOpen
   | CurlyClose
@@ -99,38 +95,34 @@ data Token
   | Assignment
   deriving (Show, Eq, Ord, Generic)
 
-class Serialize t where
-  serialize :: t -> T.Text
-
-instance Serialize Token where
-  serialize = \case
-    StringTem str -> "\"" <> str <> "\""
-    --StringLit str -> "\'" <> str <> "\'"
-    Identifier iden -> iden
-    IntLit str _ -> str
-    NumLit str _ -> str
-    BoolLit True -> "true"
-    BoolLit False -> "false"
-    Bling -> "$"
-    Colon -> ":"
-    Dot -> "."
-    Comma -> ","
-    SingleQuote -> "'"
-    DoubleCurlyOpen -> "{{"
-    DoubleCurlyClose -> "}}"
-    Eq -> "=="
-    Gt -> ">"
-    Lt -> "<"
-    And -> "&&"
-    Or -> "||"
-    CurlyOpen -> "{"
-    CurlyClose -> "}"
-    SquareOpen -> "["
-    SquareClose -> "]"
-    ParenOpen -> "("
-    ParenClose -> ")"
-    Underscore -> "_"
-    Assignment -> ":="
+serialize :: Token -> T.Text
+serialize = \case
+  StringTem str -> "\"" <> str <> "\""
+  Identifier iden -> iden
+  IntLit str _ -> str
+  NumLit str _ -> str
+  BoolLit True -> "true"
+  BoolLit False -> "false"
+  Bling -> "$"
+  Colon -> ":"
+  Dot -> "."
+  Comma -> ","
+  SingleQuote -> "'"
+  DoubleCurlyOpen -> "{{"
+  DoubleCurlyClose -> "}}"
+  Eq -> "=="
+  Gt -> ">"
+  Lt -> "<"
+  And -> "&&"
+  Or -> "||"
+  CurlyOpen -> "{"
+  CurlyClose -> "}"
+  SquareOpen -> "["
+  SquareClose -> "]"
+  ParenOpen -> "("
+  ParenClose -> ")"
+  Underscore -> "_"
+  Assignment -> ":="
 
 data TokenExt = TokenExt {teType :: Token, teStartPos :: E.SourcePosition, teEndPos :: E.SourcePosition, teLength :: Int}
   deriving (Show, Eq, Ord)
