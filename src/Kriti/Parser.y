@@ -6,13 +6,16 @@ import qualified Data.List as List
 import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
+import qualified Kriti.Error as E
 import qualified Kriti.Lexer as L
 
 }
 
 %name parser value
-%tokentype { L.Token }
+%tokentype { L.TokenExt }
 %error { parseError }
+%monad { Either ParseError }
+-- %lexer { L.lexer } { <eof> }
 
 %token
 'if'        { L.Identifier "if"}
@@ -142,8 +145,27 @@ value : string_lit    { $1 }
       | '(' value ')' { $2 }
 
 {
-parseError :: [L.Token] -> a
-parseError toks = error $ "Parse error: " <> show toks
+
+data ParseError = EmptyTokenStream | UnexpectedToken L.Token
+  deriving Show
+
+instance E.RenderError ParseError where
+  render EmptyTokenStream =
+    E.RenderedError { _code = E.ParseErrorCode
+                  , _message = "ParseError: Empty token stream."
+                  , _span = (undefined, Nothing)
+                  }
+
+  render (UnexpectedToken tok) =
+    let tok' = T.pack $ show tok
+    in E.RenderedError { _code = E.ParseErrorCode
+                  , _message = "ParseError: Unexpected token '" <> tok' <> "'."
+                  , _span = (undefined, Nothing)
+                  }
+
+parseError :: [L.Token] -> Either ParseError a
+parseError [] = error $ T.unpack $ E._message $ E.render EmptyTokenStream
+parseError (tok:_) = error $ T.unpack $ E._message $ E.render $ UnexpectedToken tok
 
 data Accessor = Obj T.Text | Arr Int
   deriving (Show, Eq, Read)
