@@ -14,13 +14,16 @@ type Column = Int
 -- | Isomorphic to Parsec's SourcePos. We need this because our golden
 -- tests require Read instances for all our types.
 data SourcePosition = SourcePosition {_sourceName :: SourceName, _line :: Line, _column :: Column}
-  deriving (Show, Eq, Read)
+  deriving (Show, Eq, Ord, Read)
 
 fromSourcePos :: Pos.SourcePos -> SourcePosition
 fromSourcePos pos = SourcePosition (Pos.sourceName pos) (Pos.unPos $ Pos.sourceLine pos) (Pos.unPos $ Pos.sourceColumn pos)
 
 incCol :: Int -> SourcePosition -> SourcePosition
 incCol i (SourcePosition n l c) = SourcePosition n l (i + c)
+
+initialSourcePos :: String -> SourcePosition
+initialSourcePos str = SourcePosition str 1 1
 
 type Span = (SourcePosition, Maybe SourcePosition)
 

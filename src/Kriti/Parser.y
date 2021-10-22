@@ -12,43 +12,43 @@ import qualified Kriti.Lexer as L
 }
 
 %name parser value
-%tokentype { L.Token }
+%tokentype { L.TokenExt }
 %error { parseError }
 %monad { Either ParseError }
 -- %lexer { L.lexer } { <eof> }
 
 %token
-'if'        { L.Identifier "if"}
-'else'      { L.Identifier "else"}
-'end'       { L.Identifier "end"}
-'null'      { L.Identifier "null" }
-'range'     { L.Identifier "range" }
-'escapeUri' { L.Identifier "escapeUri" }
-'true'      { L.BoolLit True }
-'false'     { L.BoolLit False }
-ident       { L.Identifier $$}
-string      { L.StringTem $$ }
-number      { L.NumLit _ $$ }
-int         { L.IntLit _ $$ }
-'\''        { L.SingleQuote}
-':'         { L.Colon }
-'.'         { L.Dot }
-','         { L.Comma }
-'=='        { L.Eq }
-'>'         { L.Gt }
-'<'         { L.Lt }
-'&&'        { L.And}
-'||'        { L.Or }
-'_'         { L.Underscore }
-':='        { L.Assignment }
-'{'         { L.CurlyOpen }
-'}'         { L.CurlyClose }
-'{{'        { L.DoubleCurlyOpen }
-'}}'        { L.DoubleCurlyClose }
-'['         { L.SquareOpen }
-']'         { L.SquareClose }
-'('         { L.ParenOpen }
-')'         { L.ParenClose }
+'if'        { L.TokenExt (L.Identifier "if") _ _ _ }
+'else'      { L.TokenExt (L.Identifier "else") _ _ _ }
+'end'       { L.TokenExt (L.Identifier "end") _ _ _ }
+'null'      { L.TokenExt (L.Identifier "null")  _ _ _ }
+'range'     { L.TokenExt (L.Identifier "range")  _ _ _ }
+'escapeUri' { L.TokenExt (L.Identifier "escapeUri")  _ _ _ }
+'true'      { L.TokenExt (L.BoolLit True)  _ _ _ }
+'false'     { L.TokenExt (L.BoolLit False)  _ _ _ }
+ident       { L.TokenExt (L.Identifier $$) _ _ _ }
+string      { L.TokenExt (L.StringTem $$)  _ _ _ }
+number      { L.TokenExt (L.NumLit _ $$)  _ _ _ }
+int         { L.TokenExt (L.IntLit _ $$)  _ _ _ }
+'\''        { L.TokenExt L.SingleQuote  _ _ _ }
+':'         { L.TokenExt L.Colon  _ _ _ }
+'.'         { L.TokenExt L.Dot  _ _ _ }
+','         { L.TokenExt L.Comma  _ _ _ }
+'=='        { L.TokenExt L.Eq  _ _ _ }
+'>'         { L.TokenExt L.Gt  _ _ _ }
+'<'         { L.TokenExt L.Lt  _ _ _ }
+'&&'        { L.TokenExt L.And _ _ _ }
+'||'        { L.TokenExt L.Or  _ _ _ }
+'_'         { L.TokenExt L.Underscore  _ _ _ }
+':='        { L.TokenExt L.Assignment  _ _ _ }
+'{'         { L.TokenExt L.CurlyOpen  _ _ _ }
+'}'         { L.TokenExt L.CurlyClose  _ _ _ }
+'{{'        { L.TokenExt L.DoubleCurlyOpen  _ _ _ }
+'}}'        { L.TokenExt L.DoubleCurlyClose  _ _ _ }
+'['         { L.TokenExt L.SquareOpen  _ _ _ }
+']'         { L.TokenExt L.SquareClose  _ _ _ }
+'('         { L.TokenExt L.ParenOpen  _ _ _ }
+')'         { L.TokenExt L.ParenClose  _ _ _ }
 
 %left '<' '>' '==' '||' '&&' functions
 
@@ -151,7 +151,7 @@ value : string_lit    { $1 }
 
 {
 
-data ParseError = EmptyTokenStream | UnexpectedToken L.Token
+data ParseError = EmptyTokenStream | UnexpectedToken L.TokenExt
   deriving Show
 
 instance E.RenderError ParseError where
@@ -161,16 +161,16 @@ instance E.RenderError ParseError where
                   , _span = (undefined, Nothing)
                   }
 
-  render (UnexpectedToken tok) =
-    let tok' = T.pack $ show tok
+  render (UnexpectedToken L.TokenExt{..}) =
+    let tok = L.serialize teType
     in E.RenderedError { _code = E.ParseErrorCode
-                  , _message = "ParseError: Unexpected token '" <> tok' <> "'."
-                  , _span = (undefined, Nothing)
+                  , _message = "ParseError: Unexpected token '" <> tok <> "'."
+                  , _span = (teStartPos, Just teEndPos)
                   }
 
-parseError :: [L.Token] -> Either ParseError a
-parseError [] = error $ T.unpack $ E._message $ E.render EmptyTokenStream
-parseError (tok:_) = error $ T.unpack $ E._message $ E.render $ UnexpectedToken tok
+parseError :: [L.TokenExt] -> Either ParseError a
+parseError [] = Left EmptyTokenStream
+parseError (tok:_) = Left $ UnexpectedToken tok
 
 data Accessor = Obj T.Text | Arr Int
   deriving (Show, Eq, Read)

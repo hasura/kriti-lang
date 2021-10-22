@@ -2,14 +2,14 @@
 module Kriti.Lexer (
   Token(..),
   TokenExt(..),
-  lexer
+  lexer,
+  serialize
 ) where
 
-import Control.Exception (Exception, throw)
-import Control.Monad.State
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import GHC.Generics
+import qualified Kriti.Error as E
 
 }
 
@@ -97,36 +97,42 @@ data Token
   | ParenClose
   | Underscore
   | Assignment
-  | EOF
   deriving (Show, Eq, Ord, Generic)
 
-newtype InvalidPosException = InvalidPosException Int
-  deriving Show
+class Serialize t where
+  serialize :: t -> T.Text
 
-instance Exception InvalidPosException
+instance Serialize Token where
+  serialize = \case
+    StringTem str -> "\"" <> str <> "\""
+    --StringLit str -> "\'" <> str <> "\'"
+    Identifier iden -> iden
+    IntLit str _ -> str
+    NumLit str _ -> str
+    BoolLit True -> "true"
+    BoolLit False -> "false"
+    Bling -> "$"
+    Colon -> ":"
+    Dot -> "."
+    Comma -> ","
+    SingleQuote -> "'"
+    DoubleCurlyOpen -> "{{"
+    DoubleCurlyClose -> "}}"
+    Eq -> "=="
+    Gt -> ">"
+    Lt -> "<"
+    And -> "&&"
+    Or -> "||"
+    CurlyOpen -> "{"
+    CurlyClose -> "}"
+    SquareOpen -> "["
+    SquareClose -> "]"
+    ParenOpen -> "("
+    ParenClose -> ")"
+    Underscore -> "_"
+    Assignment -> ":="
 
-newtype Pos = Pos { unPos :: Int }
-  deriving (Show, Eq, Ord)
-
-instance Semigroup Pos where
-  Pos i <> Pos j = Pos (i + j)
-
-mkPos :: Int -> Pos
-mkPos i =
-  if i <= 0
-    then throw (InvalidPosException i)
-    else Pos i
-
-pos1 :: Pos
-pos1 = Pos 1
-
-data SourcePos = SourcePos { sourceLine :: Pos, sourceColumn :: Pos }
-  deriving (Show, Eq, Ord)
-
-initialSourcePos :: SourcePos
-initialSourcePos = SourcePos pos1 pos1
-
-data TokenExt = TokenExt {teType :: Token, teStartPos :: SourcePos, teEndPos :: SourcePos, teLength :: Int}
+data TokenExt = TokenExt {teType :: Token, teStartPos :: E.SourcePosition, teEndPos :: E.SourcePosition, teLength :: Int}
   deriving (Show, Eq, Ord)
 
 unwrap :: T.Text -> T.Text
@@ -142,13 +148,10 @@ mkTok :: (String -> Token) -> AlexPosn -> String -> TokenExt
 mkTok f (AlexPn _ l c) s =
   let tok = f s
       len = length s
-      start = SourcePos (mkPos l) (mkPos c)
-      end = SourcePos (mkPos l) (mkPos (c + len))
+      start = E.SourcePosition "" l c
+      end = E.SourcePosition "" l (c + len - 1)
   in TokenExt tok start end len
 
 lexer :: String -> [TokenExt]
 lexer = alexScanTokens
-
---lexer = alexMonadScan
---alexEOF = pure EOF
 }

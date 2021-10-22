@@ -11,5 +11,5 @@ import Kriti.Parser (ValueExt (..), parser)
 runKriti :: T.Text -> [(T.Text, J.Value)] -> Either RenderedError J.Value
 runKriti template source = do
   lexemes <- pure $ lexer $ T.unpack template
-  template' <- first render $ parser $ fmap teType lexemes
+  template' <- first render $ parser lexemes
   first render $ runEval template' source
