@@ -56,6 +56,7 @@ string_lit
 
 num_lit
   : number { Number $1 }
+| int { Number (S.scientific (fromIntegral $1) 0)}
 
 boolean
   : 'true'  { Boolean True }
@@ -91,7 +92,7 @@ operator
   | predicate '||' predicate { Or $1 $3 }
 
 functions
-  : 'escapeUri' value { EscapeURI $2 }
+: '{{' 'escapeUri' value '}}' { EscapeURI $3 }
 
 iff
   : '{{' 'if' predicate '}}' value '{{' 'else' '}}' value '{{' 'end' '}}' { Iff $3 $5 $9 }
