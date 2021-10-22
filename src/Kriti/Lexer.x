@@ -6,6 +6,7 @@ module Kriti.Lexer (
 ) where
 
 import Control.Exception (Exception, throw)
+import Control.Monad.State
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import GHC.Generics
@@ -17,14 +18,13 @@ import GHC.Generics
 $digit = 0-9
 $alpha = [a-zA-Z]
 $alphanum = [a-zA-Z09]
-$eol   = [\n]
+$eol = [\n]
 -- $string_lit = (?>"(?>\\(?>["\\\/bfnrt]|u[a-fA-F0-9]{4})|[^"\\\0-\x1F\x7F]+)*")
 $num_lit = $alpha
 
 tokens :-
 
 -- Whitespace insensitive
-$eol                          ;
 $white+                       ;
 
 -- Comments
@@ -149,4 +149,6 @@ mkTok f (AlexPn _ l c) s =
 lexer :: String -> [TokenExt]
 lexer = alexScanTokens
 
+--lexer = alexMonadScan
+--alexEOF = pure EOF
 }

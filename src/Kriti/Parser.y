@@ -12,7 +12,7 @@ import qualified Kriti.Lexer as L
 }
 
 %name parser value
-%tokentype { L.TokenExt }
+%tokentype { L.Token }
 %error { parseError }
 %monad { Either ParseError }
 -- %lexer { L.lexer } { <eof> }
@@ -59,7 +59,7 @@ string_lit
 
 num_lit
   : number { Number $1 }
-| int { Number (S.scientific (fromIntegral $1) 0)}
+  | int { Number (S.scientific (fromIntegral $1) 0)}
 
 boolean
   : 'true'  { Boolean True }
@@ -95,10 +95,15 @@ operator
   | predicate '||' predicate { Or $1 $3 }
 
 functions
-: '{{' 'escapeUri' value '}}' { EscapeURI $3 }
+  : '{{' 'escapeUri' path_vector '}}' { EscapeURI (Path $3) }
 
 iff
   : '{{' 'if' predicate '}}' value '{{' 'else' '}}' value '{{' 'end' '}}' { Iff $3 $5 $9 }
+
+-- function_params
+--   : bool
+--   | path_vector
+--   | object
 
 predicate
   : path_vector { Path $1 }
