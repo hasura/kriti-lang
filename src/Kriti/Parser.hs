@@ -1,17 +1,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Kriti.Parser where --( Accessor(..)
---, ValueExt(..)
---, SourcePosition(..)
---, Span
---, ParseError
---, parser
---, parserAndLexer
---, renderPath
---, parsePath
---, parserStringInterp
---) where
+module Kriti.Parser (Accessor (..)
+                   , ValueExt (..)
+                   , SourcePosition (..)
+                   , Span
+                   , ParseError
+                   , parser
+                   , parserAndLexer
+                   , renderPath
+                   , parsePath
+                   , parserStringInterp
+                   ) where
 
 import Control.Applicative
 import Control.Lens hiding (Context, op)
@@ -90,9 +90,6 @@ match f = P.try $ do
 match_ :: (Lex.Token -> Bool) -> Parser ()
 match_ f = P.satisfy (f . Lex.teType) >> pure ()
 
-eitherP :: Parser a -> Parser b -> Parser (Either a b)
-eitherP a b = Left <$> a <|> Right <$> b
-
 colon :: Parser ()
 colon = match_ (== Lex.Colon)
 
@@ -124,7 +121,8 @@ assignment :: Parser ()
 assignment = match_ (== Lex.Assignment)
 
 reservedWords :: [Text]
-reservedWords = [ "escapeUri" ]
+reservedWords = [ "else", "end", "escapeUri", "if", "range" ]
+
 
 ident :: Parser Text
 ident = match \case
@@ -135,11 +133,6 @@ ident_ :: Text -> Parser ()
 ident_ s = match_ \case
   Lex.Identifier s' | s' `notElem` reservedWords -> s == s'
   _ -> False
-
-reserved :: Parser Text
-reserved = match \case
-  Lex.Identifier s | s `elem` reservedWords -> Just s
-  _ -> Nothing
 
 reserved_ :: Text -> Parser ()
 reserved_ s = match_ \case
@@ -215,9 +208,6 @@ integer = match \case
   Lex.NumLit _ n -> toBoundedInteger n
   _ -> Nothing
 
-betweenCurly :: Parser a -> Parser a
-betweenCurly = P.between openCurly closeCurly
-
 betweenParens :: Parser a -> Parser a
 betweenParens = P.between (match_ (== Lex.ParenOpen)) (match_ (== Lex.ParenClose))
 
@@ -228,9 +218,6 @@ parseNull :: Parser ValueExt
 parseNull = do
   ident_ "null" <|> P.try (openCurly *> closeCurly)
   pure Null
-
-parseString :: Parser ValueExt
-parseString = String <$> stringLit
 
 parseNumber :: Parser ValueExt
 parseNumber = Number <$> number
@@ -301,44 +288,25 @@ parseRange = P.try $ do
   pure $ Range (pos1, Just pos2) idx bndr path body
   where
     range = template $ do
-      ident_ "range"
+      reserved_ "range"
       idx <- Just <$> (blingPrefixedId <|> ident) <|> Nothing <$ underscore
       comma
       bndr <- blingPrefixedId <|> ident
       assignment
       path <- parsePath
       pure (idx, bndr, path)
-    end' = template (ident_ "end")
+    end' = template (reserved_ "end")
 
 parserIff :: Parser ValueExt
 parserIff = do
   pos1 <- fromSourcePos <$> P.getSourcePos
-  p <- template $ ident_ "if" *> parseOperator
+  p <- template $ reserved_ "if" *> parseOperator
   t1 <- parseKriti
-  template $ ident_ "else"
+  template $ reserved_ "else"
   t2 <- parseKriti
-  template $ ident_ "end"
+  template $ reserved_ "end"
   pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ Iff (pos1, Just pos2) p t1 t2
-
-parsePredicate :: Parser ValueExt
-parsePredicate = do
-  e1 <- start
-  mE2 <- end
-  case mE2 of
-    Nothing -> pure e1
-    Just (f, e2) -> pure (f e1 e2)
-  where
-    start =
-      getAlt $
-        foldMap
-          Alt
-          [ parseNull,
-            parserStringInterp,
-            parseNumber,
-            parseArray
-          ]
-    end = undefined
 
 registerParseErrorBundle :: P.MonadParsec e s m => P.ParseErrorBundle s e -> m ()
 registerParseErrorBundle (P.ParseErrorBundle errs _) =

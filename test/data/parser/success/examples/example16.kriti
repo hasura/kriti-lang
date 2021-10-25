@@ -1,0 +1,1 @@
+{{ if $[0].isActive == false }} true {{ else }} false {{ end }}
