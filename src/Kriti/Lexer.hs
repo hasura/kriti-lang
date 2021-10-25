@@ -5,13 +5,14 @@
 module Kriti.Lexer (
   Token(..),
   TokenExt(..),
-  lexer
+  lexer,
+  serialize
 ) where
 
-import Control.Exception (Exception, throw)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import GHC.Generics
+import qualified Kriti.Error as E
 
 
 #if __GLASGOW_HASKELL__ >= 603
@@ -10734,15 +10735,13 @@ alex_actions = array (0 :: Int, 60)
   , (0,alex_action_33)
   ]
 
-{-# LINE 68 "src/Kriti/Lexer.x" #-}
+{-# LINE 69 "src/Kriti/Lexer.x" #-}
 
 data Token
-  = -- | String Template
-    StringTem T.Text
-  | -- | Identifier
-    Identifier T.Text
-  | -- | Number literal with original string
-    NumLit T.Text Scientific
+  = StringLit String
+  | StringTem [TokenExt]
+  | Identifier T.Text
+  | NumLit T.Text Scientific
   | IntLit T.Text Int
   | BoolLit Bool
   | Bling
@@ -10754,7 +10753,6 @@ data Token
   | Lt
   | And
   | Or
-  -- | Member
   | SingleQuote
   | CurlyOpen
   | CurlyClose
@@ -10766,36 +10764,38 @@ data Token
   | ParenClose
   | Underscore
   | Assignment
-  | EOF
   deriving (Show, Eq, Ord, Generic)
 
-newtype InvalidPosException = InvalidPosException Int
-  deriving Show
+serialize :: Token -> T.Text
+serialize = \case
+  StringTem toks -> "\"" <> foldMap (serialize . teType) toks <> "\""
+  Identifier iden -> iden
+  IntLit str _ -> str
+  NumLit str _ -> str
+  BoolLit True -> "true"
+  BoolLit False -> "false"
+  Bling -> "$"
+  Colon -> ":"
+  Dot -> "."
+  Comma -> ","
+  SingleQuote -> "'"
+  DoubleCurlyOpen -> "{{"
+  DoubleCurlyClose -> "}}"
+  Eq -> "=="
+  Gt -> ">"
+  Lt -> "<"
+  And -> "&&"
+  Or -> "||"
+  CurlyOpen -> "{"
+  CurlyClose -> "}"
+  SquareOpen -> "["
+  SquareClose -> "]"
+  ParenOpen -> "("
+  ParenClose -> ")"
+  Underscore -> "_"
+  Assignment -> ":="
 
-instance Exception InvalidPosException
-
-newtype Pos = Pos { unPos :: Int }
-  deriving (Show, Eq, Ord)
-
-instance Semigroup Pos where
-  Pos i <> Pos j = Pos (i + j)
-
-mkPos :: Int -> Pos
-mkPos i =
-  if i <= 0
-    then throw (InvalidPosException i)
-    else Pos i
-
-pos1 :: Pos
-pos1 = Pos 1
-
-data SourcePos = SourcePos { sourceLine :: Pos, sourceColumn :: Pos }
-  deriving (Show, Eq, Ord)
-
-initialSourcePos :: SourcePos
-initialSourcePos = SourcePos pos1 pos1
-
-data TokenExt = TokenExt {teType :: Token, teStartPos :: SourcePos, teEndPos :: SourcePos, teLength :: Int}
+data TokenExt = TokenExt {teType :: Token, teStartPos :: E.SourcePosition, teEndPos :: E.SourcePosition, teLength :: Int}
   deriving (Show, Eq, Ord)
 
 unwrap :: T.Text -> T.Text
@@ -10807,19 +10807,25 @@ unwrap txt =
         _ -> txt'
     _ -> txt
 
+mkTemplate :: AlexPosn -> String -> TokenExt
+mkTemplate (AlexPn _ l c) s =
+  let s' = T.unpack $ unwrap $ T.pack s
+      toks = lexer s'
+      len = length s
+      start = E.SourcePosition "" l c
+      end = E.SourcePosition "" l (c + len - 1)
+  in TokenExt (StringTem toks) start end len
+
 mkTok :: (String -> Token) -> AlexPosn -> String -> TokenExt
 mkTok f (AlexPn _ l c) s =
   let tok = f s
       len = length s
-      start = SourcePos (mkPos l) (mkPos c)
-      end = SourcePos (mkPos l) (mkPos (c + len))
+      start = E.SourcePosition "" l c
+      end = E.SourcePosition "" l (c + len - 1)
   in TokenExt tok start end len
 
 lexer :: String -> [TokenExt]
 lexer = alexScanTokens
-
-alexEOF :: Alex TokenExt
-alexEOF = return EOF
 
 alex_action_2 =  mkTok (const $ Identifier "if") 
 alex_action_3 =  mkTok (const $ Identifier "else") 
@@ -10830,7 +10836,7 @@ alex_action_7 =  mkTok (const $ Identifier "escapeUri")
 alex_action_8 =  mkTok (const $ BoolLit True) 
 alex_action_9 =  mkTok (const $ BoolLit False) 
 alex_action_10 =  mkTok (Identifier . T.pack)
-alex_action_11 =  mkTok (StringTem . unwrap . T.pack) 
+alex_action_11 =  mkTemplate 
 alex_action_12 =  mkTok (\s -> IntLit (T.pack s) (read s)) 
 alex_action_13 =  mkTok (\s -> NumLit (T.pack s) (read s)) 
 alex_action_14 =  mkTok (const $ SingleQuote) 

@@ -11,7 +11,8 @@ import qualified Kriti.Lexer as L
 
 }
 
-%name parser value
+%name parser term
+%name template_parser string_template
 %tokentype { L.TokenExt }
 %error { parseError }
 %monad { Either ParseError }
@@ -55,7 +56,7 @@ int         { L.TokenExt (L.IntLit _ $$)  _ _ _ }
 %%
 
 string_lit
-  : string { String $1 }
+  : string {% mkTemplate $1 }
 
 num_lit
   : number { Number $1 }
@@ -74,8 +75,8 @@ array
   | '[' ']'               { Array V.empty }
 
 list_elements
-  : value { V.singleton $1 }
-  | list_elements ',' value { V.snoc $1 $3 }
+  : term { V.singleton $1 }
+  | list_elements ',' term { V.snoc $1 $3 }
 
 object
   : '{' object_fields '}' { Object (M.fromList $2) }
@@ -85,17 +86,17 @@ object_fields
   | object_fields ',' object_field { $3 : $1 }
 
 object_field
-  : string ':' value { ($1, $3) }
+  : ident ':' term { ($1, $3) }
 
 operator
-  : predicate '>' predicate  { Gt $1 $3 }
-  | predicate '<' predicate  { Lt $1 $3 }
-  | predicate '==' predicate { Eq $1 $3 }
-  | predicate '&&' predicate { And $1 $3 }
-  | predicate '||' predicate { Or $1 $3 }
+  : value '>' value  { Gt $1 $3 }
+  | value '<' value  { Lt $1 $3 }
+  | value '==' value { Eq $1 $3 }
+  | value '&&' value { And $1 $3 }
+  | value '||' value { Or $1 $3 }
 
 iff
-  : '{{' 'if' predicate '}}' value '{{' 'else' '}}' value '{{' 'end' '}}' { Iff $3 $5 $9 }
+  : '{{' 'if' value '}}' term '{{' 'else' '}}' term '{{' 'end' '}}' { Iff $3 $5 $9 }
 
 function_call
   : '{{' functions function_params '}}' { $2 $3 }
@@ -114,17 +115,8 @@ function_params
   | functions function_params { $1 $2 }
   | '(' function_params ')' { $2 }
 
-predicate
-  : path_vector { Path $1 }
-  | iff { $1 }
-  | operator { $1 }
-  | boolean  { $1 }
-  | num_lit { $1}
-  | string_lit { $1 }
-  | '(' predicate ')' { $2 }
-
 range
-  : range_decl value '{{' 'end' '}}' { $1 $2 }
+  : range_decl term '{{' 'end' '}}' { $1 $2 }
 
 range_decl
   : '{{' 'range' ident ',' ident ':=' path_vector '}}' { \b -> Range (Just $3) $5 $7 b }
@@ -146,7 +138,16 @@ path_element
   | '[' '\'' ident '\'' ']' { Obj $3 }
   | '[' int ']' { Arr $2 }
 
-value : string_lit    { $1 }
+value
+  : path_vector { Path $1 }
+  | iff { $1 }
+  | operator { $1 }
+  | boolean  { $1 }
+  | num_lit { $1}
+  | string_lit { $1 }
+  | '(' value ')' { $2 }
+
+term : string_lit    { $1 }
       | num_lit       { $1 }
       | boolean       { $1 }
       | null          { $1 }
@@ -156,9 +157,25 @@ value : string_lit    { $1 }
       | iff           { $1 }
       | function_call { $1 }
       | range         { $1 }
-      | '(' value ')' { $2 }
+      | '(' term ')' { $2 }
+
+-- String Template Parser
+
+string_template
+  : template { V.singleton $1 }
+  | string_template template { V.snoc $1 $2 }
+
+template
+  : '{{' value '}}' { $2 }
+  | string { String (mconcat $ fmap (L.serialize . L.teType) $1) }
 
 {
+
+mkTemplate :: [L.TokenExt] -> Either ParseError ValueExt
+mkTemplate toks = do
+  templates <- template_parser toks
+  pure $ StringTem templates
+
 data ParseError = EmptyTokenStream | UnexpectedToken L.TokenExt
   deriving Show
 
@@ -200,7 +217,7 @@ data ValueExt
   | Boolean Bool
   | Null
   | -- | Extended Terms
-    StringTem [ValueExt]
+    StringTem (V.Vector ValueExt)
   | Path (V.Vector Accessor)
   | Iff ValueExt ValueExt ValueExt
   | Eq ValueExt ValueExt

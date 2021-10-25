@@ -40,7 +40,7 @@ escapeUri                                         { mkTok (const $ Identifier "e
 true                                              { mkTok (const $ BoolLit True) }
 false                                             { mkTok (const $ BoolLit False) }
 \$? $alpha [$alpha $digit \_ \-]*                 { mkTok (Identifier . T.pack)}
-\"([^\\\"]+)\"                                    { mkTok (StringTem . unwrap . T.pack) }
+\"([^\\\"]+)\"                                    { mkTemplate }
 \-? $digit+                                       { mkTok (\s -> IntLit (T.pack s) (read s)) }
 \-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\+\-]?[0-9]+)? { mkTok (\s -> NumLit (T.pack s) (read s)) }
 
@@ -68,7 +68,8 @@ false                                             { mkTok (const $ BoolLit False
 
 {
 data Token
-  = StringTem T.Text
+  = StringLit String
+  | StringTem [TokenExt]
   | Identifier T.Text
   | NumLit T.Text Scientific
   | IntLit T.Text Int
@@ -97,7 +98,7 @@ data Token
 
 serialize :: Token -> T.Text
 serialize = \case
-  StringTem str -> "\"" <> str <> "\""
+  StringTem toks -> "\"" <> foldMap (serialize . teType) toks <> "\""
   Identifier iden -> iden
   IntLit str _ -> str
   NumLit str _ -> str
@@ -135,6 +136,15 @@ unwrap txt =
         Just (txt'', '"') -> txt''
         _ -> txt'
     _ -> txt
+
+mkTemplate :: AlexPosn -> String -> TokenExt
+mkTemplate (AlexPn _ l c) s =
+  let s' = T.unpack $ unwrap $ T.pack s
+      toks = lexer s'
+      len = length s
+      start = E.SourcePosition "" l c
+      end = E.SourcePosition "" l (c + len - 1)
+  in TokenExt (StringTem toks) start end len
 
 mkTok :: (String -> Token) -> AlexPosn -> String -> TokenExt
 mkTok f (AlexPn _ l c) s =
