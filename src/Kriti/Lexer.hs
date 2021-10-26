@@ -72,7 +72,7 @@ lexer t = do
       | Just (str, _, s) <- stringLit txt = stepLexer (StringLit str) s pos
       | Just (str, _, s) <- stringTem txt = stepLexer (StringTem str) s pos
       | Just (str, _, s) <- identifier txt = stepLexer (Identifier str) s pos
-      | Just (n, matched, s) <- numberLit txt = stepLexer (NumLit matched (realToFrac n)) s pos
+      | Just (n, matched, s) <- numberLit txt = stepLexer (NumLit matched n) s pos
       | otherwise = throwLexError pos
 
     stepLexer :: Token -> Text -> P.SourcePos -> Either LexError (Maybe (TokenExt, (Text, P.SourcePos)))
