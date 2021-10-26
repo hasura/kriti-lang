@@ -1,17 +1,16 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
-
-module Kriti.Parser where --( Accessor(..)
---, ValueExt(..)
---, SourcePosition(..)
---, Span
---, ParseError
---, parser
---, parserAndLexer
---, renderPath
---, parsePath
---, parserStringInterp
---) where
+module Kriti.Parser
+  ( Accessor (..),
+    ValueExt (..),
+    SourcePosition (..),
+    Span,
+    ParseError,
+    parser,
+    parserAndLexer,
+    renderPath,
+    parsePath,
+    parserStringInterp,
+  )
+where
 
 import Control.Applicative
 import Control.Lens hiding (Context, op)
@@ -62,8 +61,8 @@ data ValueExt
   | And Span ValueExt ValueExt
   | Or Span ValueExt ValueExt
   | Member Span ValueExt ValueExt
-  | -- | {{ range i, x := $.foo.bar }}
-    Range Span (Maybe Text) Text [(Span, Accessor)] ValueExt
+  | Range Span (Maybe Text) Text [(Span, Accessor)] ValueExt
+  | EscapeURI Span ValueExt
   deriving (Show, Eq, Read)
 
 instance J.FromJSON ValueExt where
@@ -87,9 +86,6 @@ match f = P.try $ do
 
 match_ :: (Lex.Token -> Bool) -> Parser ()
 match_ f = P.satisfy (f . Lex.teType) >> pure ()
-
-eitherP :: Parser a -> Parser b -> Parser (Either a b)
-eitherP a b = Left <$> a <|> Right <$> b
 
 colon :: Parser ()
 colon = match_ (== Lex.Colon)
@@ -121,14 +117,22 @@ underscore = match_ (== Lex.Underscore)
 assignment :: Parser ()
 assignment = match_ (== Lex.Assignment)
 
+reservedWords :: [Text]
+reservedWords = ["else", "end", "escapeUri", "if", "range"]
+
 ident :: Parser Text
 ident = match \case
-  Lex.Identifier s -> Just s
+  Lex.Identifier s | s `notElem` reservedWords -> Just s
   _ -> Nothing
 
 ident_ :: Text -> Parser ()
 ident_ s = match_ \case
-  Lex.Identifier s' -> s == s'
+  Lex.Identifier s' | s' `notElem` reservedWords -> s == s'
+  _ -> False
+
+reserved_ :: Text -> Parser ()
+reserved_ s = match_ \case
+  Lex.Identifier s' | s' `elem` reservedWords -> s == s'
   _ -> False
 
 bool :: Parser Bool
@@ -205,22 +209,16 @@ integer = match \case
   Lex.NumLit _ n -> toBoundedInteger n
   _ -> Nothing
 
-betweenCurly :: Parser a -> Parser a
-betweenCurly = P.between openCurly closeCurly
-
 betweenParens :: Parser a -> Parser a
 betweenParens = P.between (match_ (== Lex.ParenOpen)) (match_ (== Lex.ParenClose))
 
 template :: Parser a -> Parser a
-template = P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
+template = P.try . P.between (openCurly *> openCurly) (closeCurly *> closeCurly)
 
 parseNull :: Parser ValueExt
 parseNull = do
   ident_ "null" <|> P.try (openCurly *> closeCurly)
   pure Null
-
-parseString :: Parser ValueExt
-parseString = String <$> stringTemSimple
 
 parseNumber :: Parser ValueExt
 parseNumber = Number <$> number
@@ -230,6 +228,7 @@ parseBool = Boolean <$> bool
 
 parseObject :: Parser ValueExt
 parseObject = do
+  void $ P.notFollowedBy (openCurly *> openCurly)
   openCurly
   keys <- parseField `P.sepBy1` comma
   closeCurly
@@ -239,7 +238,7 @@ parseObject = do
     parseField = do
       key <- stringTemSimple
       colon
-      value <- parseJson
+      value <- parseKriti
       pure (key, value)
 
 blingPrefixedId :: Parser Text
@@ -276,37 +275,37 @@ parsePath = do
 parseArray :: Parser ValueExt
 parseArray = do
   squareOpen
-  xs <- parseJson `P.sepBy` comma
+  xs <- parseKriti `P.sepBy` comma
   squareClose
   pure $ Array $ V.fromList xs
 
 parseRange :: Parser ValueExt
-parseRange = do
+parseRange = P.try $ do
   pos1 <- fromSourcePos <$> P.getSourcePos
   (idx, bndr, Path path) <- range
-  body <- parseJson
+  body <- parseKriti
   end'
   pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ Range (pos1, Just pos2) idx bndr path body
   where
     range = template $ do
-      ident_ "range"
+      reserved_ "range"
       idx <- Just <$> (blingPrefixedId <|> ident) <|> Nothing <$ underscore
       comma
       bndr <- blingPrefixedId <|> ident
       assignment
       path <- parsePath
       pure (idx, bndr, path)
-    end' = template (ident_ "end")
+    end' = template (reserved_ "end")
 
 parserIff :: Parser ValueExt
 parserIff = do
   pos1 <- fromSourcePos <$> P.getSourcePos
-  p <- template $ ident_ "if" *> parsePath
-  t1 <- parseJson
-  template $ ident_ "else"
-  t2 <- parseJson
-  template $ ident_ "end"
+  p <- template $ reserved_ "if" *> parseOperator
+  t1 <- parseKriti
+  template $ reserved_ "else"
+  t2 <- parseKriti
+  template $ reserved_ "end"
   pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ Iff (pos1, Just pos2) p t1 t2
 
@@ -340,49 +339,64 @@ parserStringInterp = do
     then pure $ String $ foldl (<>) mempty $ removeRights vals
     else pure $ StringInterp (pos1, Just pos2) vals'
 
-parseJson :: Parser ValueExt
-parseJson = do
+parseEscape :: Parser ValueExt
+parseEscape = do
+  pos1 <- fromSourcePos <$> P.getSourcePos
+  reserved_ "escapeUri"
+  t1 <- parseKriti
+  pos2 <- fromSourcePos <$> P.getSourcePos
+  pure $ EscapeURI (pos1, Just pos2) t1
+
+-- | Parsers for basic Aeson Terms
+aesonParsers :: [Parser ValueExt]
+aesonParsers =
+  [ parseNull,
+    parserStringInterp,
+    parseNumber,
+    parseBool,
+    parseArray,
+    parseObject
+  ]
+
+-- | Parsers for Kriti terms
+kritiParsers :: [Parser ValueExt]
+kritiParsers =
+  [ template parsePath,
+    parseRange,
+    template parseEscape,
+    parserIff
+  ]
+
+parseKriti :: Parser ValueExt
+parseKriti =
+  getAlt $ foldMap Alt $ aesonParsers <> kritiParsers <> [betweenParens parseKriti]
+
+parseOperator :: Parser ValueExt
+parseOperator = do
   e1 <- start
   mE2 <- end
   case mE2 of
     Nothing -> pure e1
     Just (f, e2) -> pure (f e1 e2)
-
-start :: Parser ValueExt
-start =
-  getAlt $
-    foldMap
-      Alt
-      [ parseNull,
-        parserStringInterp,
-        parseNumber,
-        parseBool,
-        parseArray,
-        -- NOTE: This isn't a very elegant solution. It would be better to
-        -- factor out the initial `{` but `parseRange` and `parseIff` have
-        -- nested `template` parsers which makes this difficult.
-        P.try parseObject,
-        P.try (template parsePath),
-        P.try parseRange,
-        parserIff,
-        betweenParens parseJson
-      ]
-
-end :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
-end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
   where
-    lt, gt, eq :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
-    lt = op Lex.Lt Lt 0
-    gt = op Lex.Gt Gt 0
-    eq = op Lex.Eq Eq 1
-    and' = op Lex.And And 1
-    or' = op Lex.Or Or 1
+    start :: Parser ValueExt
+    start = getAlt $ foldMap Alt $ aesonParsers <> [parsePath, parseRange, parseEscape, parserIff, betweenParens parseOperator]
 
-    op tok con size = do
-      pos1 <- getSourcePos
-      void $ match_ (== tok)
-      v <- parseJson
-      pure $ Just (con (pos1, Just $ incCol size pos1), v)
+    end :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
+    end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
+      where
+        lt, gt, eq :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
+        lt = op Lex.Lt Lt 0
+        gt = op Lex.Gt Gt 0
+        eq = op Lex.Eq Eq 1
+        and' = op Lex.And And 1
+        or' = op Lex.Or Or 1
+
+        op tok con size = do
+          pos1 <- getSourcePos
+          void $ match_ (== tok)
+          v <- parseOperator
+          pure $ Just (con (pos1, Just $ incCol size pos1), v)
 
 newtype ParseError = ParseError {_peErrorBundle :: P.ParseErrorBundle Lex.TokenStream Lex.LexError}
   deriving (Show)
@@ -397,7 +411,7 @@ getSourcePos :: Parser SourcePosition
 getSourcePos = fromSourcePos <$> P.getSourcePos
 
 parser :: Lex.TokenStream -> Either ParseError ValueExt
-parser = first ParseError . P.runParser parseJson mempty
+parser = first ParseError . P.runParser parseKriti mempty
 
 parserAndLexer :: Text -> Either RenderedError ValueExt
 parserAndLexer t = do
