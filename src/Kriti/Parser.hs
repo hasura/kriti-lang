@@ -1,17 +1,16 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
-
-module Kriti.Parser (Accessor (..)
-                   , ValueExt (..)
-                   , SourcePosition (..)
-                   , Span
-                   , ParseError
-                   , parser
-                   , parserAndLexer
-                   , renderPath
-                   , parsePath
-                   , parserStringInterp
-                   ) where
+module Kriti.Parser
+  ( Accessor (..),
+    ValueExt (..),
+    SourcePosition (..),
+    Span,
+    ParseError,
+    parser,
+    parserAndLexer,
+    renderPath,
+    parsePath,
+    parserStringInterp,
+  )
+where
 
 import Control.Applicative
 import Control.Lens hiding (Context, op)
@@ -119,8 +118,7 @@ assignment :: Parser ()
 assignment = match_ (== Lex.Assignment)
 
 reservedWords :: [Text]
-reservedWords = [ "else", "end", "escapeUri", "if", "range" ]
-
+reservedWords = ["else", "end", "escapeUri", "if", "range"]
 
 ident :: Parser Text
 ident = match \case
@@ -349,7 +347,6 @@ parseEscape = do
   pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ EscapeURI (pos1, Just pos2) t1
 
-
 -- | Parsers for basic Aeson Terms
 aesonParsers :: [Parser ValueExt]
 aesonParsers =
@@ -383,7 +380,7 @@ parseOperator = do
     Just (f, e2) -> pure (f e1 e2)
   where
     start :: Parser ValueExt
-    start = getAlt $ foldMap Alt $ aesonParsers <> [ parsePath, parseRange, parseEscape, parserIff, betweenParens parseOperator ]
+    start = getAlt $ foldMap Alt $ aesonParsers <> [parsePath, parseRange, parseEscape, parserIff, betweenParens parseOperator]
 
     end :: Parser (Maybe (ValueExt -> ValueExt -> ValueExt, ValueExt))
     end = lt <|> gt <|> eq <|> and' <|> or' <|> pure Nothing
