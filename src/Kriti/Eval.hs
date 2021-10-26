@@ -120,4 +120,4 @@ eval = \case
       J.String str ->
         let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
         in pure $ J.String escapedUri
-      _ -> throwError $ TypeError pos $ T.pack $ show t1' <> " is not an array."
+      _ -> throwError $ TypeError pos $ T.pack $ show t1' <> " is not a string."
