@@ -1,0 +1,15 @@
+EscapeURI
+    ( SourcePosition
+        { _sourceName = "sourceName"
+        , _line = 1
+        , _column = 4
+        }
+    , Just
+        ( SourcePosition
+            { _sourceName = "sourceName"
+            , _line = 1
+            , _column = 29
+            }
+        )
+    )
+    ( String "?foo=bar/baz" )
