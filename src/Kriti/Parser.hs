@@ -343,9 +343,11 @@ parseEscape :: Parser ValueExt
 parseEscape = do
   pos1 <- fromSourcePos <$> P.getSourcePos
   reserved_ "escapeUri"
-  t1 <- parseKriti
+  t1 <- parseTerm
   pos2 <- fromSourcePos <$> P.getSourcePos
   pure $ EscapeURI (pos1, Just pos2) t1
+  where
+    parseTerm = getAlt $ foldMap Alt $ aesonParsers <> [parsePath, parserIff, parseEscape, betweenParens parseTerm]
 
 -- | Parsers for basic Aeson Terms
 aesonParsers :: [Parser ValueExt]

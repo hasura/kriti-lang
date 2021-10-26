@@ -3,7 +3,7 @@ cabal-version:       >=1.10
 --   For further documentation, see http://haskell.org/cabal/users-guide/
 
 name:                kriti-lang
-version:             0.2.1
+version:             0.2.2
 -- synopsis:
 -- description:
 -- bug-reports:
