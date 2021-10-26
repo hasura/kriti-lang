@@ -11,6 +11,7 @@ import qualified Data.Text as T
 import qualified Data.Vector as V
 import Kriti.Error
 import Kriti.Parser (Accessor (..), ValueExt (..), renderPath)
+import qualified Network.URI as URI
 
 data EvalError
   = -- | The first SourcePosition is the point where the lookup failed
@@ -113,3 +114,10 @@ eval = \case
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
          in local (M.fromList newScope <>) (eval body)
       _ -> throwError $ RangeError pos
+  EscapeURI pos t1 -> do
+    t1' <- eval t1
+    case t1' of
+      J.String str ->
+        let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
+         in pure $ J.String escapedUri
+      _ -> throwError $ TypeError pos $ T.pack $ show t1' <> " is not a string."
