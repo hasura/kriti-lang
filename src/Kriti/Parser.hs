@@ -327,7 +327,7 @@ parserStringInterp = do
   pos2 <- fromSourcePos <$> P.getSourcePos
   -- TODO: Recursively parsing like this will result in a junk
   -- `SourcePosition`
-  let p = first ParseError . P.runParser parsePath mempty
+  let p = first ParseError . P.runParser (parseEscape <|> parsePath) mempty
   x <- traverse (pure . traverse p) tem
 
   let errs = lefts x
