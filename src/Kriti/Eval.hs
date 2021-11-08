@@ -15,7 +15,7 @@ import qualified Network.URI as URI
 
 data EvalError
   = -- | The first SourcePosition is the point where the lookup failed
-    InvalidPath Span [(Span, Accessor)]
+    InvalidPath Span (V.Vector Accessor)
   | TypeError Span T.Text
   | RangeError Span
   deriving (Show)
@@ -33,14 +33,14 @@ getSourcePos (InvalidPath pos _) = pos
 getSourcePos (TypeError pos _) = pos
 getSourcePos (RangeError pos) = pos
 
-evalPath :: J.Value -> [(Span, Accessor)] -> ExceptT EvalError (Reader Ctxt) J.Value
+evalPath :: J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath ctx path =
-  let step :: Monad m => J.Value -> (Span, Accessor) -> ExceptT EvalError m J.Value
-      step (J.Object o) (pos, Obj k) = maybe (throwError $ InvalidPath pos path) pure $ M.lookup k o
-      step (J.Array xs) (pos, Arr i) = maybe (throwError $ InvalidPath pos path) pure $ xs V.!? i
+  let step :: Monad m => J.Value -> (Accessor) -> ExceptT EvalError m J.Value
+      step (J.Object o) (Obj k) = maybe (throwError $ InvalidPath undefined path) pure $ M.lookup k o
+      step (J.Array xs) (Arr i) = maybe (throwError $ InvalidPath undefined path) pure $ xs V.!? i
       -- TODO: Should we extend this error message with the local Context?
-      step _ (pos, Obj _) = throwError $ TypeError pos "Expected object"
-      step _ (pos, Arr _) = throwError $ TypeError pos "Expected array"
+      step _ (Obj _) = throwError $ TypeError undefined "Expected object"
+      step _ (Arr _) = throwError $ TypeError undefined "Expected array"
    in foldlM step ctx path
 
 isString :: J.Value -> Bool
@@ -59,54 +59,54 @@ eval = \case
   Boolean p -> pure $ J.Bool p
   Null -> pure J.Null
   Object fields -> J.Object <$> traverse eval fields
-  StringInterp span' ts -> do
+  StringTem ts -> do
     vals <- traverse eval ts
     vals & flip foldlM (J.String mempty) \(J.String acc) -> \case
       J.String val' -> pure $ J.String $ acc <> val'
       -- TODO: Improve Span Construction/Reporting for StringInterp
-      _ -> throwError $ InvalidPath span' []
+      _ -> throwError $ InvalidPath undefined V.empty
   Array xs -> J.Array <$> traverse eval xs
   Path path -> do
     ctx <- ask
     evalPath (J.Object ctx) path
-  Iff pos p t1 t2 ->
+  Iff p t1 t2 ->
     eval p >>= \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
-      p' -> throwError $ TypeError pos $ T.pack $ show p' <> "' is not a boolean."
-  Eq _ t1 t2 -> do
+      p' -> throwError $ TypeError undefined $ T.pack $ show p' <> "' is not a boolean."
+  Eq t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
-  Lt _ t1 t2 -> do
+  Lt t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' < t2'
-  Gt _ t1 t2 -> do
+  Gt t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' > t2'
-  And pos t1 t2 -> do
+  And t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p && q
-      (t1'', J.Bool _) -> throwError $ TypeError pos $ T.pack $ show t1'' <> "' is not a boolean."
-      (_, t2'') -> throwError $ TypeError pos $ T.pack $ show t2'' <> "' is not a boolean."
-  Or pos t1 t2 -> do
+      (t1'', J.Bool _) -> throwError $ TypeError undefined $ T.pack $ show t1'' <> "' is not a boolean."
+      (_, t2'') -> throwError $ TypeError undefined $ T.pack $ show t2'' <> "' is not a boolean."
+  Or t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p || q
-      (t1'', J.Bool _) -> throwError $ TypeError pos $ T.pack $ show t1'' <> "' is not a boolean."
-      (_, t2'') -> throwError $ TypeError pos $ T.pack $ show t2'' <> "' is not a boolean."
-  Member pos t ts -> do
+      (t1'', J.Bool _) -> throwError $ TypeError undefined $ T.pack $ show t1'' <> "' is not a boolean."
+      (_, t2'') -> throwError $ TypeError undefined $ T.pack $ show t2'' <> "' is not a boolean."
+  Member t ts -> do
     ts' <- eval ts
     case ts' of
       J.Array xs -> do
         t' <- eval t
         pure $ J.Bool $ t' `V.elem` xs
-      _ -> throwError $ TypeError pos $ T.pack $ show ts' <> " is not an array."
-  Range pos idx binder path body -> do
+      _ -> throwError $ TypeError undefined $ T.pack $ show ts' <> " is not an array."
+  Range idx binder path body -> do
     ctx <- ask
     pathResult <- evalPath (J.Object ctx) path
     case pathResult of

@@ -57,6 +57,8 @@ library
 
   hs-source-dirs: src
   build-depends:
+    , alex
+    , happy
     , lens
     , megaparsec
     , mtl

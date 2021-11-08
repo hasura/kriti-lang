@@ -23,9 +23,9 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Vector as V
 import Kriti.Error
 import Kriti.Eval
-import Kriti.Lexer
-import Kriti.Lexer.Token
-import Kriti.Parser
+import qualified Kriti.Lexer as L
+--import Kriti.Lexer.Token
+import qualified Kriti.Parser as P
 import System.Directory (listDirectory)
 import System.FilePath
 import Test.Hspec
@@ -56,7 +56,7 @@ lexerSpec = describe "Lexer" $
             tokens' = lexer serialized
          in case tokens' of
               Left lexError -> expectationFailure (show $ render lexError)
-              Right (TokenStream _ lexemes) -> fmap teType lexemes `shouldBe` (tokens :: [Token])
+              Right lexemes -> fmap teType lexemes `shouldBe` (tokens :: [L.Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -70,7 +70,7 @@ parserSpec = describe "Parser" $ do
       Q.property $ \value ->
         let serialized = J.encode @J.Value value
             tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
-            viaAeson = fromJust $ J.decode @ValueExt serialized
+            viaAeson = fromJust $ J.decode @P.ValueExt serialized
          in case tokens of
               Left lexError -> expectationFailure (show $ render lexError)
               Right lexemes -> parser lexemes `shouldSatisfy` succeeds viaAeson
@@ -98,7 +98,7 @@ parserGoldenSpec = describe "Golden" $ do
 
 -- | Parse a template file that is expected to succeed; parse failures are
 -- rendered as 'String's and thrown in 'IO'.
-parseTemplateSuccess :: FilePath -> IO ValueExt
+parseTemplateSuccess :: FilePath -> IO P.ValueExt
 parseTemplateSuccess path = do
   tmpl <- fmap decodeUtf8 . BS.readFile $ path
   case lexer tmpl of
@@ -180,7 +180,7 @@ goldenReadShow dir name val = Golden {..}
     failFirstTime = False
 
 -- | Alias for 'goldenReadShow' specialized to 'ValueExt's.
-goldenValueExt :: FilePath -> String -> ValueExt -> Golden ValueExt
+goldenValueExt :: FilePath -> String -> P.ValueExt -> Golden P.ValueExt
 goldenValueExt = goldenReadShow
 
 -- | Construct a 'Golden' test for 'ParseError's rendered as 'String's.
@@ -249,10 +249,10 @@ instance Q.Arbitrary Text where
 instance Q.Arbitrary Scientific where
   arbitrary = ((fromRational . toRational) :: Int -> Scientific) <$> Q.arbitrary
 
-instance Q.Arbitrary Token where
+instance Q.Arbitrary L.Token where
   arbitrary =
     QAG.genericArbitrary >>= \case
-      NumLit _ i -> pure $ NumLit (T.pack $ show i) i
+      L.NumLit _ i -> pure $ L.NumLit (T.pack $ show i) i
       val -> pure val
 
 instance Q.Arbitrary J.Value where
