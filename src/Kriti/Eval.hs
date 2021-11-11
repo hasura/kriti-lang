@@ -10,8 +10,9 @@ import Data.Maybe (maybeToList)
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Kriti.Error
-import Kriti.Parser (Accessor (..), ValueExt (..), renderPath)
 import qualified Network.URI as URI
+import Kriti.Parser.Spans
+import Kriti.Parser.Token
 
 data EvalError
   = -- | The first SourcePosition is the point where the lookup failed
@@ -36,11 +37,11 @@ getSourcePos (RangeError pos) = pos
 evalPath :: J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath ctx path =
   let step :: Monad m => J.Value -> (Accessor) -> ExceptT EvalError m J.Value
-      step (J.Object o) (Obj k) = maybe (throwError $ InvalidPath undefined path) pure $ M.lookup k o
-      step (J.Array xs) (Arr i) = maybe (throwError $ InvalidPath undefined path) pure $ xs V.!? i
+      step (J.Object o) (Obj _ k) = maybe (throwError $ InvalidPath undefined path) pure $ M.lookup k o
+      step (J.Array xs) (Arr _ i) = maybe (throwError $ InvalidPath undefined path) pure $ xs V.!? i
       -- TODO: Should we extend this error message with the local Context?
-      step _ (Obj _) = throwError $ TypeError undefined "Expected object"
-      step _ (Arr _) = throwError $ TypeError undefined "Expected array"
+      step _ (Obj _ _) = throwError $ TypeError undefined "Expected object"
+      step _ (Arr _ _) = throwError $ TypeError undefined "Expected array"
    in foldlM step ctx path
 
 isString :: J.Value -> Bool
@@ -54,70 +55,70 @@ runEval template source =
 
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
-  String str -> pure $ J.String str
-  Number i -> pure $ J.Number i
-  Boolean p -> pure $ J.Bool p
-  Null -> pure J.Null
-  Object fields -> J.Object <$> traverse eval fields
-  StringTem ts -> do
+  String _ str -> pure $ J.String str
+  Number _ i -> pure $ J.Number i
+  Boolean _ p -> pure $ J.Bool p
+  Null _ -> pure J.Null
+  Object _ fields -> J.Object <$> traverse eval fields
+  StringTem _ ts -> do
     vals <- traverse eval ts
     vals & flip foldlM (J.String mempty) \(J.String acc) -> \case
       J.String val' -> pure $ J.String $ acc <> val'
       -- TODO: Improve Span Construction/Reporting for StringInterp
       _ -> throwError $ InvalidPath undefined V.empty
-  Array xs -> J.Array <$> traverse eval xs
-  Path path -> do
+  Array _ xs -> J.Array <$> traverse eval xs
+  Path _ path -> do
     ctx <- ask
     evalPath (J.Object ctx) path
-  Iff p t1 t2 ->
+  Iff _ p t1 t2 ->
     eval p >>= \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
       p' -> throwError $ TypeError undefined $ T.pack $ show p' <> "' is not a boolean."
-  Eq t1 t2 -> do
+  Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
-  Lt t1 t2 -> do
+  Lt _ t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' < t2'
-  Gt t1 t2 -> do
+  Gt _ t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' > t2'
-  And t1 t2 -> do
+  And _ t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p && q
       (t1'', J.Bool _) -> throwError $ TypeError undefined $ T.pack $ show t1'' <> "' is not a boolean."
       (_, t2'') -> throwError $ TypeError undefined $ T.pack $ show t2'' <> "' is not a boolean."
-  Or t1 t2 -> do
+  Or _ t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p || q
       (t1'', J.Bool _) -> throwError $ TypeError undefined $ T.pack $ show t1'' <> "' is not a boolean."
       (_, t2'') -> throwError $ TypeError undefined $ T.pack $ show t2'' <> "' is not a boolean."
-  Member t ts -> do
+  Member _ t ts -> do
     ts' <- eval ts
     case ts' of
       J.Array xs -> do
         t' <- eval t
         pure $ J.Bool $ t' `V.elem` xs
       _ -> throwError $ TypeError undefined $ T.pack $ show ts' <> " is not an array."
-  Range idx binder path body -> do
+  Range _ idx binder path body -> do
     ctx <- ask
     pathResult <- evalPath (J.Object ctx) path
     case pathResult of
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
          in local (M.fromList newScope <>) (eval body)
-      _ -> throwError $ RangeError pos
-  EscapeURI pos t1 -> do
+      _ -> throwError $ RangeError $ error "TODO SPANS" 
+  EscapeURI _ t1 -> do
     t1' <- eval t1
     case t1' of
       J.String str ->
         let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
          in pure $ J.String escapedUri
-      _ -> throwError $ TypeError pos $ T.pack $ show t1' <> " is not a string."
+      _ -> throwError $ TypeError (error "TODO") $ T.pack $ show t1' <> " is not a string."

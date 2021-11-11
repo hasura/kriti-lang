@@ -23,9 +23,9 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Vector as V
 import Kriti.Error
 import Kriti.Eval
-import qualified Kriti.Lexer as L
---import Kriti.Lexer.Token
+import qualified Kriti.Parser.Lexer as L
 import qualified Kriti.Parser as P
+import qualified Kriti.Span as S
 import System.Directory (listDirectory)
 import System.FilePath
 import Test.Hspec
@@ -52,11 +52,12 @@ lexerSpec = describe "Lexer" $
   describe "QuickCheck" $
     it "lexing serialized tokens yields those tokens" $
       Q.property $ \tokens ->
-        let serialized = T.intercalate " " $ fmap serialize tokens
-            tokens' = lexer serialized
+        let serialized = T.intercalate " " $ fmap L.serialize tokens
+            tokens' = L.lexer serialized
          in case tokens' of
-              Left lexError -> expectationFailure (show $ render lexError)
-              Right lexemes -> fmap teType lexemes `shouldBe` (tokens :: [L.Token])
+              -- TODO: LexErrors
+              --Left lexError -> expectationFailure (show $ render lexError)
+              lexemes -> fmap L.teType lexemes `shouldBe` (tokens :: [L.Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -69,11 +70,12 @@ parserSpec = describe "Parser" $ do
     it "matches Aeson for standard JSON values" $
       Q.property $ \value ->
         let serialized = J.encode @J.Value value
-            tokens = lexer $ decodeUtf8 $ BL.toStrict serialized
+            tokens = L.lexer $ decodeUtf8 $ BL.toStrict serialized
             viaAeson = fromJust $ J.decode @P.ValueExt serialized
          in case tokens of
-              Left lexError -> expectationFailure (show $ render lexError)
-              Right lexemes -> parser lexemes `shouldSatisfy` succeeds viaAeson
+              -- TODO: LexErrors
+              --Left lexError -> expectationFailure (show $ render lexError)
+              lexemes -> P.parser lexemes `shouldSatisfy` succeeds viaAeson
 
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
@@ -101,23 +103,25 @@ parserGoldenSpec = describe "Golden" $ do
 parseTemplateSuccess :: FilePath -> IO P.ValueExt
 parseTemplateSuccess path = do
   tmpl <- fmap decodeUtf8 . BS.readFile $ path
-  case lexer tmpl of
-    Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
-    Right lexemes ->
-      case parser lexemes of
-        Left err -> throwString $ "Unexpected parsing failure " <> show err
-        Right valueExt -> pure valueExt
+  let lexemes = L.lexer tmpl
+  --case L.lexer tmpl of
+  --  Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
+  --  Right lexemes ->
+  case P.parser lexemes of
+    Left err -> throwString $ "Unexpected parsing failure " <> show err
+    Right valueExt -> pure valueExt
 
 -- | Parse a template file that is expected to fail.
-parseTemplateFailure :: FilePath -> IO ParseError
+parseTemplateFailure :: FilePath -> IO P.ParseError
 parseTemplateFailure path = do
   tmpl <- fmap decodeUtf8 . BS.readFile $ path
-  case lexer tmpl of
-    Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
-    Right lexemes ->
-      case parser lexemes of
-        Left err -> pure err
-        Right valueExt -> throwString $ "Unexpected parsing success " <> show valueExt
+  let lexemes = L.lexer tmpl
+  --case L.lexer tmpl of
+  --  Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
+  --  Right lexemes ->
+  case P.parser lexemes of
+    Left err -> pure err
+    Right valueExt -> throwString $ "Unexpected parsing success " <> show valueExt
 
 --------------------------------------------------------------------------------
 -- Evaluation tests.
@@ -188,7 +192,7 @@ goldenValueExt = goldenReadShow
 -- Since 'ParseError' doesn't export a 'Show' instance that satisfies the
 -- 'Read' <-> 'Show' roundtrip law, we must deal with its errors in terms of
 -- the text it produces.
-goldenParseError :: FilePath -> String -> ParseError -> Golden String
+goldenParseError :: FilePath -> String -> P.ParseError -> Golden String
 goldenParseError dir name parseError = Golden {..}
   where
     output = show $ render parseError
@@ -249,11 +253,19 @@ instance Q.Arbitrary Text where
 instance Q.Arbitrary Scientific where
   arbitrary = ((fromRational . toRational) :: Int -> Scientific) <$> Q.arbitrary
 
+instance Q.Arbitrary S.SourcePosition where
+  arbitrary = QAG.genericArbitrary
+  shrink = QAG.genericShrink
+
 instance Q.Arbitrary L.Token where
   arbitrary =
     QAG.genericArbitrary >>= \case
       L.NumLit _ i -> pure $ L.NumLit (T.pack $ show i) i
       val -> pure val
+
+instance Q.Arbitrary L.TokenExt where
+  arbitrary = QAG.genericArbitrary
+  shrink = QAG.genericShrink
 
 instance Q.Arbitrary J.Value where
   arbitrary = Q.sized sizedArbitraryValue
