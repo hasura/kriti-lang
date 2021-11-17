@@ -3,11 +3,13 @@ module Kriti.Eval where
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Aeson as J
+import qualified Data.ByteString.Lazy as BL
 import Data.Foldable (foldlM)
 import Data.Function
 import qualified Data.HashMap.Strict as M
 import Data.Maybe (maybeToList)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
 import Kriti.Error
 import Kriti.Parser (Accessor (..), ValueExt (..), renderPath)
@@ -52,6 +54,14 @@ runEval template source =
   let ctx = M.fromList source
    in runReader (runExceptT (eval template)) ctx
 
+serializeType :: J.Value -> T.Text
+serializeType J.Object{} = "Object"
+serializeType J.Array{} = "Array"
+serializeType J.String{} = "String"
+serializeType J.Number{} = "Number"
+serializeType J.Bool{} = "Boolean"
+serializeType J.Null = "Null"
+
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
   String str -> pure $ J.String str
@@ -63,8 +73,10 @@ eval = \case
     vals <- traverse eval ts
     vals & flip foldlM (J.String mempty) \(J.String acc) -> \case
       J.String val' -> pure $ J.String $ acc <> val'
-      -- TODO: Improve Span Construction/Reporting for StringInterp
-      _ -> throwError $ InvalidPath span' []
+      J.Number i -> pure $ J.String $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode i)
+      J.Bool p -> pure $ J.String $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode p)
+      -- TODO: Improve Span Construction
+      t -> throwError $ TypeError span' $ "Cannot interpolate type: '" <> serializeType t <> "'."
   Array xs -> J.Array <$> traverse eval xs
   Path path -> do
     ctx <- ask

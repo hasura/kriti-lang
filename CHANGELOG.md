@@ -1,5 +1,9 @@
 # Revision history for Kriti-Lang
 
+## 0.2.2 -- 2021-11-16
+
+  - Fixes a bug in String Templates when interpolating Numbers and Booleans.
+
 ## 0.2.1 -- 2021-10-26
 
   - Field lookup by string literal with brackets

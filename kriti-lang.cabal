@@ -3,11 +3,7 @@ cabal-version:       >=1.10
 --   For further documentation, see http://haskell.org/cabal/users-guide/
 
 name:                kriti-lang
-version:             0.2.1
--- synopsis:
--- description:
--- bug-reports:
--- license:
+version:             0.2.2
 license-file:        LICENSE
 author:              Solomon Bothwell
 maintainer:          solomon@hasura.io
@@ -19,6 +15,7 @@ extra-source-files:  CHANGELOG.md
 library
   build-depends:       base >= 2 && < 5
                      , aeson < 2.0
+                     , bytestring
                      , lens
                      , megaparsec
                      , mtl
