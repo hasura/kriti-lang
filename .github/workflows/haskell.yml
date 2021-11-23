@@ -28,27 +28,27 @@ jobs:
 #   NOTE: once the library is ready to be released into the wild
 #   we could use this code block to run the tests and build the exe.
 #   on multiple GHC versions and perhaps even multiple cabal versions
-
-#     strategy:
-#       matrix:
-#         cabal: ["3.2"]
-#         ghc: ["8.10.4", "8.10.5", "9.0.1"]
+    strategy:
+      matrix:
+        cabal: ["3.4"]
+        ghc: ["8.10.7"]
 
     env:
-      CONFIG: "--enable-tests --enable-benchmarks"
-    steps:
-      - uses: actions/checkout@v2
+      CONFIG: "--project-file=ci/${{ matrix.ghc }}.project"
 
-      - uses: haskell/actions/setup@v1.2
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+
+      - name: "Setup"
+        uses: haskell/actions/setup@v1.2
         id: setup-haskell-cabal
         with:
-          ghc-version: "8.10.5"
-          cabal-version: "3.2"
+          ghc-version: "8.10.7"
+          cabal-version: "3.4"
 
-      - run: cabal v2-update
-      - run: cabal v2-freeze $CONFIG
-      
-      - uses: actions/cache@v2
+      - name: "Cache"
+        uses: actions/cache@v2
         env:
           cache-name: cache-cabal
         with:
@@ -61,12 +61,12 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       
-      - name: Build project
-        run: cabal v2-build $CONFIG
+      - name: "Build"
+        run: cabal build $CONFIG
 
-      - name: Test project
-        run: cabal v2-test $CONFIG
+      - name: "Test"
+        run: cabal test $CONFIG
 
 # NOTE: keeping these here for future versions
-#       - run: cabal v2-haddock $CONFIG
-#       - run: cabal v2-sdist
+#       - run: cabal haddock $CONFIG
+#       - run: cabal sdist
