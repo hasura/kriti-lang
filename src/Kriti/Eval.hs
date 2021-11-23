@@ -55,11 +55,11 @@ runEval template source =
    in runReader (runExceptT (eval template)) ctx
 
 serializeType :: J.Value -> T.Text
-serializeType J.Object{} = "Object"
-serializeType J.Array{} = "Array"
-serializeType J.String{} = "String"
-serializeType J.Number{} = "Number"
-serializeType J.Bool{} = "Boolean"
+serializeType J.Object {} = "Object"
+serializeType J.Array {} = "Array"
+serializeType J.String {} = "String"
+serializeType J.Number {} = "Number"
+serializeType J.Bool {} = "Boolean"
 serializeType J.Null = "Null"
 
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
