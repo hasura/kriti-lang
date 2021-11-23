@@ -28,11 +28,9 @@ int         { TokIntLit _ $$ }
 'true'      { TokBoolLit $$ }
 'false'     { TokBoolLit $$ }
 
-'s"'        { StringBegin $$ }
-'"e'        { StringEnd $$ }
+'s"'        { TokSymbol SymStringBegin $$ }
+'"e'        { TokSymbol SymStringEnd $$ }
 string      { TokStringLit $$ }
-'s{'        { TemplateBegin $$ }
-'}e'        { TemplateEnd $$ }
 
 'if'        { TokIdentifier (Loc $$ "if") }
 'else'      { TokIdentifier (Loc $$ "else") }
@@ -73,17 +71,19 @@ string_lit
 string_template :: { V.Vector ValueExt }
 string_template
   -- Template to the right
-  : string_template 's{' template '}e' { V.snoc $1 $3 }
+  : string_template '{{' template '}}' { V.snoc $1 $3 }
   -- String Lit to the right
   | string_template string { V.snoc $1 (String (locate $2) (unlocate $2)) }
   -- Template Base Case
-  | 's{' template '}e' { V.singleton $2 }
+  | '{{' template '}}' { V.singleton $2 }
   -- String Base Case
   | string { V.singleton (String (locate $1) (unlocate $1))}
 
 template :: { ValueExt }
 template
   : path_vector { uncurry Path $1 }
+  | boolean { $1 }
+  | num_lit { $1 }
 
 num_lit :: { ValueExt }
 num_lit

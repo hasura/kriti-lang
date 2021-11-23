@@ -46,6 +46,9 @@ setEnd sp (Span start _) = Span start sp
 data Loc a = Loc Span a
   deriving (Show, Eq, Ord, Functor)
 
+instance Semigroup a => Semigroup (Loc a) where
+  Loc s1 a1 <> Loc s2 a2 = Loc (s1 <> s2) (a1 <> a2)
+  
 unlocate :: Loc a -> a
 unlocate (Loc _ a) = a
 

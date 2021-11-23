@@ -31,27 +31,23 @@ data Symbol =
   | SymParenClose
   | SymUnderscore
   | SymAssignment
+  | SymStringBegin 
+  | SymStringEnd 
   deriving (Show, Eq, Ord, Generic)
 
 data Token =
     TokSymbol Symbol Span
   | TokStringLit (Loc T.Text)
-  -- | TokStringTem [Token]
   | TokIdentifier (Loc T.Text)
   | TokNumLit T.Text (Loc Scientific)
   | TokIntLit T.Text (Loc Int)
   | TokBoolLit (Loc Bool)
   | EOF
-  | StringBegin Span
-  | TemplateBegin Span
-  | TemplateEnd Span
-  | StringEnd Span
   deriving (Show, Eq, Ord, Generic)
 
 serialize :: Token -> T.Text
 serialize = \case
   TokStringLit str ->  "\"" <> unlocate str <> "\""
---  TokStringTem toks -> "\"" <> foldMap (serialize . teType) toks <> "\""
   TokIdentifier iden -> unlocate iden
   TokIntLit str _ -> str
   TokNumLit str _ -> str
@@ -77,11 +73,9 @@ serialize = \case
   TokSymbol SymParenClose _ -> ")"
   TokSymbol SymUnderscore _ -> "_"
   TokSymbol SymAssignment _ -> ":="
+  TokSymbol SymStringBegin _ -> "\""
+  TokSymbol SymStringEnd _ -> "\""
   EOF -> ""
-  StringBegin _ -> "\""
-  StringEnd _ -> "\""
-  TemplateBegin _ -> "{{"
-  TemplateEnd _ -> "}}"
 
 data Accessor = Obj Span T.Text | Arr Span Int
   deriving (Show, Eq, Read)
