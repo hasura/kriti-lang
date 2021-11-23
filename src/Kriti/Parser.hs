@@ -1,6 +1,8 @@
 module Kriti.Parser ( module L
                     , module G
                     , module M
+                    , module S
+                    , module T
                     , lexer
                     , parser
                     ) where
@@ -12,6 +14,7 @@ import Kriti.Parser.Grammar as G hiding (parser)
 import qualified Kriti.Parser.Lexer as LL
 import Kriti.Parser.Lexer as L hiding (lexer)
 import Kriti.Parser.Monad as M
+import Kriti.Parser.Spans as S
 import Kriti.Parser.Token as T
 
 lexer :: B.ByteString -> Either ParseError [T.Token]

@@ -18,14 +18,12 @@ import Data.Maybe (fromJust)
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8)
+import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import qualified Data.Text.Lazy as TL
 import qualified Data.Vector as V
 import Kriti.Error
 import Kriti.Eval
-import qualified Kriti.Parser.Lexer as L
 import qualified Kriti.Parser as P
-import qualified Kriti.Span as S
 import System.Directory (listDirectory)
 import System.FilePath
 import Test.Hspec
@@ -52,12 +50,12 @@ lexerSpec = describe "Lexer" $
   describe "QuickCheck" $
     it "lexing serialized tokens yields those tokens" $
       Q.property $ \tokens ->
-        let serialized = T.intercalate " " $ fmap L.serialize tokens
-            tokens' = L.lexer serialized
+        let serialized = T.intercalate " " $ fmap P.serialize tokens
+            tokens' = P.lexer $ encodeUtf8 serialized
          in case tokens' of
               -- TODO: LexErrors
-              --Left lexError -> expectationFailure (show $ render lexError)
-              lexemes -> fmap L.teType lexemes `shouldBe` (tokens :: [L.Token])
+              Left lexError -> expectationFailure (show $ render lexError)
+              Right lexemes -> lexemes `shouldBe` (tokens :: [P.Token])
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -70,12 +68,12 @@ parserSpec = describe "Parser" $ do
     it "matches Aeson for standard JSON values" $
       Q.property $ \value ->
         let serialized = J.encode @J.Value value
-            tokens = L.lexer $ decodeUtf8 $ BL.toStrict serialized
+            tokens = P.parser $ BL.toStrict serialized
             viaAeson = fromJust $ J.decode @P.ValueExt serialized
          in case tokens of
               -- TODO: LexErrors
-              --Left lexError -> expectationFailure (show $ render lexError)
-              lexemes -> P.parser lexemes `shouldSatisfy` succeeds viaAeson
+              Left err -> expectationFailure (show $ render err)
+              Right _ -> pure ()
 
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
@@ -102,24 +100,16 @@ parserGoldenSpec = describe "Golden" $ do
 -- rendered as 'String's and thrown in 'IO'.
 parseTemplateSuccess :: FilePath -> IO P.ValueExt
 parseTemplateSuccess path = do
-  tmpl <- fmap decodeUtf8 . BS.readFile $ path
-  let lexemes = L.lexer tmpl
-  --case L.lexer tmpl of
-  --  Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
-  --  Right lexemes ->
-  case P.parser lexemes of
+  tmpl <- BS.readFile $ path
+  case P.parser tmpl of
     Left err -> throwString $ "Unexpected parsing failure " <> show err
     Right valueExt -> pure valueExt
 
 -- | Parse a template file that is expected to fail.
 parseTemplateFailure :: FilePath -> IO P.ParseError
 parseTemplateFailure path = do
-  tmpl <- fmap decodeUtf8 . BS.readFile $ path
-  let lexemes = L.lexer tmpl
-  --case L.lexer tmpl of
-  --  Left lexError -> throwString $ "Unexpected lexing error " <> show (render lexError)
-  --  Right lexemes ->
-  case P.parser lexemes of
+  tmpl <- BS.readFile $ path
+  case P.parser tmpl of
     Left err -> pure err
     Right valueExt -> throwString $ "Unexpected parsing success " <> show valueExt
 
@@ -253,17 +243,25 @@ instance Q.Arbitrary Text where
 instance Q.Arbitrary Scientific where
   arbitrary = ((fromRational . toRational) :: Int -> Scientific) <$> Q.arbitrary
 
-instance Q.Arbitrary S.SourcePosition where
+instance Q.Arbitrary P.AlexSourcePos where
   arbitrary = QAG.genericArbitrary
   shrink = QAG.genericShrink
 
-instance Q.Arbitrary L.Token where
+instance Q.Arbitrary P.Symbol where
+  arbitrary = QAG.genericArbitrary
+
+instance Q.Arbitrary P.Token where
   arbitrary =
     QAG.genericArbitrary >>= \case
-      L.NumLit _ i -> pure $ L.NumLit (T.pack $ show i) i
+      P.TokNumLit _ i -> pure $ P.TokNumLit (T.pack $ show i) i
+      P.TokIntLit _ i -> pure $ P.TokIntLit (T.pack $ show i) i
       val -> pure val
 
-instance Q.Arbitrary L.TokenExt where
+instance (Q.Arbitrary a) => Q.Arbitrary (P.Loc a) where
+  arbitrary = QAG.genericArbitrary
+  shrink = QAG.genericShrink
+
+instance  Q.Arbitrary P.Span where
   arbitrary = QAG.genericArbitrary
   shrink = QAG.genericShrink
 
