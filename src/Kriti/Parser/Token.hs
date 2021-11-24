@@ -1,5 +1,6 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE RankNTypes #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Kriti.Parser.Token where
 
 import qualified Data.HashMap.Strict as M
@@ -10,8 +11,8 @@ import qualified Data.Vector as V
 import GHC.Generics
 import Kriti.Parser.Spans
 
-data Symbol =
-    SymBling
+data Symbol
+  = SymBling
   | SymColon
   | SymDot
   | SymComma
@@ -31,12 +32,12 @@ data Symbol =
   | SymParenClose
   | SymUnderscore
   | SymAssignment
-  | SymStringBegin 
-  | SymStringEnd 
+  | SymStringBegin
+  | SymStringEnd
   deriving (Show, Eq, Ord, Generic)
 
-data Token =
-    TokSymbol (Loc Symbol)
+data Token
+  = TokSymbol (Loc Symbol)
   | TokStringLit (Loc T.Text)
   | TokIdentifier (Loc T.Text)
   | TokNumLit T.Text (Loc Scientific)
@@ -56,7 +57,7 @@ overLoc _ EOF = EOF
 
 serialize :: Token -> T.Text
 serialize = \case
-  TokStringLit str ->  "\"" <> unLoc str <> "\""
+  TokStringLit str -> "\"" <> unLoc str <> "\""
   TokIdentifier iden -> unLoc iden
   TokIntLit str _ -> str
   TokNumLit str _ -> str
@@ -91,9 +92,9 @@ data Accessor = Obj Span T.Text | Arr Span Int
 
 renderAccessor :: Accessor -> T.Text
 renderAccessor = \case
-    -- TODO: Doesn't correctly account for `['foo bar']` object lookup syntax
-    Obj _ txt -> txt
-    Arr _ i -> T.pack $ show i
+  -- TODO: Doesn't correctly account for `['foo bar']` object lookup syntax
+  Obj _ txt -> txt
+  Arr _ i -> T.pack $ show i
 
 -- TODO: Should not insert a '.' when encountering an 'Arr' or square bracket object lookup
 renderPath :: V.Vector Accessor -> T.Text

@@ -1,8 +1,8 @@
 module Kriti.Error where
 
 import qualified Data.Aeson as J
-import qualified Kriti.Parser.Spans as S
 import qualified Data.Text as T
+import qualified Kriti.Parser.Spans as S
 
 data ErrorCode
   = InvalidPathCode
@@ -22,13 +22,13 @@ instance J.ToJSON RenderedError where
      in J.object
           [ "error_code" J..= J.String (T.pack $ show ec),
             "message" J..= J.String msg,
-            "source_position" J..= J.object
-              [ "start_line" J..= startLine,
-                "start_column" J..= startCol,
-                "end_line" J..= endLine,
-                "end_column" J..= endCol
-              ]
-                
+            "source_position"
+              J..= J.object
+                [ "start_line" J..= startLine,
+                  "start_column" J..= startCol,
+                  "end_line" J..= endLine,
+                  "end_column" J..= endCol
+                ]
           ]
 
 class RenderError e where

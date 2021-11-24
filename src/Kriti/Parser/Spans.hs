@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+
 module Kriti.Parser.Spans where
 
 import GHC.Generics
@@ -7,7 +8,7 @@ import GHC.Generics
 --- Source Positions ---
 ------------------------
 
-data AlexSourcePos = AlexSourcePos { line :: !Int , col :: !Int }
+data AlexSourcePos = AlexSourcePos {line :: !Int, col :: !Int}
   deriving (Show, Read, Eq, Ord, Generic)
 
 overCol :: (Int -> Int) -> AlexSourcePos -> AlexSourcePos
@@ -23,7 +24,7 @@ alexStartPos = AlexSourcePos 1 1
 --- Spans ---
 -------------
 
-data Span = Span { start :: AlexSourcePos, end :: AlexSourcePos }
+data Span = Span {start :: AlexSourcePos, end :: AlexSourcePos}
   deriving (Show, Read, Eq, Ord, Generic)
 
 instance Semigroup Span where
@@ -50,7 +51,7 @@ data Loc a = Loc {getSpan :: Span, unLoc :: a}
 
 instance Semigroup a => Semigroup (Loc a) where
   Loc s1 a1 <> Loc s2 a2 = Loc (s1 <> s2) (a1 <> a2)
-  
+
 overSpan :: (Span -> Span) -> Loc a -> Loc a
 overSpan f (Loc s a) = Loc (f s) a
 
@@ -73,4 +74,3 @@ instance (Located a, Located b) => Located (Either a b) where
   locate = \case
     Left a -> locate a
     Right b -> locate b
-    

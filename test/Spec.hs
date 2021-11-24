@@ -69,23 +69,24 @@ normalizeSpans = fmap (P.overLoc (P.setSpan (P.Span P.alexStartPos P.alexStartPo
 parserSpec :: Spec
 parserSpec = describe "Parser" $ do
   parserGoldenSpec
-  -- TODO: Round Trip tests don't make sense with spans unless we also
-  -- have a pretty printer. This test should be reintroduced and
-  -- rewritten once we have a working pretty printer.
-  -- 
-  -- describe "QuickCheck" $
-  --   it "matches Aeson for standard JSON values" $
-  --     Q.property $ \value ->
-  --       let serialized = J.encode @J.Value value -- Serialized JSON via Aeson
-  --           tokens = P.parser $ BL.toStrict serialized -- Either _ ValueExt via kriti
-  --           --viaAeson = fromJust $ J.decode @P.ValueExt serialized
-  --        in case tokens of
-  --             Left err -> expectationFailure (show $ render err)
-  --             Right viaKriti ->
-  --               let serializedKriti = BL8.fromStrict $ encodeUtf8 $ P.serialize viaKriti
-  --               in case J.decode @J.Value serializedKriti of
-  --                 Nothing -> expectationFailure $ "Failed to roundtrip '" <> T.unpack (decodeUtf8 $ BL8.toStrict serialized) <> "'."
-  --                 Just _ -> pure () -- viaKriti `shouldBe` viaAeson
+
+-- TODO: Round Trip tests don't make sense with spans unless we also
+-- have a pretty printer. This test should be reintroduced and
+-- rewritten once we have a working pretty printer.
+--
+-- describe "QuickCheck" $
+--   it "matches Aeson for standard JSON values" $
+--     Q.property $ \value ->
+--       let serialized = J.encode @J.Value value -- Serialized JSON via Aeson
+--           tokens = P.parser $ BL.toStrict serialized -- Either _ ValueExt via kriti
+--           --viaAeson = fromJust $ J.decode @P.ValueExt serialized
+--        in case tokens of
+--             Left err -> expectationFailure (show $ render err)
+--             Right viaKriti ->
+--               let serializedKriti = BL8.fromStrict $ encodeUtf8 $ P.serialize viaKriti
+--               in case J.decode @J.Value serializedKriti of
+--                 Nothing -> expectationFailure $ "Failed to roundtrip '" <> T.unpack (decodeUtf8 $ BL8.toStrict serialized) <> "'."
+--                 Just _ -> pure () -- viaKriti `shouldBe` viaAeson
 
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
@@ -274,7 +275,7 @@ instance (Q.Arbitrary a) => Q.Arbitrary (P.Loc a) where
   arbitrary = QAG.genericArbitrary
   shrink = QAG.genericShrink
 
-instance  Q.Arbitrary P.Span where
+instance Q.Arbitrary P.Span where
   arbitrary = QAG.genericArbitrary
   shrink = QAG.genericShrink
 

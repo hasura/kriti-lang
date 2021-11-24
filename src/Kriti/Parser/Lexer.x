@@ -17,7 +17,7 @@ tokens :-
 <0, expr> $white+                 ;
 
 -- Comments
-<0, expr> "#".*                         ;
+<0, expr> "#".*                   ;
 
 -- Syntax
 <0> range                                      { token TokIdentifier }
@@ -83,17 +83,17 @@ tokens :-
 <0, expr> \-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\+\-]?[0-9]+)? { token (\loc -> TokNumLit (unLoc loc) (read . T.unpack <$> loc)) }
 <0> \:                                                      { symbol SymColon }
 <0, expr> \.                                                { symbol SymDot }
-<0, expr> \,                                                      { symbol SymComma }
-<0, expr> \==                                                     { symbol SymEq }
-<0, expr> \>                                                      { symbol SymGt }
-<0, expr> \<                                                      { symbol SymLt }
-<0, expr> \<                                                      { symbol SymLt }
-<0, expr> \&\&                                                    { symbol SymAnd }
-<0, expr> \|\|                                                    { symbol SymOr }
-<0, expr> \_                                                      { symbol SymUnderscore }
-<0, expr> \:\=                                                    { symbol SymAssignment }
-<0, expr> \{                                                      { symbol SymCurlyOpen }
-<0, expr> \}                                                      { symbol SymCurlyClose }
+<0, expr> \,                                                { symbol SymComma }
+<0, expr> \==                                               { symbol SymEq }
+<0, expr> \>                                                { symbol SymGt }
+<0, expr> \<                                                { symbol SymLt }
+<0, expr> \<                                                { symbol SymLt }
+<0, expr> \&\&                                              { symbol SymAnd }
+<0, expr> \|\|                                              { symbol SymOr }
+<0, expr> \_                                                { symbol SymUnderscore }
+<0, expr> \:\=                                              { symbol SymAssignment }
+<0, expr> \{                                                { symbol SymCurlyOpen }
+<0, expr> \}                                                { symbol SymCurlyClose }
 
 -- When we encounter a `{{` we push an <expr> code. This way we know
 -- when to parse two `}` as `SymDoubleCurlyClose` rather then as two
@@ -106,7 +106,7 @@ tokens :-
 <0, expr> \)                                                { symbol SymParenClose }
 
 {
--- | Our monadic wrapper for `alexScan`. We hold the latest
+-- | Our monadic wrapper for `alexScan`.
 scan :: Parser Token
 scan = do
   input <- getInput

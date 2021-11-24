@@ -12,9 +12,9 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
 import Kriti.Error
-import qualified Network.URI as URI
 import Kriti.Parser.Spans
 import Kriti.Parser.Token
+import qualified Network.URI as URI
 
 data EvalError
   = -- | The first SourcePosition is the point where the lookup failed
@@ -72,11 +72,12 @@ eval = \case
   Object _ fields -> J.Object <$> traverse eval fields
   StringTem sp ts -> do
     vals <- traverse eval ts
-    str <- vals & flip foldlM mempty \acc -> \case
-      J.String val' -> pure $ acc <> val'
-      J.Number i -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode i)
-      J.Bool p -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode p)
-      t -> throwError $ TypeError sp $ "Cannot interpolate type: '" <> serializeType t <> "'."
+    str <-
+      vals & flip foldlM mempty \acc -> \case
+        J.String val' -> pure $ acc <> val'
+        J.Number i -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode i)
+        J.Bool p -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode p)
+        t -> throwError $ TypeError sp $ "Cannot interpolate type: '" <> serializeType t <> "'."
     pure $ J.String str
   Array _ xs -> J.Array <$> traverse eval xs
   Path _ path -> do

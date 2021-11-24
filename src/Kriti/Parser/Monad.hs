@@ -15,20 +15,21 @@ import Kriti.Parser.Spans
 import Kriti.Parser.Token
 
 data ParserState = ParserState
-  { parseInput :: {-# UNPACK #-} !AlexInput
-  , parseStartCodes :: {-# UNPACK #-} !(NE.NonEmpty Int)
-  , parseSpan :: !Span
+  { parseInput :: {-# UNPACK #-} !AlexInput,
+    parseStartCodes :: {-# UNPACK #-} !(NE.NonEmpty Int),
+    parseSpan :: !Span
   }
 
 initState :: [Int] -> B.ByteString -> ParserState
-initState codes bs = ParserState
-  { parseInput      = AlexInput (AlexSourcePos 0 1) '\n' bs []
-  , parseStartCodes = NE.fromList (codes ++ [0])
-  , parseSpan       = Span (AlexSourcePos 0 1) (AlexSourcePos 0 1)
-  }
-  
-newtype Parser a = Parser { unParser :: StateT ParserState (Except ParseError) a }
-    deriving newtype (Functor, Applicative, Monad, MonadState ParserState, MonadError ParseError)
+initState codes bs =
+  ParserState
+    { parseInput = AlexInput (AlexSourcePos 0 1) '\n' bs [],
+      parseStartCodes = NE.fromList (codes ++ [0]),
+      parseSpan = Span (AlexSourcePos 0 1) (AlexSourcePos 0 1)
+    }
+
+newtype Parser a = Parser {unParser :: StateT ParserState (Except ParseError) a}
+  deriving newtype (Functor, Applicative, Monad, MonadState ParserState, MonadError ParseError)
 
 runParser :: [Int] -> B.ByteString -> Parser a -> Either ParseError a
 runParser codes bs p = runExcept $ evalStateT (unParser p) (initState codes bs)
@@ -39,15 +40,16 @@ runParser codes bs p = runExcept $ evalStateT (unParser p) (initState codes bs)
 
 {-# INLINE advance #-}
 advance :: AlexInput -> Parser ()
-advance input@AlexInput{ lexPos } = do
+advance input@AlexInput {lexPos} = do
   modify' $ \s ->
-    s { parseInput = input
-      , parseSpan = Span (end $ parseSpan s) lexPos
+    s
+      { parseInput = input,
+        parseSpan = Span (end $ parseSpan s) lexPos
       }
 
 {-# INLINE setInput #-}
 setInput :: AlexInput -> Parser ()
-setInput input = modify' $ \s -> s { parseInput = input }
+setInput input = modify' $ \s -> s {parseInput = input}
 
 {-# INLINE getInput #-}
 getInput :: Parser AlexInput
@@ -78,48 +80,49 @@ startCode = gets (NE.head . parseStartCodes)
 -- | Push a new start code to the stack.
 pushStartCode :: Int -> Parser ()
 pushStartCode code = modify' $ \st ->
-  st { parseStartCodes = code NE.<| (parseStartCodes st) }
+  st {parseStartCodes = code NE.<| (parseStartCodes st)}
 
 -- | Pop a start code off the stack.
 popStartCode :: Parser ()
 popStartCode = modify' $ \st ->
-  st { parseStartCodes =
-       case parseStartCodes st of
-         _ NE.:| []     -> 0 NE.:| []
-         _ NE.:| (x:xs) -> x NE.:| xs
-       }
+  st
+    { parseStartCodes =
+        case parseStartCodes st of
+          _ NE.:| [] -> 0 NE.:| []
+          _ NE.:| (x : xs) -> x NE.:| xs
+    }
 
 ----------------------
 --- Error Handling ---
 ----------------------
 
-data ParseError =
-    EmptyTokenStream Span
+data ParseError
+  = EmptyTokenStream Span
   | UnexpectedToken (Loc Token)
   | InvalidLexeme AlexSourcePos B.ByteString
-  deriving Show
+  deriving (Show)
 
 instance E.RenderError ParseError where
   render (EmptyTokenStream s) =
     E.RenderedError
-      { _code = E.ParseErrorCode
-      , _message = "ParseError: Empty token stream."
-      , _span = s
+      { _code = E.ParseErrorCode,
+        _message = "ParseError: Empty token stream.",
+        _span = s
       }
   render (UnexpectedToken tok) =
     let tok' = serialize $ unLoc tok
         span' = locate tok
-    in E.RenderedError
-      { _code = E.ParseErrorCode
-      , _message = "ParseError: Unexpected token '" <> tok' <> "'."
-      , _span = span'
-      }
+     in E.RenderedError
+          { _code = E.ParseErrorCode,
+            _message = "ParseError: Unexpected token '" <> tok' <> "'.",
+            _span = span'
+          }
   render (InvalidLexeme start inp) =
     E.RenderedError
-        { _code = E.LexErrorCode
-        , _message = "LexError: Invalid Lexeme: '" <> TE.decodeUtf8 inp <> "'"
-        , _span = Span start (overCol (+ (B.length inp)) start)
-        }
+      { _code = E.LexErrorCode,
+        _message = "LexError: Invalid Lexeme: '" <> TE.decodeUtf8 inp <> "'",
+        _span = Span start (overCol (+ (B.length inp)) start)
+      }
 
 parseError :: ParseError -> Parser a
 parseError err = throwError err
@@ -146,65 +149,68 @@ symbol sym _ = do
 -----------------------
 
 data AlexInput = AlexInput
-  { lexPos :: AlexSourcePos
-  , lexPrevChar   :: Char
-  , lexBytes :: B.ByteString
-  -- ^ current input bytestring
-  , lexCharBytes :: [Word8]
-  -- ^ remaining bytes in current character
+  { lexPos :: AlexSourcePos,
+    lexPrevChar :: Char,
+    -- | current input bytestring
+    lexBytes :: B.ByteString,
+    -- | remaining bytes in current character
+    lexCharBytes :: [Word8]
   }
 
 {-# INLINE nextLine #-}
 nextLine :: B.ByteString -> AlexInput -> AlexInput
-nextLine rest AlexInput{..} = AlexInput
-  { lexPos = lexPos { line = line lexPos + 1, col = 1 }
-  , lexPrevChar = '\n'
-  , lexBytes = rest
-  , lexCharBytes = []
-  }
+nextLine rest AlexInput {..} =
+  AlexInput
+    { lexPos = lexPos {line = line lexPos + 1, col = 1},
+      lexPrevChar = '\n',
+      lexBytes = rest,
+      lexCharBytes = []
+    }
 
 {-# INLINE nextCol #-}
 nextCol :: Char -> B.ByteString -> AlexInput -> AlexInput
-nextCol c rest AlexInput{..} = AlexInput
-  { lexPos = lexPos { col = col lexPos + 1 }
-  , lexPrevChar = c
-  , lexBytes = rest
-  , ..
-  }
+nextCol c rest AlexInput {..} =
+  AlexInput
+    { lexPos = lexPos {col = col lexPos + 1},
+      lexPrevChar = c,
+      lexBytes = rest,
+      ..
+    }
 
 {-# INLINE popBufferedBytes #-}
 popBufferedBytes :: AlexInput -> Maybe (Word8, AlexInput)
-popBufferedBytes AlexInput{..} = 
+popBufferedBytes AlexInput {..} =
   case lexCharBytes of
     [] -> Nothing
-    (b : bs) -> Just (b, AlexInput { lexCharBytes = bs, .. })
+    (b : bs) -> Just (b, AlexInput {lexCharBytes = bs, ..})
 
 {-# INLINE bufferBytes #-}
 bufferBytes :: Char -> [Word8] -> B.ByteString -> AlexInput -> AlexInput
-bufferBytes c bytes rest AlexInput{..} = AlexInput
-  { lexPrevChar = c
-  , lexBytes = rest
-  , lexCharBytes = bytes
-  , ..
-  }
+bufferBytes c bytes rest AlexInput {..} =
+  AlexInput
+    { lexPrevChar = c,
+      lexBytes = rest,
+      lexCharBytes = bytes,
+      ..
+    }
 
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte input@AlexInput{..} =
+alexGetByte input@AlexInput {..} =
   case popBufferedBytes input of
     Nothing -> advance' <$> UTFBS.uncons lexBytes
-    ok      -> ok
+    ok -> ok
   where
     advance' :: (Char, B.ByteString) -> (Word8, AlexInput)
     advance' ('\n', rest) = (B.c2w '\n', nextLine rest input)
-    advance' (c, rest)   =
+    advance' (c, rest) =
       case UTF8.encodeChar c of
-        [b]    -> (b, nextCol c rest input)
-        (b:bs) -> (b, bufferBytes c bs rest input)
-        []     -> error "The impossible happened! A Char decoded to 0 bytes."
+        [b] -> (b, nextCol c rest input)
+        (b : bs) -> (b, bufferBytes c bs rest input)
+        [] -> error "The impossible happened! A Char decoded to 0 bytes."
 
 alexPrevInputChar :: AlexInput -> Char
 alexPrevInputChar = lexPrevChar
 
 {-# INLINE slice #-}
 slice :: Int -> AlexInput -> B.ByteString
-slice n AlexInput{..} = B.take n lexBytes
+slice n AlexInput {..} = B.take n lexBytes
