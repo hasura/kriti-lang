@@ -47,6 +47,9 @@ jobs:
           ghc-version: "8.10.7"
           cabal-version: "3.4"
 
+      - name: "Install Happy/Alex"
+        run: sudo apt-get install happy alex
+
       - name: "Cache"
         uses: actions/cache@v2
         env:
