@@ -79,8 +79,8 @@ tokens :-
 <literal> (\\ \\ | \\ \` | [^ \' \{ ])+ { token TokStringLit }
 <literal> \'                            { \b -> (popStartCode *> symbol SymSingleQuote b) }
 
-<0, expr> \-? $digit+                                       { token (\loc -> TokIntLit (unlocate loc) (read . T.unpack <$> loc)) }
-<0, expr> \-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\+\-]?[0-9]+)? { token (\loc -> TokNumLit (unlocate loc) (read . T.unpack <$> loc)) }
+<0, expr> \-? $digit+                                       { token (\loc -> TokIntLit (unLoc loc) (read . T.unpack <$> loc)) }
+<0, expr> \-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\+\-]?[0-9]+)? { token (\loc -> TokNumLit (unLoc loc) (read . T.unpack <$> loc)) }
 <0> \:                                                      { symbol SymColon }
 <0, expr> \.                                                { symbol SymDot }
 <0, expr> \,                                                      { symbol SymComma }
@@ -113,8 +113,8 @@ scan = do
   code <- startCode
   case alexScan input code of
     AlexEOF -> pure EOF
-    AlexError (AlexInput pos _ _ _) ->
-      parseError $ InvalidLexeme pos
+    AlexError (AlexInput pos _ inp _) ->
+      parseError $ InvalidLexeme pos inp
     AlexSkip rest _ -> do
       advance rest
       scan

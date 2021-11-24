@@ -45,14 +45,17 @@ setEnd sp (Span start _) = Span start sp
 --- Locations ---
 -----------------
 
-data Loc a = Loc Span a
+data Loc a = Loc {getSpan :: Span, unLoc :: a}
   deriving (Show, Eq, Ord, Functor, Generic)
 
 instance Semigroup a => Semigroup (Loc a) where
   Loc s1 a1 <> Loc s2 a2 = Loc (s1 <> s2) (a1 <> a2)
   
-unlocate :: Loc a -> a
-unlocate (Loc _ a) = a
+overSpan :: (Span -> Span) -> Loc a -> Loc a
+overSpan f (Loc s a) = Loc (f s) a
+
+setSpan :: Span -> Loc a -> Loc a
+setSpan s loc = overSpan (const s) loc
 
 class Located a where
   locate :: a -> Span
@@ -63,7 +66,7 @@ instance Located Span where
 
 instance Located (Loc a) where
   {-# INLINE locate #-}
-  locate (Loc sp _) = sp
+  locate = getSpan
 
 instance (Located a, Located b) => Located (Either a b) where
   {-# INLINE locate #-}

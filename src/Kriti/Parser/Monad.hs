@@ -94,33 +94,32 @@ popStartCode = modify' $ \st ->
 ----------------------
 
 data ParseError =
-    EmptyTokenStream
+    EmptyTokenStream Span
   | UnexpectedToken (Loc Token)
-  | InvalidLexeme AlexSourcePos
+  | InvalidLexeme AlexSourcePos B.ByteString
   deriving Show
 
 instance E.RenderError ParseError where
-   -- TODO: When failing with an empty token stream, the span should end at the last known token.
-  render EmptyTokenStream =
+  render (EmptyTokenStream s) =
     E.RenderedError
       { _code = E.ParseErrorCode
       , _message = "ParseError: Empty token stream."
-      , _span = error "TODO"
+      , _span = s
       }
   render (UnexpectedToken tok) =
-    let tok' = serialize $ unlocate tok
+    let tok' = serialize $ unLoc tok
         span' = locate tok
     in E.RenderedError
       { _code = E.ParseErrorCode
       , _message = "ParseError: Unexpected token '" <> tok' <> "'."
       , _span = span'
       }
-  render (InvalidLexeme _) =
+  render (InvalidLexeme start inp) =
     E.RenderedError
-      { _code = E.LexErrorCode
-      , _message = "LexError: Invalid Lexeme."
-      , _span = error "TODO"
-      }
+        { _code = E.LexErrorCode
+        , _message = "LexError: Invalid Lexeme: '" <> TE.decodeUtf8 inp <> "'"
+        , _span = Span start (overCol (+ (B.length inp)) start)
+        }
 
 parseError :: ParseError -> Parser a
 parseError err = throwError err
@@ -138,7 +137,9 @@ token k bs = k <$> located (TE.decodeUtf8 bs)
 -- to construct the `Loc _`.
 {-# INLINE symbol #-}
 symbol :: Symbol -> B.ByteString -> Parser Token
-symbol sym _ = TokSymbol sym <$> location
+symbol sym _ = do
+  sp <- location
+  pure $ TokSymbol $ Loc sp sym
 
 -----------------------
 --- Alex Primitives ---

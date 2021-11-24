@@ -28,8 +28,8 @@ int         { TokIntLit _ $$ }
 'true'      { TokBoolLit $$ }
 'false'     { TokBoolLit $$ }
 
-'s"'        { TokSymbol SymStringBegin $$ }
-'"e'        { TokSymbol SymStringEnd $$ }
+'s"'        { TokSymbol (Loc $$ SymStringBegin) }
+'"e'        { TokSymbol (Loc $$ SymStringEnd) }
 string      { TokStringLit $$ }
 
 'if'        { TokIdentifier (Loc $$ "if") }
@@ -40,25 +40,25 @@ string      { TokStringLit $$ }
 'escapeUri' { TokIdentifier (Loc $$ "escapeUri") }
 ident       { TokIdentifier $$ }
 
-'\''        { TokSymbol SymSingleQuote $$ }
-':'         { TokSymbol SymColon $$ }
-'.'         { TokSymbol SymDot $$ }
-','         { TokSymbol SymComma $$ }
-'=='        { TokSymbol SymEq $$ }
-'>'         { TokSymbol SymGt $$ }
-'<'         { TokSymbol SymLt $$ }
-'&&'        { TokSymbol SymAnd $$ }
-'||'        { TokSymbol SymOr $$ }
-'_'         { TokSymbol SymUnderscore $$ }
-':='        { TokSymbol SymAssignment $$ }
-'{'         { TokSymbol SymCurlyOpen $$ }
-'}'         { TokSymbol SymCurlyClose $$ }
-'{{'        { TokSymbol SymDoubleCurlyOpen $$ }
-'}}'        { TokSymbol SymDoubleCurlyClose $$ }
-'['         { TokSymbol SymSquareOpen $$ }
-']'         { TokSymbol SymSquareClose $$ }
-'('         { TokSymbol SymParenOpen $$ }
-')'         { TokSymbol SymParenClose $$ }
+'\''        { TokSymbol (Loc $$ SymSingleQuote) }
+':'         { TokSymbol (Loc $$ SymColon) }
+'.'         { TokSymbol (Loc $$ SymDot) }
+','         { TokSymbol (Loc $$ SymComma) }
+'=='        { TokSymbol (Loc $$ SymEq) }
+'>'         { TokSymbol (Loc $$ SymGt) }
+'<'         { TokSymbol (Loc $$ SymLt) }
+'&&'        { TokSymbol (Loc $$ SymAnd) }
+'||'        { TokSymbol (Loc $$ SymOr) }
+'_'         { TokSymbol (Loc $$ SymUnderscore) }
+':='        { TokSymbol (Loc $$ SymAssignment) }
+'{'         { TokSymbol (Loc $$ SymCurlyOpen) }
+'}'         { TokSymbol (Loc $$ SymCurlyClose) }
+'{{'        { TokSymbol (Loc $$ SymDoubleCurlyOpen) }
+'}}'        { TokSymbol (Loc $$ SymDoubleCurlyClose) }
+'['         { TokSymbol (Loc $$ SymSquareOpen) }
+']'         { TokSymbol (Loc $$ SymSquareClose) }
+'('         { TokSymbol (Loc $$ SymParenOpen) }
+')'         { TokSymbol (Loc $$ SymParenClose) }
 
 %left '<' '>' '==' '||' '&&' functions
 
@@ -73,11 +73,11 @@ string_template
   -- Template to the right
   : string_template '{{' template '}}' { V.snoc $1 $3 }
   -- String Lit to the right
-  | string_template string { V.snoc $1 (String (locate $2) (unlocate $2)) }
+  | string_template string { V.snoc $1 (String (locate $2) (unLoc $2)) }
   -- Template Base Case
   | '{{' template '}}' { V.singleton $2 }
   -- String Base Case
-  | string { V.singleton (String (locate $1) (unlocate $1))}
+  | string { V.singleton (String (locate $1) (unLoc $1))}
 
 template :: { ValueExt }
 template
@@ -88,13 +88,13 @@ template
 
 num_lit :: { ValueExt }
 num_lit
-  : number { Number (locate $1) (unlocate $1)  }
-  | int { Number (locate $1) (S.scientific (fromIntegral (unlocate $1)) 0) }
+  : number { Number (locate $1) (unLoc $1)  }
+  | int { Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0) }
 
 boolean :: { ValueExt }
 boolean
-  : 'true'  { Boolean (locate $1) (unlocate $1) }
-  | 'false' { Boolean (locate $1) (unlocate $1) }
+  : 'true'  { Boolean (locate $1) (unLoc $1) }
+  | 'false' { Boolean (locate $1) (unLoc $1) }
 
 null :: { ValueExt }
 null
@@ -122,7 +122,7 @@ object_fields
 
 object_field :: { (T.Text, ValueExt) }
 object_field
-  : 's"' string '"e' ':' term { (unlocate $2, $5) }
+  : 's"' string '"e' ':' term { (unLoc $2, $5) }
 
 operator :: { ValueExt }
 operator
@@ -162,8 +162,8 @@ range
 
 range_decl :: { Span -> ValueExt -> ValueExt }
 range_decl
-  : '{{' 'range' ident ',' ident ':=' path_vector '}}' { \s b -> Range (locate $1 <> s) (Just (unlocate $3)) (unlocate $5) (snd $7) b }
-  | '{{' 'range' '_' ',' ident ':=' path_vector '}}' { \s b -> Range (locate $1 <> s) Nothing (unlocate $5) (snd $7) b }
+  : '{{' 'range' ident ',' ident ':=' path_vector '}}' { \s b -> Range (locate $1 <> s) (Just (unLoc $3)) (unLoc $5) (snd $7) b }
+  | '{{' 'range' '_' ',' ident ':=' path_vector '}}' { \s b -> Range (locate $1 <> s) Nothing (unLoc $5) (snd $7) b }
 
 path :: { ValueExt }
 path
@@ -171,8 +171,8 @@ path
 
 path_vector :: { (Span, V.Vector Accessor) }
 path_vector
-  : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) (unlocate $1)) (snd $2))  }
-  | ident { (locate $1, V.singleton (Obj (locate $1) (unlocate $1))) }
+  : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) (unLoc $1)) (snd $2))  }
+  | ident { (locate $1, V.singleton (Obj (locate $1) (unLoc $1))) }
 
 path_tail :: { (Span, V.Vector Accessor) }
 path_tail
@@ -181,9 +181,9 @@ path_tail
 
 path_element :: { Accessor }
 path_element
-  : '.' ident { Obj (locate $1 <> locate $2) (unlocate $2) }
-  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) (unlocate $3) }
-  | '[' int ']' { Arr (locate $1 <> locate $3) (unlocate $2) }
+  : '.' ident { Obj (locate $1 <> locate $2) (unLoc $2) }
+  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) (unLoc $3) }
+  | '[' int ']' { Arr (locate $1 <> locate $3) (unLoc $2) }
 
 value :: { ValueExt }
 value
@@ -211,7 +211,9 @@ term
 
 {
 failure :: [Token] -> Parser a
-failure [] = parseError EmptyTokenStream
+failure [] = do
+  sp <- location
+  parseError $ EmptyTokenStream sp
 failure (tok:_) = do
   sp <- location
   parseError $ UnexpectedToken (Loc sp tok)

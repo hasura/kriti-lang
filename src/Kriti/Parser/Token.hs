@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE RankNTypes #-}
 module Kriti.Parser.Token where
 
 import qualified Data.Aeson as J
@@ -36,7 +37,7 @@ data Symbol =
   deriving (Show, Eq, Ord, Generic)
 
 data Token =
-    TokSymbol Symbol Span
+    TokSymbol (Loc Symbol)
   | TokStringLit (Loc T.Text)
   | TokIdentifier (Loc T.Text)
   | TokNumLit T.Text (Loc Scientific)
@@ -45,36 +46,45 @@ data Token =
   | EOF
   deriving (Show, Eq, Ord, Generic)
 
+overLoc :: (forall a. Loc a -> Loc a) -> Token -> Token
+overLoc f (TokSymbol loc) = TokSymbol $ f loc
+overLoc f (TokStringLit loc) = TokStringLit $ f loc
+overLoc f (TokIdentifier loc) = TokIdentifier $ f loc
+overLoc f (TokNumLit txt loc) = TokNumLit txt $ f loc
+overLoc f (TokIntLit txt loc) = TokIntLit txt $ f loc
+overLoc f (TokBoolLit loc) = TokBoolLit $ f loc
+overLoc _ EOF = EOF
+
 serialize :: Token -> T.Text
 serialize = \case
-  TokStringLit str ->  "\"" <> unlocate str <> "\""
-  TokIdentifier iden -> unlocate iden
+  TokStringLit str ->  "\"" <> unLoc str <> "\""
+  TokIdentifier iden -> unLoc iden
   TokIntLit str _ -> str
   TokNumLit str _ -> str
   TokBoolLit (Loc _ True) -> "true"
   TokBoolLit (Loc _ False) -> "false"
-  TokSymbol SymBling _ -> "$"
-  TokSymbol SymColon _ -> ":"
-  TokSymbol SymDot _ -> "."
-  TokSymbol SymComma _ -> ","
-  TokSymbol SymSingleQuote _ -> "'"
-  TokSymbol SymDoubleCurlyOpen _ -> "{{"
-  TokSymbol SymDoubleCurlyClose _ -> "}}"
-  TokSymbol SymEq _ -> "=="
-  TokSymbol SymGt _ -> ">"
-  TokSymbol SymLt _ -> "<"
-  TokSymbol SymAnd _ -> "&&"
-  TokSymbol SymOr _ -> "||"
-  TokSymbol SymCurlyOpen _ -> "{"
-  TokSymbol SymCurlyClose _ -> "}"
-  TokSymbol SymSquareOpen _ -> "["
-  TokSymbol SymSquareClose _ -> "]"
-  TokSymbol SymParenOpen _ -> "("
-  TokSymbol SymParenClose _ -> ")"
-  TokSymbol SymUnderscore _ -> "_"
-  TokSymbol SymAssignment _ -> ":="
-  TokSymbol SymStringBegin _ -> "\""
-  TokSymbol SymStringEnd _ -> "\""
+  TokSymbol (Loc _ SymBling) -> "$"
+  TokSymbol (Loc _ SymColon) -> ":"
+  TokSymbol (Loc _ SymDot) -> "."
+  TokSymbol (Loc _ SymComma) -> ","
+  TokSymbol (Loc _ SymSingleQuote) -> "'"
+  TokSymbol (Loc _ SymDoubleCurlyOpen) -> "{{"
+  TokSymbol (Loc _ SymDoubleCurlyClose) -> "}}"
+  TokSymbol (Loc _ SymEq) -> "=="
+  TokSymbol (Loc _ SymGt) -> ">"
+  TokSymbol (Loc _ SymLt) -> "<"
+  TokSymbol (Loc _ SymAnd) -> "&&"
+  TokSymbol (Loc _ SymOr) -> "||"
+  TokSymbol (Loc _ SymCurlyOpen) -> "{"
+  TokSymbol (Loc _ SymCurlyClose) -> "}"
+  TokSymbol (Loc _ SymSquareOpen) -> "["
+  TokSymbol (Loc _ SymSquareClose) -> "]"
+  TokSymbol (Loc _ SymParenOpen) -> "("
+  TokSymbol (Loc _ SymParenClose) -> ")"
+  TokSymbol (Loc _ SymUnderscore) -> "_"
+  TokSymbol (Loc _ SymAssignment) -> ":="
+  TokSymbol (Loc _ SymStringBegin) -> "\""
+  TokSymbol (Loc _ SymStringEnd) -> "\""
   EOF -> ""
 
 data Accessor = Obj Span T.Text | Arr Span Int
@@ -82,9 +92,11 @@ data Accessor = Obj Span T.Text | Arr Span Int
 
 renderAccessor :: Accessor -> T.Text
 renderAccessor = \case
-  Obj _ txt -> txt
-  Arr _ i -> T.pack $ show i
+    -- TODO: Doesn't correctly account for `['foo bar']` object lookup syntax
+    Obj _ txt -> txt
+    Arr _ i -> T.pack $ show i
 
+-- TODO: Should not insert a '.' when encountering an 'Arr' or square bracket object lookup
 renderPath :: V.Vector Accessor -> T.Text
 renderPath = mconcat . L.intersperse "." . V.toList . fmap renderAccessor
 
