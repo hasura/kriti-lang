@@ -2,7 +2,6 @@
 {-# LANGUAGE RankNTypes #-}
 module Kriti.Parser.Token where
 
-import qualified Data.Aeson as J
 import qualified Data.HashMap.Strict as M
 import qualified Data.List as L
 import Data.Scientific (Scientific)
@@ -121,17 +120,6 @@ data ValueExt
   | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
   | EscapeURI Span ValueExt
   deriving (Show, Eq, Read, Generic)
-
-instance J.FromJSON ValueExt where
-  parseJSON = \case
-  -- TODO: Does this instance make sense given spans?
-    J.Null -> pure undefined Null
-    J.String s -> pure $ String undefined s
-    J.Number i -> pure $ Number undefined i
-    J.Bool p -> pure $ Boolean undefined p
-    J.Array arr -> Array undefined <$> traverse J.parseJSON arr
-    J.Object obj | null obj -> pure $ Null undefined
-    J.Object obj -> Object undefined <$> traverse J.parseJSON obj
 
 instance Located ValueExt where
   locate = \case

@@ -39,11 +39,11 @@ getSourcePos (RangeError pos) = pos
 evalPath :: J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath ctx path =
   let step :: Monad m => J.Value -> (Accessor) -> ExceptT EvalError m J.Value
-      step (J.Object o) (Obj _ k) = maybe (throwError $ InvalidPath undefined path) pure $ M.lookup k o
-      step (J.Array xs) (Arr _ i) = maybe (throwError $ InvalidPath undefined path) pure $ xs V.!? i
+      step (J.Object o) (Obj sp k) = maybe (throwError $ InvalidPath sp path) pure $ M.lookup k o
+      step (J.Array xs) (Arr sp i) = maybe (throwError $ InvalidPath sp path) pure $ xs V.!? i
       -- TODO: Should we extend this error message with the local Context?
-      step _ (Obj _ _) = throwError $ TypeError undefined "Expected object"
-      step _ (Arr _ _) = throwError $ TypeError undefined "Expected array"
+      step _ (Obj sp _) = throwError $ TypeError sp "Expected object"
+      step _ (Arr sp _) = throwError $ TypeError sp "Expected array"
    in foldlM step ctx path
 
 isString :: J.Value -> Bool
@@ -82,11 +82,11 @@ eval = \case
   Path _ path -> do
     ctx <- ask
     evalPath (J.Object ctx) path
-  Iff _ p t1 t2 ->
+  Iff sp p t1 t2 ->
     eval p >>= \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
-      p' -> throwError $ TypeError undefined $ T.pack $ show p' <> "' is not a boolean."
+      p' -> throwError $ TypeError sp $ T.pack $ show p' <> "' is not a boolean."
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
@@ -98,39 +98,39 @@ eval = \case
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' > t2'
-  And _ t1 t2 -> do
+  And sp t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p && q
-      (t1'', J.Bool _) -> throwError $ TypeError undefined $ T.pack $ show t1'' <> "' is not a boolean."
-      (_, t2'') -> throwError $ TypeError undefined $ T.pack $ show t2'' <> "' is not a boolean."
-  Or _ t1 t2 -> do
+      (t1'', J.Bool _) -> throwError $ TypeError sp $ T.pack $ show t1'' <> "' is not a boolean."
+      (_, t2'') -> throwError $ TypeError sp $ T.pack $ show t2'' <> "' is not a boolean."
+  Or sp t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p || q
-      (t1'', J.Bool _) -> throwError $ TypeError undefined $ T.pack $ show t1'' <> "' is not a boolean."
-      (_, t2'') -> throwError $ TypeError undefined $ T.pack $ show t2'' <> "' is not a boolean."
-  Member _ t ts -> do
+      (t1'', J.Bool _) -> throwError $ TypeError sp $ T.pack $ show t1'' <> "' is not a boolean."
+      (_, t2'') -> throwError $ TypeError sp $ T.pack $ show t2'' <> "' is not a boolean."
+  Member sp t ts -> do
     ts' <- eval ts
     case ts' of
       J.Array xs -> do
         t' <- eval t
         pure $ J.Bool $ t' `V.elem` xs
-      _ -> throwError $ TypeError undefined $ T.pack $ show ts' <> " is not an array."
-  Range _ idx binder path body -> do
+      _ -> throwError $ TypeError sp $ T.pack $ show ts' <> " is not an array."
+  Range sp idx binder path body -> do
     ctx <- ask
     pathResult <- evalPath (J.Object ctx) path
     case pathResult of
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
          in local (M.fromList newScope <>) (eval body)
-      _ -> throwError $ RangeError $ error "TODO SPANS" 
-  EscapeURI _ t1 -> do
+      _ -> throwError $ RangeError sp
+  EscapeURI sp t1 -> do
     t1' <- eval t1
     case t1' of
       J.String str ->
         let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
          in pure $ J.String escapedUri
-      _ -> throwError $ TypeError (error "TODO") $ T.pack $ show t1' <> " is not a string."
+      _ -> throwError $ TypeError sp $ T.pack $ show t1' <> " is not a string."
