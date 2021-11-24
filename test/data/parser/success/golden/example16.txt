@@ -1,83 +1,114 @@
 Iff
-    ( SourcePosition
-        { _sourceName = "sourceName"
-        , _line = 1
-        , _column = 1
-        }
-    , Just
-        ( SourcePosition
-            { _sourceName = "sourceName"
-            , _line = 1
-            , _column = 21
+    ( Span
+        { start = AlexSourcePos
+            { line = 0
+            , col = 1
             }
-        )
+        , end = AlexSourcePos
+            { line = 0
+            , col = 64
+            }
+        }
     )
     ( Eq
-        ( SourcePosition
-            { _sourceName = "sourceName"
-            , _line = 1
-            , _column = 21
-            }
-        , Just
-            ( SourcePosition
-                { _sourceName = "sourceName"
-                , _line = 1
-                , _column = 22
+        ( Span
+            { start = AlexSourcePos
+                { line = 0
+                , col = 7
                 }
-            )
+            , end = AlexSourcePos
+                { line = 0
+                , col = 29
+                }
+            }
         )
         ( Path
-            [
-                (
-                    ( SourcePosition
-                        { _sourceName = "sourceName"
-                        , _line = 1
-                        , _column = 7
+            ( Span
+                { start = AlexSourcePos
+                    { line = 0
+                    , col = 7
+                    }
+                , end = AlexSourcePos
+                    { line = 0
+                    , col = 20
+                    }
+                }
+            )
+            [ Obj
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 0
+                        , col = 7
                         }
-                    , Just
-                        ( SourcePosition
-                            { _sourceName = "sourceName"
-                            , _line = 1
-                            , _column = 8
-                            }
-                        )
-                    )
-                , Obj "$"
-                )
-            ,
-                (
-                    ( SourcePosition
-                        { _sourceName = "sourceName"
-                        , _line = 1
-                        , _column = 8
+                    , end = AlexSourcePos
+                        { line = 0
+                        , col = 8
                         }
-                    , Just
-                        ( SourcePosition
-                            { _sourceName = "sourceName"
-                            , _line = 1
-                            , _column = 10
-                            }
-                        )
-                    )
-                , Arr 0
-                )
-            ,
-                (
-                    ( SourcePosition
-                        { _sourceName = "sourceName"
-                        , _line = 1
-                        , _column = 11
+                    }
+                ) "$"
+            , Arr
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 0
+                        , col = 8
                         }
-                    , Just
-                        ( SourcePosition
-                            { _sourceName = "sourceName"
-                            , _line = 1
-                            , _column = 19
-                            }
-                        )
-                    )
-                , Obj "isActive"
-                )
+                    , end = AlexSourcePos
+                        { line = 0
+                        , col = 11
+                        }
+                    }
+                ) 0
+            , Obj
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 0
+                        , col = 11
+                        }
+                    , end = AlexSourcePos
+                        { line = 0
+                        , col = 20
+                        }
+                    }
+                ) "isActive"
             ]
-        ) ( Boolean False )
-    ) ( Boolean True ) ( Boolean False )
+        )
+        ( Boolean
+            ( Span
+                { start = AlexSourcePos
+                    { line = 0
+                    , col = 24
+                    }
+                , end = AlexSourcePos
+                    { line = 0
+                    , col = 29
+                    }
+                }
+            ) False
+        )
+    )
+    ( Boolean
+        ( Span
+            { start = AlexSourcePos
+                { line = 0
+                , col = 33
+                }
+            , end = AlexSourcePos
+                { line = 0
+                , col = 37
+                }
+            }
+        ) True
+    )
+    ( Boolean
+        ( Span
+            { start = AlexSourcePos
+                { line = 0
+                , col = 49
+                }
+            , end = AlexSourcePos
+                { line = 0
+                , col = 54
+                }
+            }
+        ) False
+    )

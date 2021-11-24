@@ -1,93 +1,104 @@
 Array
-    [ Range
-        ( SourcePosition
-            { _sourceName = "sourceName"
-            , _line = 1
-            , _column = 2
+    ( Span
+        { start = AlexSourcePos
+            { line = 0
+            , col = 1
             }
-        , Just
-            ( SourcePosition
-                { _sourceName = "sourceName"
-                , _line = 1
-                , _column = 65
+        , end = AlexSourcePos
+            { line = 0
+            , col = 66
+            }
+        }
+    )
+    [ Range
+        ( Span
+            { start = AlexSourcePos
+                { line = 0
+                , col = 2
                 }
-            )
+            , end = AlexSourcePos
+                { line = 0
+                , col = 65
+                }
+            }
         )
         ( Just "i" ) "x"
-        [
-            (
-                ( SourcePosition
-                    { _sourceName = "sourceName"
-                    , _line = 1
-                    , _column = 19
+        [ Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 0
+                    , col = 19
                     }
-                , Just
-                    ( SourcePosition
-                        { _sourceName = "sourceName"
-                        , _line = 1
-                        , _column = 20
-                        }
-                    )
-                )
-            , Obj "$"
-            )
-        ,
-            (
-                ( SourcePosition
-                    { _sourceName = "sourceName"
-                    , _line = 1
-                    , _column = 20
+                , end = AlexSourcePos
+                    { line = 0
+                    , col = 20
                     }
-                , Just
-                    ( SourcePosition
-                        { _sourceName = "sourceName"
-                        , _line = 1
-                        , _column = 26
-                        }
-                    )
-                )
-            , Obj "events"
-            )
+                }
+            ) "$"
+        , Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 0
+                    , col = 20
+                    }
+                , end = AlexSourcePos
+                    { line = 0
+                    , col = 27
+                    }
+                }
+            ) "events"
         ]
         ( Object
+            ( Span
+                { start = AlexSourcePos
+                    { line = 0
+                    , col = 31
+                    }
+                , end = AlexSourcePos
+                    { line = 0
+                    , col = 55
+                    }
+                }
+            )
             ( fromList
                 [
                     ( "name"
                     , Path
-                        [
-                            (
-                                ( SourcePosition
-                                    { _sourceName = "sourceName"
-                                    , _line = 1
-                                    , _column = 44
+                        ( Span
+                            { start = AlexSourcePos
+                                { line = 0
+                                , col = 41
+                                }
+                            , end = AlexSourcePos
+                                { line = 0
+                                , col = 53
+                                }
+                            }
+                        )
+                        [ Obj
+                            ( Span
+                                { start = AlexSourcePos
+                                    { line = 0
+                                    , col = 44
                                     }
-                                , Just
-                                    ( SourcePosition
-                                        { _sourceName = "sourceName"
-                                        , _line = 1
-                                        , _column = 45
-                                        }
-                                    )
-                                )
-                            , Obj "x"
-                            )
-                        ,
-                            (
-                                ( SourcePosition
-                                    { _sourceName = "sourceName"
-                                    , _line = 1
-                                    , _column = 45
+                                , end = AlexSourcePos
+                                    { line = 0
+                                    , col = 45
                                     }
-                                , Just
-                                    ( SourcePosition
-                                        { _sourceName = "sourceName"
-                                        , _line = 1
-                                        , _column = 49
-                                        }
-                                    )
-                                )
-                            , Obj "name"
-                            )
+                                }
+                            ) "x"
+                        , Obj
+                            ( Span
+                                { start = AlexSourcePos
+                                    { line = 0
+                                    , col = 45
+                                    }
+                                , end = AlexSourcePos
+                                    { line = 0
+                                    , col = 50
+                                    }
+                                }
+                            ) "name"
                         ]
                     )
                 ]

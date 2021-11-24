@@ -18,7 +18,7 @@ import Data.Maybe (fromJust)
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Text.Lazy as TL
 import qualified Data.Vector as V
 import Kriti.Error

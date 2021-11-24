@@ -18,7 +18,6 @@ data ParserState = ParserState
   { parseInput :: {-# UNPACK #-} !AlexInput
   , parseStartCodes :: {-# UNPACK #-} !(NE.NonEmpty Int)
   , parseSpan :: !Span
-  , parseTemplateFragment :: B.ByteString
   }
 
 initState :: [Int] -> B.ByteString -> ParserState

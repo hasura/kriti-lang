@@ -1,1 +1,1 @@
-RenderedError {_code = ParseErrorCode, _message = "1:1:\n  |\n1 | \n  | ^\nunexpected end of input\n", _span = (SourcePosition {_sourceName = "", _line = 1, _column = 1},Nothing)}
+RenderedError {_code = ParseErrorCode, _message = "ParseError: Unexpected token '}'.", _span = Span {start = AlexSourcePos {line = 0, col = 12}, end = AlexSourcePos {line = 1, col = 1}}}

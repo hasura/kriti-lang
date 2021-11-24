@@ -1,52 +1,76 @@
 Iff
-    ( SourcePosition
-        { _sourceName = "sourceName"
-        , _line = 1
-        , _column = 1
+    ( Span
+        { start = AlexSourcePos
+            { line = 0
+            , col = 1
+            }
+        , end = AlexSourcePos
+            { line = 0
+            , col = 42
+            }
         }
-    , Just
-        ( SourcePosition
-            { _sourceName = "sourceName"
-            , _line = 1
-            , _column = 8
+    )
+    ( Path
+        ( Span
+            { start = AlexSourcePos
+                { line = 0
+                , col = 7
+                }
+            , end = AlexSourcePos
+                { line = 0
+                , col = 12
+                }
+            }
+        )
+        [ Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 0
+                    , col = 7
+                    }
+                , end = AlexSourcePos
+                    { line = 0
+                    , col = 8
+                    }
+                }
+            ) "$"
+        , Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 0
+                    , col = 8
+                    }
+                , end = AlexSourcePos
+                    { line = 0
+                    , col = 12
+                    }
+                }
+            ) "foo"
+        ]
+    )
+    ( Number
+        ( Span
+            { start = AlexSourcePos
+                { line = 0
+                , col = 16
+                }
+            , end = AlexSourcePos
+                { line = 0
+                , col = 17
+                }
+            }
+        ) 1.0
+    )
+    ( Null
+        ( Span
+            { start = AlexSourcePos
+                { line = 0
+                , col = 29
+                }
+            , end = AlexSourcePos
+                { line = 0
+                , col = 33
+                }
             }
         )
     )
-    ( Path
-        [
-            (
-                ( SourcePosition
-                    { _sourceName = "sourceName"
-                    , _line = 1
-                    , _column = 7
-                    }
-                , Just
-                    ( SourcePosition
-                        { _sourceName = "sourceName"
-                        , _line = 1
-                        , _column = 8
-                        }
-                    )
-                )
-            , Obj "$"
-            )
-        ,
-            (
-                ( SourcePosition
-                    { _sourceName = "sourceName"
-                    , _line = 1
-                    , _column = 8
-                    }
-                , Just
-                    ( SourcePosition
-                        { _sourceName = "sourceName"
-                        , _line = 1
-                        , _column = 11
-                        }
-                    )
-                )
-            , Obj "foo"
-            )
-        ]
-    )
-    ( Number 1.0 ) Null

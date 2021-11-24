@@ -1,59 +1,91 @@
 Object
+    ( Span
+        { start = AlexSourcePos
+            { line = 0
+            , col = 1
+            }
+        , end = AlexSourcePos
+            { line = 0
+            , col = 28
+            }
+        }
+    )
     ( fromList
         [
             ( "foo"
-            , StringInterp
-                ( SourcePosition
-                    { _sourceName = "sourceName"
-                    , _line = 1
-                    , _column = 10
+            , StringTem
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 0
+                        , col = 10
+                        }
+                    , end = AlexSourcePos
+                        { line = 0
+                        , col = 26
+                        }
                     }
-                , Just
-                    ( SourcePosition
-                        { _sourceName = "sourceName"
-                        , _line = 1
-                        , _column = 27
+                )
+                [ String
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 0
+                            , col = 11
+                            }
+                        , end = AlexSourcePos
+                            { line = 0
+                            , col = 15
+                            }
+                        }
+                    ) "bar-"
+                , Path
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 0
+                            , col = 17
+                            }
+                        , end = AlexSourcePos
+                            { line = 0
+                            , col = 22
+                            }
                         }
                     )
-                )
-                [ String "bar-"
-                , Path
-                    [
-                        (
-                            ( SourcePosition
-                                { _sourceName = "sourceName"
-                                , _line = 1
-                                , _column = 1
+                    [ Obj
+                        ( Span
+                            { start = AlexSourcePos
+                                { line = 0
+                                , col = 17
                                 }
-                            , Just
-                                ( SourcePosition
-                                    { _sourceName = "sourceName"
-                                    , _line = 1
-                                    , _column = 2
-                                    }
-                                )
-                            )
-                        , Obj "$"
-                        )
-                    ,
-                        (
-                            ( SourcePosition
-                                { _sourceName = "sourceName"
-                                , _line = 1
-                                , _column = 2
+                            , end = AlexSourcePos
+                                { line = 0
+                                , col = 18
                                 }
-                            , Just
-                                ( SourcePosition
-                                    { _sourceName = "sourceName"
-                                    , _line = 1
-                                    , _column = 5
-                                    }
-                                )
-                            )
-                        , Obj "baz"
-                        )
+                            }
+                        ) "$"
+                    , Obj
+                        ( Span
+                            { start = AlexSourcePos
+                                { line = 0
+                                , col = 18
+                                }
+                            , end = AlexSourcePos
+                                { line = 0
+                                , col = 22
+                                }
+                            }
+                        ) "baz"
                     ]
-                , String "1"
+                , String
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 0
+                            , col = 24
+                            }
+                        , end = AlexSourcePos
+                            { line = 0
+                            , col = 25
+                            }
+                        }
+                    ) "1"
                 ]
             )
         ]

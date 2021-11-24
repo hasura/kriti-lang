@@ -14,15 +14,16 @@ $alphanum = [a-zA-Z09]
 tokens :-
 
 -- Whitespace insensitive
-<0, template, braces> $white+                       ;
+<0, expr> $white+                 ;
 
 -- Comments
-<0> "#".*                         ;
+<0, expr> "#".*                         ;
 
 -- Syntax
 <0> range                                      { token TokIdentifier }
 <0, expr> true                                 { token (TokBoolLit . (\(Loc sp _) -> Loc sp True)) }
 <0, expr> false                                { token (TokBoolLit . (\(Loc sp _) -> Loc sp False)) }
+<0, expr> \$                                   { token TokIdentifier }
 <0, expr> \$? $alpha [\$ $alpha $digit \_ \-]* { token TokIdentifier }
 
 -- | String Templating
@@ -48,7 +49,7 @@ tokens :-
 -- we encounter '\"'.
 
 -- Enter String Mode
-<0> \" { \b -> pushStartCode string *> symbol SymStringBegin b}
+<0, expr> \" { \b -> pushStartCode string *> symbol SymStringBegin b}
 
 -- In <string> we have three rules:
 -- 1. Capture a string literal
@@ -71,31 +72,34 @@ tokens :-
 -- Exit <string> Mode if we match '\"'
 <string> \" { \b -> (popStartCode *> symbol SymStringEnd b) }
 
--- If in the future we want to allow terms with curly brackets inside our
--- <expr> sections then we need to add the following rules to allow nested
--- <expr> code stacks:
---
--- <expr> \{ \{ { \b -> (pushStartCode expr *> symbol SymDoubleCurlyOpen b) }
--- <expr> \} \} { \b -> (popStartCode *> symbol SymDoubleCurlyClose b) } 
+-- String literals can be constructed with single quotes. These are
+-- only used for object lookup and are thus only available in <expr>
+-- mode.
+<expr> \'                              { \b -> pushStartCode literal *> symbol SymSingleQuote b }
+<literal> (\\ \\ | \\ \` | [^ \' \{ ])+ { token TokStringLit }
+<literal> \'                            { \b -> (popStartCode *> symbol SymSingleQuote b) }
 
 <0, expr> \-? $digit+                                       { token (\loc -> TokIntLit (unlocate loc) (read . T.unpack <$> loc)) }
 <0, expr> \-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\+\-]?[0-9]+)? { token (\loc -> TokNumLit (unlocate loc) (read . T.unpack <$> loc)) }
-<0, expr> \'                                                { symbol SymSingleQuote }
 <0> \:                                                      { symbol SymColon }
 <0, expr> \.                                                { symbol SymDot }
-<0> \,                                                      { symbol SymComma }
-<0> \==                                                     { symbol SymEq }
-<0> \>                                                      { symbol SymGt }
-<0> \<                                                      { symbol SymLt }
-<0> \<                                                      { symbol SymLt }
-<0> \&\&                                                    { symbol SymAnd }
-<0> \|\|                                                    { symbol SymOr }
-<0> \_                                                      { symbol SymUnderscore }
-<0> \:\=                                                    { symbol SymAssignment }
-<0> \{                                                      { symbol SymCurlyOpen }
-<0> \}                                                      { symbol SymCurlyClose }
-<0> \{\{                                                    { symbol SymDoubleCurlyOpen }
-<0> \}\}                                                    { symbol SymDoubleCurlyClose }
+<0, expr> \,                                                      { symbol SymComma }
+<0, expr> \==                                                     { symbol SymEq }
+<0, expr> \>                                                      { symbol SymGt }
+<0, expr> \<                                                      { symbol SymLt }
+<0, expr> \<                                                      { symbol SymLt }
+<0, expr> \&\&                                                    { symbol SymAnd }
+<0, expr> \|\|                                                    { symbol SymOr }
+<0, expr> \_                                                      { symbol SymUnderscore }
+<0, expr> \:\=                                                    { symbol SymAssignment }
+<0, expr> \{                                                      { symbol SymCurlyOpen }
+<0, expr> \}                                                      { symbol SymCurlyClose }
+
+-- When we encounter a `{{` we push an <expr> code. This way we know
+-- when to parse two `}` as `SymDoubleCurlyClose` rather then as two
+-- `SymCurlyClose`
+<0, expr> \{ \{                                             { \b -> (pushStartCode expr *> symbol SymDoubleCurlyOpen b) }
+
 <0, expr> \[                                                { symbol SymSquareOpen }
 <0, expr> \]                                                { symbol SymSquareClose }
 <0, expr> \(                                                { symbol SymParenOpen }

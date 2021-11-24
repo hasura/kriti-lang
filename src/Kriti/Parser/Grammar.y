@@ -82,6 +82,7 @@ string_template
 template :: { ValueExt }
 template
   : path_vector { uncurry Path $1 }
+  | functions function_params { $1 $2 }
   | boolean { $1 }
   | num_lit { $1 }
 
@@ -121,8 +122,7 @@ object_fields
 
 object_field :: { (T.Text, ValueExt) }
 object_field
-  -- TODO: Key should be a String Literal
-  : ident ':' term { (unlocate $1, $3) }
+  : 's"' string '"e' ':' term { (unlocate $2, $5) }
 
 operator :: { ValueExt }
 operator
@@ -182,7 +182,7 @@ path_tail
 path_element :: { Accessor }
 path_element
   : '.' ident { Obj (locate $1 <> locate $2) (unlocate $2) }
-  | '[' '\'' ident '\'' ']' { Obj (locate $1 <> locate $5) (unlocate $3) }
+  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) (unlocate $3) }
   | '[' int ']' { Arr (locate $1 <> locate $3) (unlocate $2) }
 
 value :: { ValueExt }
