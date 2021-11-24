@@ -1,6 +1,6 @@
 cabal-version:       3.0
 name:                kriti-lang
-version:             0.2.1
+version:             0.2.2
 copyright:           2021 Hasura Systems Private Limited
 author:              Solomon Bothwell
 maintainer:          solomon@hasura.io

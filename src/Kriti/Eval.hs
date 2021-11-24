@@ -3,11 +3,13 @@ module Kriti.Eval where
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Aeson as J
+import qualified Data.ByteString.Lazy as BL
 import Data.Foldable (foldlM)
 import Data.Function
 import qualified Data.HashMap.Strict as M
 import Data.Maybe (maybeToList)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
 import Kriti.Error
 import qualified Network.URI as URI
@@ -53,6 +55,14 @@ runEval template source =
   let ctx = M.fromList source
    in runReader (runExceptT (eval template)) ctx
 
+serializeType :: J.Value -> T.Text
+serializeType J.Object {} = "Object"
+serializeType J.Array {} = "Array"
+serializeType J.String {} = "String"
+serializeType J.Number {} = "Number"
+serializeType J.Bool {} = "Boolean"
+serializeType J.Null = "Null"
+
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
   String _ str -> pure $ J.String str
@@ -60,12 +70,14 @@ eval = \case
   Boolean _ p -> pure $ J.Bool p
   Null _ -> pure J.Null
   Object _ fields -> J.Object <$> traverse eval fields
-  StringTem _ ts -> do
+  StringTem sp ts -> do
     vals <- traverse eval ts
-    vals & flip foldlM (J.String mempty) \(J.String acc) -> \case
-      J.String val' -> pure $ J.String $ acc <> val'
-      -- TODO: Improve Span Construction/Reporting for StringInterp
-      _ -> throwError $ InvalidPath undefined V.empty
+    str <- vals & flip foldlM mempty \acc -> \case
+      J.String val' -> pure $ acc <> val'
+      J.Number i -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode i)
+      J.Bool p -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode p)
+      t -> throwError $ TypeError sp $ "Cannot interpolate type: '" <> serializeType t <> "'."
+    pure $ J.String str
   Array _ xs -> J.Array <$> traverse eval xs
   Path _ path -> do
     ctx <- ask
