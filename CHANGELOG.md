@@ -1,5 +1,9 @@
 # Revision history for Kriti-Lang
 
+## Upcoming
+
+  - Parser rewrite with Happy and Alex with improved source span generation.
+
 ## 0.2.2 -- 2021-11-16
 
   - Fixes a bug in String Templates when interpolating Numbers and Booleans.
