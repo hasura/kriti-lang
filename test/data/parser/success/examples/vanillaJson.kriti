@@ -1,4 +1,16 @@
-{
+# Vanilla Javascript Expressions
+[
+  null,
+  true,
+  false,
+  1,
+  1.5,
+  "hello",
+  "hello123",
+  [1, null, true],
+  {"foo": 1},
+  {"foo": 1, "bar": { "baz": [1, true]}},
+  {
   "event": {
     "name": "Freddie Jones",
     "age": 27,
@@ -11,3 +23,4 @@
     }
   }
 }
+]

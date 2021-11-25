@@ -1,11 +1,11 @@
 Object
     ( Span
         { start = AlexSourcePos
-            { line = 1
+            { line = 0
             , col = 1
             }
         , end = AlexSourcePos
-            { line = 14
+            { line = 13
             , col = 2
             }
         }
@@ -16,11 +16,11 @@ Object
             , Object
                 ( Span
                     { start = AlexSourcePos
-                        { line = 2
+                        { line = 1
                         , col = 13
                         }
                     , end = AlexSourcePos
-                        { line = 13
+                        { line = 12
                         , col = 4
                         }
                     }
@@ -31,11 +31,11 @@ Object
                         , Path
                             ( Span
                                 { start = AlexSourcePos
-                                    { line = 3
+                                    { line = 2
                                     , col = 13
                                     }
                                 , end = AlexSourcePos
-                                    { line = 3
+                                    { line = 2
                                     , col = 29
                                     }
                                 }
@@ -43,11 +43,11 @@ Object
                             [ Obj
                                 ( Span
                                     { start = AlexSourcePos
-                                        { line = 3
+                                        { line = 2
                                         , col = 15
                                         }
                                     , end = AlexSourcePos
-                                        { line = 3
+                                        { line = 2
                                         , col = 16
                                         }
                                     }
@@ -55,11 +55,11 @@ Object
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
-                                        { line = 3
+                                        { line = 2
                                         , col = 16
                                         }
                                     , end = AlexSourcePos
-                                        { line = 3
+                                        { line = 2
                                         , col = 22
                                         }
                                     }
@@ -67,11 +67,11 @@ Object
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
-                                        { line = 3
+                                        { line = 2
                                         , col = 22
                                         }
                                     , end = AlexSourcePos
-                                        { line = 3
+                                        { line = 2
                                         , col = 27
                                         }
                                     }
@@ -83,11 +83,11 @@ Object
                         , Array
                             ( Span
                                 { start = AlexSourcePos
-                                    { line = 5
+                                    { line = 4
                                     , col = 17
                                     }
                                 , end = AlexSourcePos
-                                    { line = 12
+                                    { line = 11
                                     , col = 6
                                     }
                                 }
@@ -95,11 +95,11 @@ Object
                             [ Range
                                 ( Span
                                     { start = AlexSourcePos
-                                        { line = 6
+                                        { line = 5
                                         , col = 1
                                         }
                                     , end = AlexSourcePos
-                                        { line = 11
+                                        { line = 10
                                         , col = 10
                                         }
                                     }
@@ -107,11 +107,11 @@ Object
                                 [ Obj
                                     ( Span
                                         { start = AlexSourcePos
-                                            { line = 6
+                                            { line = 5
                                             , col = 18
                                             }
                                         , end = AlexSourcePos
-                                            { line = 6
+                                            { line = 5
                                             , col = 19
                                             }
                                         }
@@ -119,11 +119,11 @@ Object
                                 , Obj
                                     ( Span
                                         { start = AlexSourcePos
-                                            { line = 6
+                                            { line = 5
                                             , col = 19
                                             }
                                         , end = AlexSourcePos
-                                            { line = 6
+                                            { line = 5
                                             , col = 25
                                             }
                                         }
@@ -131,11 +131,11 @@ Object
                                 , Obj
                                     ( Span
                                         { start = AlexSourcePos
-                                            { line = 6
+                                            { line = 5
                                             , col = 25
                                             }
                                         , end = AlexSourcePos
-                                            { line = 6
+                                            { line = 5
                                             , col = 32
                                             }
                                         }
@@ -143,11 +143,11 @@ Object
                                 , Obj
                                     ( Span
                                         { start = AlexSourcePos
-                                            { line = 6
+                                            { line = 5
                                             , col = 32
                                             }
                                         , end = AlexSourcePos
-                                            { line = 6
+                                            { line = 5
                                             , col = 41
                                             }
                                         }
@@ -156,11 +156,11 @@ Object
                                 ( Object
                                     ( Span
                                         { start = AlexSourcePos
-                                            { line = 7
+                                            { line = 6
                                             , col = 7
                                             }
                                         , end = AlexSourcePos
-                                            { line = 10
+                                            { line = 9
                                             , col = 8
                                             }
                                         }
@@ -171,11 +171,11 @@ Object
                                             , Path
                                                 ( Span
                                                     { start = AlexSourcePos
-                                                        { line = 9
+                                                        { line = 8
                                                         , col = 18
                                                         }
                                                     , end = AlexSourcePos
-                                                        { line = 9
+                                                        { line = 8
                                                         , col = 29
                                                         }
                                                     }
@@ -183,11 +183,11 @@ Object
                                                 [ Obj
                                                     ( Span
                                                         { start = AlexSourcePos
-                                                            { line = 9
+                                                            { line = 8
                                                             , col = 20
                                                             }
                                                         , end = AlexSourcePos
-                                                            { line = 9
+                                                            { line = 8
                                                             , col = 21
                                                             }
                                                         }
@@ -195,11 +195,11 @@ Object
                                                 , Obj
                                                     ( Span
                                                         { start = AlexSourcePos
-                                                            { line = 9
+                                                            { line = 8
                                                             , col = 21
                                                             }
                                                         , end = AlexSourcePos
-                                                            { line = 9
+                                                            { line = 8
                                                             , col = 27
                                                             }
                                                         }
@@ -211,11 +211,11 @@ Object
                                             , Path
                                                 ( Span
                                                     { start = AlexSourcePos
-                                                        { line = 8
+                                                        { line = 7
                                                         , col = 15
                                                         }
                                                     , end = AlexSourcePos
-                                                        { line = 8
+                                                        { line = 7
                                                         , col = 23
                                                         }
                                                     }
@@ -223,11 +223,11 @@ Object
                                                 [ Obj
                                                     ( Span
                                                         { start = AlexSourcePos
-                                                            { line = 8
+                                                            { line = 7
                                                             , col = 17
                                                             }
                                                         , end = AlexSourcePos
-                                                            { line = 8
+                                                            { line = 7
                                                             , col = 18
                                                             }
                                                         }
@@ -235,11 +235,11 @@ Object
                                                 , Obj
                                                     ( Span
                                                         { start = AlexSourcePos
-                                                            { line = 8
+                                                            { line = 7
                                                             , col = 18
                                                             }
                                                         , end = AlexSourcePos
-                                                            { line = 8
+                                                            { line = 7
                                                             , col = 21
                                                             }
                                                         }
@@ -256,11 +256,11 @@ Object
                         , Path
                             ( Span
                                 { start = AlexSourcePos
-                                    { line = 4
+                                    { line = 3
                                     , col = 12
                                     }
                                 , end = AlexSourcePos
-                                    { line = 4
+                                    { line = 3
                                     , col = 27
                                     }
                                 }
@@ -268,11 +268,11 @@ Object
                             [ Obj
                                 ( Span
                                     { start = AlexSourcePos
-                                        { line = 4
+                                        { line = 3
                                         , col = 14
                                         }
                                     , end = AlexSourcePos
-                                        { line = 4
+                                        { line = 3
                                         , col = 15
                                         }
                                     }
@@ -280,11 +280,11 @@ Object
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
-                                        { line = 4
+                                        { line = 3
                                         , col = 15
                                         }
                                     , end = AlexSourcePos
-                                        { line = 4
+                                        { line = 3
                                         , col = 21
                                         }
                                     }
@@ -292,11 +292,11 @@ Object
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
-                                        { line = 4
+                                        { line = 3
                                         , col = 21
                                         }
                                     , end = AlexSourcePos
-                                        { line = 4
+                                        { line = 3
                                         , col = 25
                                         }
                                     }
