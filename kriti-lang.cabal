@@ -43,7 +43,7 @@ common common-settings
 common common-libraries
   build-depends:
     , base >= 2 && < 5
-    , aeson < 1.6
+    , aeson < 1.6 || >= 2 && < 2.1
     , bytestring
     , text
     , optparse-applicative

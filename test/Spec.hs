@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -8,12 +9,17 @@ import Control.Exception.Safe (throwString)
 import Control.Monad (replicateM)
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Encode.Pretty as JEP (encodePretty)
+import qualified Data.Aeson.Key as K
+import qualified Data.Aeson.KeyMap as KM
+import Data.Bifunctor (first)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Foldable (for_)
+#if !MIN_VERSION_aeson(2, 0, 0)
 import qualified Data.HashMap.Strict as M
+#endif
 import Data.Maybe (fromJust)
 import Data.Scientific (Scientific)
 import Data.Text (Text)
@@ -267,7 +273,7 @@ instance Q.Arbitrary J.Value where
           number' = J.Number <$> Q.arbitrary
           string' = J.String <$> Q.arbitrary
           array' = J.Array . V.fromList <$> Q.arbitrary
-          object' = J.Object . M.fromList <$> Q.arbitrary
+          object' = J.Object . objFromListCompat <$> Q.arbitrary
 
 --------------------------------------------------------------------------------
 -- General test helpers.
@@ -293,3 +299,19 @@ succeeds _ _ = False
 fails :: Either e a -> Bool
 fails (Right _) = False
 fails _ = True
+
+-- Aeson compatibility
+
+objFromListCompat ::
+  [(T.Text, v)] ->
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.KeyMap v
+#else
+  M.HashMap T.Text v
+#endif
+objFromListCompat =
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.fromList . map (first K.fromText)
+#else
+  M.fromList
+#endif

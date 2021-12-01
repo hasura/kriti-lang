@@ -1,12 +1,31 @@
-module Kriti.Eval where
+{-# LANGUAGE CPP #-}
+
+module Kriti.Eval
+  ( EvalError (..),
+    Ctxt,
+    getSourcePos,
+    evalPath,
+    isString,
+    runEval,
+    serializeType,
+    eval,
+  )
+where
 
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Aeson as J
+#if MIN_VERSION_aeson(2, 0, 0)
+import qualified Data.Aeson.Key as K
+import qualified Data.Aeson.KeyMap as KM
+import Data.Bifunctor (first)
+#endif
 import qualified Data.ByteString.Lazy as BL
 import Data.Foldable (foldlM)
 import Data.Function
+#if !MIN_VERSION_aeson(2, 0, 0)
 import qualified Data.HashMap.Strict as M
+#endif
 import Data.Maybe (maybeToList)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -28,7 +47,12 @@ instance RenderError EvalError where
   render (TypeError span' txt) = RenderedError {_code = TypeErrorCode, _message = "Type Error: " <> txt, _span = span'}
   render (RangeError span') = RenderedError {_code = RangeErrorCode, _message = "Range Error: Can only range over an array", _span = span'}
 
-type Ctxt = M.HashMap T.Text J.Value
+type Ctxt =
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.KeyMap J.Value
+#else
+  M.HashMap T.Text J.Value
+#endif
 
 getSourcePos :: EvalError -> Span
 getSourcePos (InvalidPath pos _) = pos
@@ -38,7 +62,7 @@ getSourcePos (RangeError pos) = pos
 evalPath :: J.Value -> [(Span, Accessor)] -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath ctx path =
   let step :: Monad m => J.Value -> (Span, Accessor) -> ExceptT EvalError m J.Value
-      step (J.Object o) (pos, Obj k) = maybe (throwError $ InvalidPath pos path) pure $ M.lookup k o
+      step (J.Object o) (pos, Obj k) = maybe (throwError $ InvalidPath pos path) pure $ lookupCompat k o
       step (J.Array xs) (pos, Arr i) = maybe (throwError $ InvalidPath pos path) pure $ xs V.!? i
       -- TODO: Should we extend this error message with the local Context?
       step _ (pos, Obj _) = throwError $ TypeError pos "Expected object"
@@ -51,7 +75,7 @@ isString _ = False
 
 runEval :: ValueExt -> [(T.Text, J.Value)] -> Either EvalError J.Value
 runEval template source =
-  let ctx = M.fromList source
+  let ctx = objFromListCompat source
    in runReader (runExceptT (eval template)) ctx
 
 serializeType :: J.Value -> T.Text
@@ -124,7 +148,7 @@ eval = \case
     case pathResult of
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
-         in local (M.fromList newScope <>) (eval body)
+         in local (objFromListCompat newScope <>) (eval body)
       _ -> throwError $ RangeError pos
   EscapeURI pos t1 -> do
     t1' <- eval t1
@@ -133,3 +157,34 @@ eval = \case
         let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
          in pure $ J.String escapedUri
       _ -> throwError $ TypeError pos $ T.pack $ show t1' <> " is not a string."
+
+-- Aeson compatibility
+
+lookupCompat ::
+  T.Text ->
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.KeyMap J.Value ->
+#else
+  M.HashMap T.Text J.Value ->
+#endif
+  Maybe J.Value
+lookupCompat k =
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.lookup (K.fromText k)
+#else
+  M.lookup k
+#endif
+
+objFromListCompat ::
+  [(T.Text, v)] ->
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.KeyMap v
+#else
+  M.HashMap T.Text v
+#endif
+objFromListCompat =
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.fromList . map (first K.fromText)
+#else
+  M.fromList
+#endif

@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Kriti.Parser
   ( Accessor (..),
     ValueExt (..),
@@ -16,10 +18,16 @@ import Control.Applicative
 import Control.Lens hiding (Context, op)
 import Control.Monad
 import qualified Data.Aeson as J
+#if MIN_VERSION_aeson(2, 0, 0)
+import qualified Data.Aeson.Key as K
+import qualified Data.Aeson.KeyMap as KM
+#endif
 import Data.Bifunctor (first)
 import Data.Either (lefts, rights)
 import Data.Foldable
+#if !MIN_VERSION_aeson(2, 0, 0)
 import qualified Data.HashMap.Strict as M
+#endif
 import Data.List (intersperse)
 import Data.Monoid (Alt (..))
 import Data.Scientific (Scientific, toBoundedInteger)
@@ -45,7 +53,12 @@ renderPath = mconcat . intersperse "." . fmap (renderAccessor . snd)
 
 data ValueExt
   = -- Core Aeson Terms
-    Object (M.HashMap Text ValueExt)
+    Object
+#if MIN_VERSION_aeson(2, 0, 0)
+      (KM.KeyMap ValueExt)
+#else
+      (M.HashMap Text ValueExt)
+#endif
   | Array (V.Vector ValueExt)
   | String Text
   | Number Scientific
@@ -232,7 +245,7 @@ parseObject = do
   openCurly
   keys <- parseField `P.sepBy1` comma
   closeCurly
-  pure $ Object $ M.fromList keys
+  pure $ Object $ objFromListCompat keys
   where
     parseField :: Parser (Text, ValueExt)
     parseField = do
@@ -419,3 +432,19 @@ parserAndLexer :: Text -> Either RenderedError ValueExt
 parserAndLexer t = do
   lexemes <- first render $ Lex.lexer t
   first render $ parser lexemes
+
+-- Aeson compatibility
+
+objFromListCompat ::
+  [(T.Text, v)] ->
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.KeyMap v
+#else
+  M.HashMap T.Text v
+#endif
+objFromListCompat =
+#if MIN_VERSION_aeson(2, 0, 0)
+  KM.fromList . map (first K.fromText)
+#else
+  M.fromList
+#endif

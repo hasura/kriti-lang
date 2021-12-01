@@ -1,0 +1,9 @@
+packages: .
+
+-- Vendoring dependencies that do not yet support ghc 9.2.1.
+-- TODO: Remove this file after the dependencies have updated and before
+-- merging to main.
+source-repository-package
+  type: git
+  location: https://github.com/awjchen/generic-arbitrary.git
+  tag: 8e6865e507baecdd23c98e36efe016cc7b8712e5
