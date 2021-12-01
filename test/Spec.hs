@@ -51,7 +51,7 @@ lexerSpec :: Spec
 lexerSpec = describe "Lexer" $
   describe "QuickCheck" $
     -- Note: This should be a pretty printer round trip test to account for spans
-    it "lexing serialized tokens yields those tokens modulo spans" $
+    it "lexes serialized tokens and yields those tokens modulo spans" $
       Q.property $ \tokens ->
         let serialized = T.intercalate " " $ fmap P.serialize tokens
             tokens' = P.lexer $ encodeUtf8 serialized

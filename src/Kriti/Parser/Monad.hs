@@ -206,7 +206,7 @@ alexGetByte input@AlexInput {..} =
       case UTF8.encodeChar c of
         [b] -> (b, nextCol c rest input)
         (b : bs) -> (b, bufferBytes c bs rest input)
-        [] -> error "The impossible happened! A Char decoded to 0 bytes."
+        [] -> error $ "The following character produced an empty UTF8-encoded bytestring, which should be impossible: " ++ [c]
 
 alexPrevInputChar :: AlexInput -> Char
 alexPrevInputChar = lexPrevChar

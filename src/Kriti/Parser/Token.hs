@@ -11,6 +11,8 @@ import qualified Data.Vector as V
 import GHC.Generics
 import Kriti.Parser.Spans
 
+-- | The type of non literal/identifer symbols extracted from
+-- source. This type is factored out of `Token` for clarity.
 data Symbol
   = SymBling
   | SymColon
@@ -36,6 +38,7 @@ data Symbol
   | SymStringEnd
   deriving (Show, Eq, Ord, Generic)
 
+-- | The type of Lexeme Tokens. Lexemes can either be Symbols, identifiers or literals.
 data Token
   = TokSymbol (Loc Symbol)
   | TokStringLit (Loc T.Text)
@@ -87,6 +90,7 @@ serialize = \case
   TokSymbol (Loc _ SymStringEnd) -> "\""
   EOF -> ""
 
+-- | Path lookups are represented as a stack of object and array lookups. eg., `Vector Accessor`.
 data Accessor = Obj Span T.Text | Arr Span Int
   deriving (Show, Eq, Read)
 
@@ -100,6 +104,9 @@ renderAccessor = \case
 renderPath :: V.Vector Accessor -> T.Text
 renderPath = mconcat . L.intersperse "." . V.toList . fmap renderAccessor
 
+-- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
+-- terms which are then evaluated and converted into Aeson `Value`
+-- terms.
 data ValueExt
   = -- | Core Aeson Terms
     Object Span (M.HashMap T.Text ValueExt)

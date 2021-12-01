@@ -46,6 +46,7 @@ setEnd sp (Span start _) = Span start sp
 --- Locations ---
 -----------------
 
+-- | The product of `a` and a `Span` representing `a`'s source position.
 data Loc a = Loc {getSpan :: Span, unLoc :: a}
   deriving (Show, Eq, Ord, Functor, Generic)
 
@@ -58,6 +59,7 @@ overSpan f (Loc s a) = Loc (f s) a
 setSpan :: Span -> Loc a -> Loc a
 setSpan s loc = overSpan (const s) loc
 
+-- | The class of types from which we can extract a `Span`
 class Located a where
   locate :: a -> Span
 

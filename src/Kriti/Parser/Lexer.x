@@ -53,6 +53,9 @@ tokens :-
 
 -- In <string> we have three rules:
 -- 1. Capture a string literal
+-- NOTE: The escape handling in this regex seems correct but we should
+-- investigate precisely how escaping is handling in other examples of
+-- string templating.
 <string> (\\ \\ | \\ \` | [^ \" \{ ])+ { token TokStringLit }
 -- 2. Capture a '{' as a string literal
 <string> \{ { token TokStringLit}
@@ -106,7 +109,14 @@ tokens :-
 <0, expr> \)                                                { symbol SymParenClose }
 
 {
--- | Our monadic wrapper for `alexScan`.
+-- | Our monadic wrapper for `alexScan`. The `Parser` type is defined
+-- in `Kriti.Parser.Monad` as a transformer stack of `StateT` and
+-- `Except`. The Start Code Stack, current Span, and AlexInput are
+-- tracked in StateT.
+--
+-- `scan` recursively consumes the consumes the `AlexInput` from state
+-- until it produces a `Token`, an error, or reaches the end of the
+-- file.
 scan :: Parser Token
 scan = do
   input <- getInput
