@@ -1,0 +1,9 @@
+# Range tests
+[ {{ range i, x := $foo.bar[0] }} {"hello": "world"} {{ end }},
+  {{ range _, x := $foo.bar[0] }} {"hello": "world"} {{ end }},
+  {{ range _, x := $foo.bar[0] }}
+    {"hello": {{$foo.bar }}}
+    # Random Comment
+  {{ end }},
+  [{{ range i, x := $.events }} { "name": {{ x.name }} } {{ end }}]
+]

@@ -1,0 +1,265 @@
+Array
+    ( Span
+        { start = AlexSourcePos
+            { line = 1
+            , col = 1
+            }
+        , end = AlexSourcePos
+            { line = 6
+            , col = 2
+            }
+        }
+    )
+    [ EscapeURI
+        ( Span
+            { start = AlexSourcePos
+                { line = 1
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 1
+                , col = 15
+                }
+            }
+        )
+        ( StringTem
+            ( Span
+                { start = AlexSourcePos
+                    { line = 1
+                    , col = 16
+                    }
+                , end = AlexSourcePos
+                    { line = 1
+                    , col = 21
+                    }
+                }
+            )
+            [ String
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 1
+                        , col = 17
+                        }
+                    , end = AlexSourcePos
+                        { line = 1
+                        , col = 20
+                        }
+                    }
+                ) "foo"
+            ]
+        )
+    , EscapeURI
+        ( Span
+            { start = AlexSourcePos
+                { line = 2
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 2
+                , col = 15
+                }
+            }
+        )
+        ( StringTem
+            ( Span
+                { start = AlexSourcePos
+                    { line = 2
+                    , col = 16
+                    }
+                , end = AlexSourcePos
+                    { line = 2
+                    , col = 29
+                    }
+                }
+            )
+            [ String
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 2
+                        , col = 17
+                        }
+                    , end = AlexSourcePos
+                        { line = 2
+                        , col = 20
+                        }
+                    }
+                ) "foo"
+            , Path
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 2
+                        , col = 22
+                        }
+                    , end = AlexSourcePos
+                        { line = 2
+                        , col = 26
+                        }
+                    }
+                )
+                [ Obj
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 2
+                            , col = 22
+                            }
+                        , end = AlexSourcePos
+                            { line = 2
+                            , col = 26
+                            }
+                        }
+                    ) "$bar"
+                ]
+            ]
+        )
+    , EscapeURI
+        ( Span
+            { start = AlexSourcePos
+                { line = 3
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 3
+                , col = 15
+                }
+            }
+        )
+        ( Path
+            ( Span
+                { start = AlexSourcePos
+                    { line = 3
+                    , col = 16
+                    }
+                , end = AlexSourcePos
+                    { line = 3
+                    , col = 24
+                    }
+                }
+            )
+            [ Obj
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 3
+                        , col = 16
+                        }
+                    , end = AlexSourcePos
+                        { line = 3
+                        , col = 21
+                        }
+                    }
+                ) "$path"
+            , Arr
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 3
+                        , col = 21
+                        }
+                    , end = AlexSourcePos
+                        { line = 3
+                        , col = 24
+                        }
+                    }
+                ) 0
+            ]
+        )
+    , EscapeURI
+        ( Span
+            { start = AlexSourcePos
+                { line = 4
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 4
+                , col = 15
+                }
+            }
+        )
+        ( StringTem
+            ( Span
+                { start = AlexSourcePos
+                    { line = 4
+                    , col = 16
+                    }
+                , end = AlexSourcePos
+                    { line = 4
+                    , col = 30
+                    }
+                }
+            )
+            [ String
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 17
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 29
+                        }
+                    }
+                ) "?foo=bar/baz"
+            ]
+        )
+    , StringTem
+        ( Span
+            { start = AlexSourcePos
+                { line = 5
+                , col = 3
+                }
+            , end = AlexSourcePos
+                { line = 5
+                , col = 47
+                }
+            }
+        )
+        [ String
+            ( Span
+                { start = AlexSourcePos
+                    { line = 5
+                    , col = 4
+                    }
+                , end = AlexSourcePos
+                    { line = 5
+                    , col = 25
+                    }
+                }
+            ) "http://www.google.com"
+        , EscapeURI
+            ( Span
+                { start = AlexSourcePos
+                    { line = 5
+                    , col = 27
+                    }
+                , end = AlexSourcePos
+                    { line = 5
+                    , col = 36
+                    }
+                }
+            )
+            ( Path
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 5
+                        , col = 37
+                        }
+                    , end = AlexSourcePos
+                        { line = 5
+                        , col = 44
+                        }
+                    }
+                )
+                [ Obj
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 5
+                            , col = 37
+                            }
+                        , end = AlexSourcePos
+                            { line = 5
+                            , col = 44
+                            }
+                        }
+                    ) "$params"
+                ]
+            )
+        ]
+    ]

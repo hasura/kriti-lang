@@ -1,1 +1,0 @@
-{{ if $.foo }} 1 {{ else }} null {{end }}
