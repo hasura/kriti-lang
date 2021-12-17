@@ -70,8 +70,8 @@ library
     , unordered-containers
     , vector
   build-tool-depends:
-    , alex:alex
-    , happy:happy
+    , alex:alex >= 3.2.6
+    , happy:happy >= 1.20
   exposed-modules:
     Kriti
     Kriti.Error
