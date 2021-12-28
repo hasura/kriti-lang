@@ -9,6 +9,7 @@ import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import GHC.Generics
+import qualified Kriti.Aeson.Compat as Compat
 import qualified Kriti.Error as E
 import qualified Kriti.Parser.Lexer as L
 import Kriti.Parser.Monad
@@ -113,7 +114,7 @@ list_elements
 
 object :: { ValueExt }
 object
-: '{' object_fields '}' { Object (locate $1 <> locate $3) (M.fromList $2) }
+: '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
 
 object_fields :: { [(T.Text, ValueExt)] }
 object_fields

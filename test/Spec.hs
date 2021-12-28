@@ -13,13 +13,13 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Foldable (for_)
-import qualified Data.HashMap.Strict as M
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Text.Lazy as TL
 import qualified Data.Vector as V
+import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
 import Kriti.Eval
 import qualified Kriti.Parser as P
@@ -291,7 +291,7 @@ instance Q.Arbitrary J.Value where
           number' = J.Number <$> Q.arbitrary
           string' = J.String <$> Q.arbitrary
           array' = J.Array . V.fromList <$> Q.arbitrary
-          object' = J.Object . M.fromList <$> Q.arbitrary
+          object' = J.Object . Compat.fromList <$> Q.arbitrary
 
 --------------------------------------------------------------------------------
 -- General test helpers.
