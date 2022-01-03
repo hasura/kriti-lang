@@ -6,11 +6,11 @@ import qualified Data.Aeson as J
 import qualified Data.ByteString.Lazy as BL
 import Data.Foldable (foldlM)
 import Data.Function
-import qualified Data.HashMap.Strict as M
 import Data.Maybe (maybeToList)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
+import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
 import Kriti.Parser.Spans
 import Kriti.Parser.Token
@@ -29,7 +29,7 @@ instance RenderError EvalError where
   render (TypeError span' txt) = RenderedError {_code = TypeErrorCode, _message = "Type Error: " <> txt, _span = span'}
   render (RangeError span') = RenderedError {_code = RangeErrorCode, _message = "Range Error: Can only range over an array", _span = span'}
 
-type Ctxt = M.HashMap T.Text J.Value
+type Ctxt = Compat.Object J.Value
 
 getSourcePos :: EvalError -> Span
 getSourcePos (InvalidPath pos _) = pos
@@ -39,7 +39,7 @@ getSourcePos (RangeError pos) = pos
 evalPath :: J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath ctx path =
   let step :: Monad m => J.Value -> (Accessor) -> ExceptT EvalError m J.Value
-      step (J.Object o) (Obj sp k) = maybe (throwError $ InvalidPath sp path) pure $ M.lookup k o
+      step (J.Object o) (Obj sp k) = maybe (throwError $ InvalidPath sp path) pure $ Compat.lookup k o
       step (J.Array xs) (Arr sp i) = maybe (throwError $ InvalidPath sp path) pure $ xs V.!? i
       -- TODO: Should we extend this error message with the local Context?
       step _ (Obj sp _) = throwError $ TypeError sp "Expected object"
@@ -52,7 +52,7 @@ isString _ = False
 
 runEval :: ValueExt -> [(T.Text, J.Value)] -> Either EvalError J.Value
 runEval template source =
-  let ctx = M.fromList source
+  let ctx = Compat.fromList source
    in runReader (runExceptT (eval template)) ctx
 
 serializeType :: J.Value -> T.Text
@@ -126,7 +126,7 @@ eval = \case
     case pathResult of
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
-         in local (M.fromList newScope <>) (eval body)
+         in local (Compat.fromList newScope <>) (eval body)
       _ -> throwError $ RangeError sp
   EscapeURI sp t1 -> do
     t1' <- eval t1

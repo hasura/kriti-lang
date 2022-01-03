@@ -3,12 +3,12 @@
 
 module Kriti.Parser.Token where
 
-import qualified Data.HashMap.Strict as M
 import qualified Data.List as L
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import GHC.Generics
+import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Parser.Spans
 
 -- | The type of non literal/identifer symbols extracted from
@@ -109,7 +109,7 @@ renderPath = mconcat . L.intersperse "." . V.toList . fmap renderAccessor
 -- terms.
 data ValueExt
   = -- | Core Aeson Terms
-    Object Span (M.HashMap T.Text ValueExt)
+    Object Span (Compat.Object ValueExt)
   | Array Span (V.Vector ValueExt)
   | String Span T.Text
   | Number Span Scientific

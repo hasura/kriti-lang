@@ -44,7 +44,7 @@ common common-settings
 common common-libraries
   build-depends:
     , base >= 2 && < 5
-    , aeson < 1.6
+    , aeson <1.6 || >=2 && <2.1
     , bytestring
     , containers
     , text
@@ -71,6 +71,7 @@ library
     , vector
   exposed-modules:
     Kriti
+    Kriti.Aeson.Compat
     Kriti.Error
     Kriti.Parser
     Kriti.Parser.Grammar
