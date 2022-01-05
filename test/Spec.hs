@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -18,8 +19,10 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Text.Lazy as TL
+#if !MIN_VERSION_aeson(2,0,3)
 import qualified Data.Vector as V
 import qualified Kriti.Aeson.Compat as Compat
+#endif
 import Kriti.Error
 import Kriti.Eval
 import qualified Kriti.Parser as P
@@ -279,6 +282,7 @@ instance Q.Arbitrary P.Span where
   arbitrary = QAG.genericArbitrary
   shrink = QAG.genericShrink
 
+#if !MIN_VERSION_aeson(2,0,3)
 instance Q.Arbitrary J.Value where
   arbitrary = Q.sized sizedArbitraryValue
     where
@@ -292,6 +296,7 @@ instance Q.Arbitrary J.Value where
           string' = J.String <$> Q.arbitrary
           array' = J.Array . V.fromList <$> Q.arbitrary
           object' = J.Object . Compat.fromList <$> Q.arbitrary
+#endif
 
 --------------------------------------------------------------------------------
 -- General test helpers.
