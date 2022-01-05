@@ -5,7 +5,7 @@
 ```
 ---
 authors: Solomon Bothwell <solomon@hasura.io>
-discussion:
+discussion: https://github.com/hasura/kriti-lang/issues/34
 ---
 ```
 
