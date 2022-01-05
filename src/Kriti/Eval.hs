@@ -88,6 +88,11 @@ eval = \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
       p' -> throwError $ TypeError sp $ T.pack $ show p' <> "' is not a boolean."
+  Not sp t1 -> do
+    v1 <- eval t1
+    case v1 of
+      J.Bool p -> pure $ J.Bool $ not p
+      _ -> throwError  $ TypeError sp $ T.pack $ show t1 <> "is not a boolean."
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res

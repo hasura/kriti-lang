@@ -21,6 +21,7 @@ tokens :-
 
 -- Syntax
 <0> range                                      { token TokIdentifier }
+<0> not                                        { token TokIdentifier }
 <0, expr> true                                 { token (TokBoolLit . (\(Loc sp _) -> Loc sp True)) }
 <0, expr> false                                { token (TokBoolLit . (\(Loc sp _) -> Loc sp False)) }
 <0, expr> \$                                   { token TokIdentifier }
