@@ -5,14 +5,14 @@
 ```
 ---
 authors: Solomon Bothwell <solomon@hasura.io>
-discussion: [Github Issue](https://github.com/hasura/kriti-lang/issues/30)
+discussion: https://github.com/hasura/kriti-lang/issues/30
 ---
 ```
 
 ## Description
 
 Path lookups to missing object fields and out of bound array indices
-result in a runtime error. 
+result in a runtime exception. 
 
 ```
 > runKriti "{{$foo}}" []
@@ -34,12 +34,15 @@ for object and array lookups.
 
 ## How
 
-I propse a simplfied version of the Javascript Optional Chaining syntax:
+I propose a simplfied version of the Javascript Optional Chaining syntax:
 
 ```
 runKriti "{{ $body?.bar }}" [($body, {"foo": 1})]
 Right Null
 ```
+
+Here `$body.bar` is undefined. By using the `?.` operator we return a
+`null` rather then throwing an exception.
 
 Optional Lookups will shortcircuit at the first error:
 
@@ -48,26 +51,25 @@ runKriti "{{ $body?.bar.baz }}" [($body, {"foo": 1})]
 Right Null
 ```
 
+In this case we shortciruit at the first unbound path element (`bar`).
 
 ### Effects and Interactions
 
 This will allow use to do a verbose form of defaulting values using if statements:
 
 ```
-runKriti "{{ if $body?.bar.baz }} {{ $body.bar.baz}} {{ else }} null {{ end }}" [($body, {"foo": 1})]
-Right Null
+runKriti "{{ if $body?.bar.baz == null }} 42 {{ else }} {{ $body.bar.baz}} {{ end }}" [($body, {"foo": 1})]
+Right 42
 ```
 
 Which could be used to solve the query param request transformation issue mentioned in the intro. At a later date we can develop more terse defaulting operator, perhaps based on the Javascript [Nullish Operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_operator).
 
 ### Alternatives
 
-As an alternative to introducing a new operator, we could change the
-before of the standard path lookup operator or even allow the
-semantics to be set via a configuration option. I am opposed to both
-of these options as there are common scenarios where you may want a
-runtime error and where you may want an optional value.
-
+As an alternative to introducing a new operator, we could simply not
+throw an exception for bad path lookups. Instead we could either
+always return `null` or allow the user to configure the behavior to
+either always return `null` or exceptions.
 
 ### Unresolved Questions
 
