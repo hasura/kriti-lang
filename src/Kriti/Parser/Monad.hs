@@ -144,6 +144,9 @@ symbol sym _ = do
   sp <- location
   pure $ TokSymbol $ Loc sp sym
 
+function :: (Span -> ValueExt -> ValueExt) -> Span -> ValueExt -> ValueExt
+function f sp param = f (sp <> locate param) param
+
 -----------------------
 --- Alex Primitives ---
 -----------------------
