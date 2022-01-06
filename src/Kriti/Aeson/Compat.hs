@@ -14,6 +14,9 @@ type Object v = KM.KeyMap v
 fromList :: [(T.Text, v)] -> Object v
 fromList = KM.fromList . map (first K.fromText)
 
+toList :: Object v -> [(T.Text, v)]
+toList = map (first K.toText) . KM.toList
+
 lookup :: T.Text -> Object v -> Maybe v
 lookup = KM.lookup . K.fromText
 
@@ -26,6 +29,9 @@ type Object v = M.HashMap T.Text v
 
 fromList :: [(T.Text, v)] -> Object v
 fromList = M.fromList
+
+toList :: Object v -> [(T.Text, v)]
+toList = M.toList
 
 lookup :: T.Text -> Object v -> Maybe v
 lookup = M.lookup

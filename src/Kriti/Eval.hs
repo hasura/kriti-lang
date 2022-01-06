@@ -38,11 +38,11 @@ getSourcePos (RangeError pos) = pos
 
 evalPath :: J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath ctx path =
-  let step :: Monad m => J.Value -> (Accessor) -> ExceptT EvalError m J.Value
-      step (J.Object o) (Obj sp k) = maybe (throwError $ InvalidPath sp path) pure $ Compat.lookup k o
+  let step :: Monad m => J.Value -> Accessor -> ExceptT EvalError m J.Value
+      step (J.Object o) (Obj sp k _) = maybe (throwError $ InvalidPath sp path) pure $ Compat.lookup k o
       step (J.Array xs) (Arr sp i) = maybe (throwError $ InvalidPath sp path) pure $ xs V.!? i
       -- TODO: Should we extend this error message with the local Context?
-      step _ (Obj sp _) = throwError $ TypeError sp "Expected object"
+      step _ (Obj sp _ _) = throwError $ TypeError sp "Expected object"
       step _ (Arr sp _) = throwError $ TypeError sp "Expected array"
    in foldlM step ctx path
 

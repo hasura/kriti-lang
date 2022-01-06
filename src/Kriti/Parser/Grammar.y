@@ -172,8 +172,8 @@ path
 
 path_vector :: { (Span, V.Vector Accessor) }
 path_vector
-  : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) (unLoc $1)) (snd $2))  }
-  | ident { (locate $1, V.singleton (Obj (locate $1) (unLoc $1))) }
+  : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) (unLoc $1) Head) (snd $2))  }
+  | ident { (locate $1, V.singleton (Obj (locate $1) (unLoc $1) Head)) }
 
 path_tail :: { (Span, V.Vector Accessor) }
 path_tail
@@ -182,8 +182,8 @@ path_tail
 
 path_element :: { Accessor }
 path_element
-  : '.' ident { Obj (locate $1 <> locate $2) (unLoc $2) }
-  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) (unLoc $3) }
+  : '.' ident { Obj (locate $1 <> locate $2) (unLoc $2) DotAccess }
+  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) (unLoc $3) BracketAccess }
   | '[' int ']' { Arr (locate $1 <> locate $3) (unLoc $2) }
 
 value :: { ValueExt }
