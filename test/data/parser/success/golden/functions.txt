@@ -107,7 +107,7 @@ Array
                             , col = 26
                             }
                         }
-                    ) "$bar"
+                    ) "$bar" Head
                 ]
             ]
         )
@@ -146,7 +146,7 @@ Array
                         , col = 21
                         }
                     }
-                ) "$path"
+                ) "$path" Head
             , Arr
                 ( Span
                     { start = AlexSourcePos
@@ -258,7 +258,7 @@ Array
                             , col = 44
                             }
                         }
-                    ) "$params"
+                    ) "$params" Head
                 ]
             )
         ]

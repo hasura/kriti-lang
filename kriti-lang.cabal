@@ -106,6 +106,7 @@ test-suite kriti-lang-test
     , hspec-golden
     , parsec
     , pretty-simple
+    , prettyprinter
     , raw-strings-qq
     , QuickCheck
     , safe-exceptions

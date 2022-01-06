@@ -171,9 +171,6 @@ evalSuccess source path = do
 --
 -- In this case, "valid" means that the value satisfies the roundtrip law where
 -- @read . show === id@.
---
--- NOTE: This function uses the 'goldenDir' function defined within this module
--- to read/write files from/to a shared directory within the project.
 goldenReadShow ::
   (Read val, Show val) => FilePath -> String -> val -> Golden val
 goldenReadShow dir name val = Golden {..}
