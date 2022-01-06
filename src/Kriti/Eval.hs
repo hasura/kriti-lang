@@ -17,8 +17,7 @@ import Kriti.Parser.Token
 import qualified Network.URI as URI
 
 data EvalError
-  = -- | The first SourcePosition is the point where the lookup failed
-    InvalidPath Span (V.Vector Accessor)
+  = InvalidPath Span (V.Vector Accessor)
   | TypeError Span T.Text
   | RangeError Span
   deriving (Show)
@@ -55,13 +54,13 @@ runEval template source =
   let ctx = Compat.fromList source
    in runReader (runExceptT (eval template)) ctx
 
-serializeType :: J.Value -> T.Text
-serializeType J.Object {} = "Object"
-serializeType J.Array {} = "Array"
-serializeType J.String {} = "String"
-serializeType J.Number {} = "Number"
-serializeType J.Bool {} = "Boolean"
-serializeType J.Null = "Null"
+typoOfJSON :: J.Value -> T.Text
+typoOfJSON J.Object {} = "Object"
+typoOfJSON J.Array {} = "Array"
+typoOfJSON J.String {} = "String"
+typoOfJSON J.Number {} = "Number"
+typoOfJSON J.Bool {} = "Boolean"
+typoOfJSON J.Null = "Null"
 
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
@@ -77,7 +76,7 @@ eval = \case
         J.String val' -> pure $ acc <> val'
         J.Number i -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode i)
         J.Bool p -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode p)
-        t -> throwError $ TypeError sp $ "Cannot interpolate type: '" <> serializeType t <> "'."
+        t -> throwError $ TypeError sp $ "Cannot interpolate type: '" <> typoOfJSON t <> "'."
     pure $ J.String str
   Array _ xs -> J.Array <$> traverse eval xs
   Path _ path -> do
@@ -87,7 +86,7 @@ eval = \case
     eval p >>= \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
-      p' -> throwError $ TypeError sp $ T.pack $ show p' <> "' is not a boolean."
+      p' -> throwError $ TypeError sp $ renderBL $ "'" <> J.encode p' <> "' is not a boolean."
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
@@ -104,22 +103,22 @@ eval = \case
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p && q
-      (t1'', J.Bool _) -> throwError $ TypeError sp $ T.pack $ show t1'' <> "' is not a boolean."
-      (_, t2'') -> throwError $ TypeError sp $ T.pack $ show t2'' <> "' is not a boolean."
+      (t1'', J.Bool _) -> throwError $ TypeError sp $ renderBL $ "'" <> J.encode t1'' <> "' is not a boolean."
+      (_, t2'') -> throwError $ TypeError sp $ renderBL $ "'" <> J.encode t2'' <> "' is not a boolean."
   Or sp t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p || q
-      (t1'', J.Bool _) -> throwError $ TypeError sp $ T.pack $ show t1'' <> "' is not a boolean."
-      (_, t2'') -> throwError $ TypeError sp $ T.pack $ show t2'' <> "' is not a boolean."
+      (t1'', J.Bool _) -> throwError $ TypeError sp $ renderBL $ "'" <> J.encode t1'' <> "' is not a boolean."
+      (_, t2'') -> throwError $ TypeError sp $ renderBL $ "'" <> J.encode t2'' <> "' is not a boolean."
   Member sp t ts -> do
     ts' <- eval ts
     case ts' of
       J.Array xs -> do
         t' <- eval t
         pure $ J.Bool $ t' `V.elem` xs
-      _ -> throwError $ TypeError sp $ T.pack $ show ts' <> " is not an array."
+      _ -> throwError $ TypeError sp $ T.pack $ "'" <> show ts' <> "' is not an array."
   Range sp idx binder path body -> do
     ctx <- ask
     pathResult <- evalPath (J.Object ctx) path
@@ -134,4 +133,4 @@ eval = \case
       J.String str ->
         let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
          in pure $ J.String escapedUri
-      _ -> throwError $ TypeError sp $ T.pack $ show t1' <> " is not a string."
+      _ -> throwError $ TypeError sp $ T.pack $ "'" <> show t1' <> "' is not a string."

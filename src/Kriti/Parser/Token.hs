@@ -4,7 +4,9 @@
 module Kriti.Parser.Token where
 
 import Data.Scientific (Scientific)
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
 import GHC.Generics
 import qualified Kriti.Aeson.Compat as Compat
@@ -200,3 +202,6 @@ renderPretty = renderDoc . pretty
 
 renderVect :: Pretty a => V.Vector a -> T.Text
 renderVect = renderDoc . foldMap pretty
+
+renderBL :: BL.ByteString -> T.Text
+renderBL = TE.decodeUtf8 . BL.toStrict
