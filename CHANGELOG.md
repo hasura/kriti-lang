@@ -1,7 +1,7 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
-
+  - Adds support for Aeson >=2.0.0
   - Parser rewrite with Happy and Alex with improved source span generation.
 
 ## 0.2.2 -- 2021-11-16
