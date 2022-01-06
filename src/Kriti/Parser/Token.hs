@@ -106,9 +106,6 @@ instance Pretty Accessor where
     Obj _ txt Head -> pretty txt
     Arr _ i -> brackets (pretty i)
 
-renderPath :: V.Vector Accessor -> T.Text
-renderPath = renderDoc . foldMap pretty
-
 -- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
 -- terms which are then evaluated and converted into Aeson `Value`
 -- terms.
@@ -197,3 +194,9 @@ instance Pretty ValueExt where
 
 renderDoc :: Doc ann -> T.Text 
 renderDoc = renderStrict . layoutPretty defaultLayoutOptions 
+
+renderPretty :: Pretty a => a -> T.Text
+renderPretty = renderDoc . pretty
+
+renderVect :: Pretty a => V.Vector a -> T.Text
+renderVect = renderDoc . foldMap pretty

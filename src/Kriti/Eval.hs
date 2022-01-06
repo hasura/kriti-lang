@@ -25,9 +25,9 @@ data EvalError
 
 instance RenderError EvalError where
   render :: EvalError -> RenderedError
-  render (InvalidPath span' path) = RenderedError {_code = InvalidPathCode, _message = "Path Lookup Error: \"" <> renderPath path <> "\"", _span = span'}
-  render (TypeError span' txt) = RenderedError {_code = TypeErrorCode, _message = "Type Error: " <> txt, _span = span'}
-  render (RangeError span') = RenderedError {_code = RangeErrorCode, _message = "Range Error: Can only range over an array", _span = span'}
+  render (InvalidPath span' path) = RenderedError {_code = InvalidPathCode, _message = "\"" <> renderVect path <> "\"", _span = span'}
+  render (TypeError span' txt) = RenderedError {_code = TypeErrorCode, _message = txt, _span = span'}
+  render (RangeError span') = RenderedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = span'}
 
 type Ctxt = Compat.Object J.Value
 

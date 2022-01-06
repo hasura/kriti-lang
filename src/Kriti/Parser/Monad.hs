@@ -114,13 +114,13 @@ instance E.RenderError ParseError where
         span' = locate tok
      in E.RenderedError
           { _code = E.ParseErrorCode,
-            _message = "ParseError: Unexpected token '" <> tok' <> "'.",
+            _message = "Unexpected token '" <> tok' <> "'.",
             _span = span'
           }
   render (InvalidLexeme start inp) =
     E.RenderedError
       { _code = E.LexErrorCode,
-        _message = "LexError: Invalid Lexeme: '" <> TE.decodeUtf8 inp <> "'",
+        _message = "Invalid Lexeme: '" <> TE.decodeUtf8 inp <> "'",
         _span = Span start (overCol (+ (B.length inp)) start)
       }
 
