@@ -1,23 +1,20 @@
 module Main where
 
--- import Control.Exception
-
-import Control.Monad (void)
-import Data.Aeson (decode, encode)
-import Data.Bifoldable (bifoldMap)
+import Control.Monad.Except
+import qualified Data.Aeson as J
+import Data.Bifunctor (first)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LBS8
-import Data.Maybe (fromJust)
-import Data.Text
-import Kriti (runKriti)
+import qualified Data.Text as T
+import Kriti (parser, runEval, renderPretty)
 import Options.Applicative
+import Prettyprinter
 import System.IO (IOMode (ReadMode), openFile)
 
 data KritiOptions = KritiOptions
   { _koJSONFile :: FilePath,
     _koTemplateFile :: FilePath,
-    _koBindingSymbol :: Text
+    _koBindingSymbol :: T.Text
   }
   deriving (Show, Eq)
 
@@ -29,7 +26,7 @@ kritiOpts =
       ( long "json" <> short 'j' <> metavar "JSON_FILE"
           <> help "The JSON file to read"
       )
-    <*> strOption
+         <*> strOption
       ( long "template" <> short 't' <> metavar "TEMPLATE_FILE"
           <> help "The template file to use"
       )
@@ -37,25 +34,28 @@ kritiOpts =
       ( long "bind" <> short 'b' <> metavar "BINDING_SYMBOL"
           <> showDefault
           <> value "$"
-          <> help "The symbol that's used to represent a JSON binding within the template"
+               <> help "The symbol that's used to represent a JSON binding within the template"
       )
 
 main :: IO ()
-main = runKritiInteractive =<< execParser opts
-  where
-    opts =
-      info (kritiOpts <**> helper) $
-        fullDesc
-          <> progDesc "transform JSON using the Kriti language"
-          <> header "kriti - a minimal JSON templating language based on Go's template language."
+main = do
+  let parserOptions = 
+        info (kritiOpts <**> helper) $
+          fullDesc
+            <> progDesc "transform JSON using the Kriti language"
+            <> header "kriti - a minimal JSON templating language based on Go's template language."
+  kritiOptions <- execParser parserOptions
+  result <- runExceptT $ runKriti kritiOptions
+  either (print . pretty) (print . J.encode) result
 
-runKritiInteractive :: KritiOptions -> IO ()
-runKritiInteractive (KritiOptions jsonFile templateFile rootSymbol) = do
-  void $ checkFilePath jsonFile
-  void $ checkFilePath templateFile
+runKriti :: KritiOptions -> ExceptT T.Text IO J.Value
+runKriti (KritiOptions jsonFile templateFile rootSymbol) = do
+  let checkFilePath = flip openFile ReadMode
+  void $ liftIO $ checkFilePath jsonFile
+  void $ liftIO $ checkFilePath templateFile
 
-  json <- LBS.readFile jsonFile
-  template <- B.readFile templateFile
-  LBS8.putStrLn $ bifoldMap encode encode $ runKriti template [(rootSymbol, fromJust . decode $ json)]
-  where
-    checkFilePath = flip openFile ReadMode
+  json <- ExceptT $ fmap (first T.pack . J.eitherDecode) $ LBS.readFile jsonFile
+  template <- liftIO $ B.readFile templateFile
+  kritiAst <- ExceptT $ pure $ first renderPretty $ parser template
+  ExceptT $ pure $ first renderPretty $ runEval template kritiAst [(rootSymbol, json)]
+    

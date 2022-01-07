@@ -50,6 +50,7 @@ common common-libraries
     , text
     , utf8-string
     , optparse-applicative
+    , prettyprinter
 
 -------------------------------------------------------------------------------
 
@@ -66,7 +67,6 @@ library
     , mtl
     , network-uri
     , parser-combinators == 1.3.0
-    , prettyprinter
     , scientific
     , unordered-containers
     , vector
@@ -125,3 +125,4 @@ executable kriti
   main-is: Main.hs
   build-depends:
     , kriti-lang
+    , mtl

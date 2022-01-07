@@ -1,6 +1,7 @@
 {
 module Kriti.Parser.Lexer where
 
+import Control.Monad.State (gets)
 import qualified Data.Text as T
 import Kriti.Parser.Monad
 import Kriti.Parser.Spans
@@ -121,10 +122,11 @@ scan :: Parser Token
 scan = do
   input <- getInput
   code <- startCode
+  src <- gets parseSource
   case alexScan input code of
     AlexEOF -> pure EOF
-    AlexError (AlexInput pos _ inp _) ->
-      parseError $ InvalidLexeme pos inp
+    AlexError (AlexInput pos _ _ _) ->
+      parseError $ InvalidLexeme pos src
     AlexSkip rest _ -> do
       advance rest
       scan

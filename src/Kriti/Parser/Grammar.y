@@ -1,6 +1,7 @@
 {
 module Kriti.Parser.Grammar where
 
+import Control.Monad.State (gets)
 import qualified Data.Aeson as J
 import Data.Bifunctor (first)
 import qualified Data.HashMap.Strict as M
@@ -168,7 +169,7 @@ range_decl
 
 path :: { ValueExt }
 path
-  : '{{' path_vector '}}' { Path (locate $1 <> locate $3) (snd $2) }
+  : '{{' path_vector '}}' { Path (fst $2) (snd $2) }
 
 path_vector :: { (Span, V.Vector Accessor) }
 path_vector
@@ -215,8 +216,11 @@ term
 failure :: [Token] -> Parser a
 failure [] = do
   sp <- location
-  parseError $ EmptyTokenStream sp
+  src <- gets parseSource
+  parseError $ EmptyTokenStream sp src
 failure (tok:_) = do
   sp <- location
-  parseError $ UnexpectedToken (Loc sp tok)
+  src <- gets parseSource
+  -- TODO: fix source position capture here. I think we need the prior span.
+  parseError $ UnexpectedToken (Loc sp tok) src
 }
