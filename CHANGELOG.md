@@ -1,6 +1,7 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
+  - Adds a Pretty Printer.
   - Adds support for Aeson >=2.0.0
   - Parser rewrite with Happy and Alex with improved source span generation.
 

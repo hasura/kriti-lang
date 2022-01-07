@@ -102,23 +102,23 @@ data ParseError
   | InvalidLexeme AlexSourcePos B.ByteString
   deriving (Show)
 
-instance E.RenderError ParseError where
-  render (EmptyTokenStream s) =
-    E.RenderedError
+instance E.SerializeError ParseError where
+  serialize (EmptyTokenStream s) =
+    E.SerializedError
       { _code = E.ParseErrorCode,
         _message = "ParseError: Empty token stream.",
         _span = s
       }
-  render (UnexpectedToken tok) =
-    let tok' = serialize $ unLoc tok
+  serialize (UnexpectedToken tok) =
+    let tok' = serializeToken $ unLoc tok
         span' = locate tok
-     in E.RenderedError
+     in E.SerializedError
           { _code = E.ParseErrorCode,
             _message = "Unexpected token '" <> tok' <> "'.",
             _span = span'
           }
-  render (InvalidLexeme start inp) =
-    E.RenderedError
+  serialize (InvalidLexeme start inp) =
+    E.SerializedError
       { _code = E.LexErrorCode,
         _message = "Invalid Lexeme: '" <> TE.decodeUtf8 inp <> "'",
         _span = Span start (overCol (+ (B.length inp)) start)

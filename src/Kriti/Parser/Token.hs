@@ -61,8 +61,8 @@ overLoc f (TokIntLit txt loc) = TokIntLit txt $ f loc
 overLoc f (TokBoolLit loc) = TokBoolLit $ f loc
 overLoc _ EOF = EOF
 
-serialize :: Token -> T.Text
-serialize = \case
+serializeToken :: Token -> T.Text
+serializeToken = \case
   TokStringLit str -> "\"" <> unLoc str <> "\""
   TokIdentifier iden -> unLoc iden
   TokIntLit str _ -> str

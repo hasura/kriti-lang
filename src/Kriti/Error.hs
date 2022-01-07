@@ -21,11 +21,11 @@ instance Pretty ErrorCode where
     ParseErrorCode -> "Parse Error"
     LexErrorCode -> "Lex Error"
 
-data RenderedError = RenderedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
+data SerializedError = SerializedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
   deriving Show
 
-instance J.ToJSON RenderedError where
-  toJSON (RenderedError ec msg span') =
+instance J.ToJSON SerializedError where
+  toJSON (SerializedError ec msg span') =
     let (S.AlexSourcePos startLine startCol) = S.start span'
         (S.AlexSourcePos endLine endCol) = S.end span'
      in J.object
@@ -40,11 +40,11 @@ instance J.ToJSON RenderedError where
                 ]
           ]
 
-class RenderError e where
-  render :: e -> RenderedError
+class SerializeError e where
+  serialize :: e -> SerializedError
 
-instance Pretty RenderedError where
-   pretty RenderedError {..} = 
+instance Pretty SerializedError where
+   pretty SerializedError {..} = 
      vsep [ pretty _code <> colon
           , indent 2 $ pretty _message
           ]

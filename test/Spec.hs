@@ -56,10 +56,10 @@ lexerSpec = describe "Lexer" $
     -- Note: This should be a pretty printer round trip test to account for spans
     it "lexes serialized tokens and yields those tokens modulo spans" $
       Q.property $ \tokens ->
-        let serialized = T.intercalate " " $ fmap P.serialize tokens
+        let serialized = T.intercalate " " $ fmap P.serializeToken tokens
             tokens' = P.lexer $ encodeUtf8 serialized
          in case tokens' of
-              Left lexError -> expectationFailure (show $ render lexError)
+              Left lexError -> expectationFailure (show $ serialize lexError)
               Right lexemes -> normalizeSpans lexemes `shouldBe` normalizeSpans (tokens :: [P.Token])
 
 normalizeSpans :: [P.Token] -> [P.Token]
@@ -198,7 +198,7 @@ goldenValueExt = goldenReadShow
 goldenParseError :: FilePath -> String -> P.ParseError -> Golden String
 goldenParseError dir name parseError = Golden {..}
   where
-    output = show $ render parseError
+    output = show $ serialize parseError
     encodePretty = id
     writeToFile path actual = BS.writeFile path . BS8.pack $ actual
     readFromFile path = BS8.unpack <$> BS.readFile path
