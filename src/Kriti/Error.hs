@@ -3,7 +3,8 @@ module Kriti.Error where
 import qualified Data.Aeson as J
 import qualified Data.Text as T
 import qualified Kriti.Parser.Spans as S
-import Prettyprinter
+import Prettyprinter (Pretty(..))
+import Kriti.Parser.Token (renderPretty)
 
 data ErrorCode
   = InvalidPathCode
@@ -29,7 +30,7 @@ instance J.ToJSON SerializedError where
     let (S.AlexSourcePos startLine startCol) = S.start span'
         (S.AlexSourcePos endLine endCol) = S.end span'
      in J.object
-          [ "error_code" J..= J.String (T.pack $ show ec),
+          [ "error_code" J..= J.String (renderPretty ec),
             "message" J..= J.String msg,
             "source_position"
               J..= J.object
@@ -42,9 +43,3 @@ instance J.ToJSON SerializedError where
 
 class SerializeError e where
   serialize :: e -> SerializedError
-
-instance Pretty SerializedError where
-   pretty SerializedError {..} = 
-     vsep [ pretty _code <> colon
-          , indent 2 $ pretty _message
-          ]

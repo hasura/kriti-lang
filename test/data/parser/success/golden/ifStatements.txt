@@ -618,11 +618,11 @@ Array
             ( Span
                 { start = AlexSourcePos
                     { line = 7
-                    , col = 23
+                    , col = 26
                     }
                 , end = AlexSourcePos
                     { line = 7
-                    , col = 43
+                    , col = 41
                     }
                 }
             )

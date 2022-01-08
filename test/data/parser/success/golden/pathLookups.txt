@@ -14,11 +14,11 @@ Array
         ( Span
             { start = AlexSourcePos
                 { line = 1
-                , col = 3
+                , col = 6
                 }
             , end = AlexSourcePos
                 { line = 1
-                , col = 13
+                , col = 10
                 }
             }
         )
@@ -39,11 +39,11 @@ Array
         ( Span
             { start = AlexSourcePos
                 { line = 2
-                , col = 3
+                , col = 6
                 }
             , end = AlexSourcePos
                 { line = 2
-                , col = 21
+                , col = 18
                 }
             }
         )
@@ -88,11 +88,11 @@ Array
         ( Span
             { start = AlexSourcePos
                 { line = 3
-                , col = 3
+                , col = 6
                 }
             , end = AlexSourcePos
                 { line = 3
-                , col = 28
+                , col = 25
                 }
             }
         )
@@ -137,11 +137,11 @@ Array
         ( Span
             { start = AlexSourcePos
                 { line = 4
-                , col = 3
+                , col = 6
                 }
             , end = AlexSourcePos
                 { line = 4
-                , col = 25
+                , col = 22
                 }
             }
         )

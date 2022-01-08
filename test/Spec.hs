@@ -103,7 +103,7 @@ parserGoldenSpec = describe "Golden" $ do
       let name = dropExtension $ takeFileName path
       before (parseTemplateSuccess path) $
         it ("parses " <> name) $
-          \valueExt -> goldenValueExt dirSuc name valueExt
+          \(_, valueExt) -> goldenValueExt dirSuc name valueExt
 
   describe "Failure" $
     for_ pathsFail $ \path -> do
@@ -114,12 +114,12 @@ parserGoldenSpec = describe "Golden" $ do
 
 -- | Parse a template file that is expected to succeed; parse failures are
 -- rendered as 'String's and thrown in 'IO'.
-parseTemplateSuccess :: FilePath -> IO P.ValueExt
+parseTemplateSuccess :: FilePath -> IO (BS.ByteString, P.ValueExt)
 parseTemplateSuccess path = do
   tmpl <- BS.readFile $ path
   case P.parser tmpl of
     Left err -> throwString $ "Unexpected parsing failure " <> show err
-    Right valueExt -> pure valueExt
+    Right valueExt -> pure (tmpl, valueExt)
 
 -- | Parse a template file that is expected to fail.
 parseTemplateFailure :: FilePath -> IO P.ParseError
@@ -160,8 +160,8 @@ evalGoldenSpec = describe "Golden" do
 -- and thrown in 'IO'.
 evalSuccess :: J.Value -> FilePath -> IO J.Value
 evalSuccess source path = do
-  tmpl <- parseTemplateSuccess path
-  either throwString pure $ either (Left . show) Right $ runEval tmpl [("$", source)]
+  (src, tmpl) <- parseTemplateSuccess path
+  either throwString pure $ either (Left . show) Right $ runEval src tmpl [("$", source)]
 
 --------------------------------------------------------------------------------
 -- Golden test construction functions.

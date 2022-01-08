@@ -32,11 +32,11 @@ Object
                             ( Span
                                 { start = AlexSourcePos
                                     { line = 3
-                                    , col = 12
+                                    , col = 14
                                     }
                                 , end = AlexSourcePos
                                     { line = 3
-                                    , col = 27
+                                    , col = 25
                                     }
                                 }
                             )
@@ -172,11 +172,11 @@ Object
                                                 ( Span
                                                     { start = AlexSourcePos
                                                         { line = 7
-                                                        , col = 15
+                                                        , col = 17
                                                         }
                                                     , end = AlexSourcePos
                                                         { line = 7
-                                                        , col = 23
+                                                        , col = 21
                                                         }
                                                     }
                                                 )
@@ -212,11 +212,11 @@ Object
                                                 ( Span
                                                     { start = AlexSourcePos
                                                         { line = 8
-                                                        , col = 18
+                                                        , col = 20
                                                         }
                                                     , end = AlexSourcePos
                                                         { line = 8
-                                                        , col = 29
+                                                        , col = 27
                                                         }
                                                     }
                                                 )
@@ -257,11 +257,11 @@ Object
                             ( Span
                                 { start = AlexSourcePos
                                     { line = 2
-                                    , col = 13
+                                    , col = 15
                                     }
                                 , end = AlexSourcePos
                                     { line = 2
-                                    , col = 29
+                                    , col = 27
                                     }
                                 }
                             )

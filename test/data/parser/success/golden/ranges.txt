@@ -265,11 +265,11 @@ Array
                         ( Span
                             { start = AlexSourcePos
                                 { line = 4
-                                , col = 15
+                                , col = 17
                                 }
                             , end = AlexSourcePos
                                 { line = 4
-                                , col = 28
+                                , col = 25
                                 }
                             }
                         )
@@ -371,11 +371,11 @@ Array
                             ( Span
                                 { start = AlexSourcePos
                                     { line = 7
-                                    , col = 43
+                                    , col = 46
                                     }
                                 , end = AlexSourcePos
                                     { line = 7
-                                    , col = 55
+                                    , col = 52
                                     }
                                 }
                             )
