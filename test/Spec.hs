@@ -3,28 +3,26 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Main where
-
 import Control.Exception.Safe (throwString)
-import Control.Monad (replicateM)
+import Control.Monad.Except
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Encode.Pretty as JEP (encodePretty)
+import Data.Bifunctor (first)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Foldable (for_)
 import Data.Scientific (Scientific)
-import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Text.Encoding (encodeUtf8)
+import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Lazy as TL
 #if !MIN_VERSION_aeson(2,0,3)
 import qualified Data.Vector as V
 import qualified Kriti.Aeson.Compat as Compat
 #endif
+import Kriti
 import Kriti.Error
-import Kriti.Eval
 import qualified Kriti.Parser as P
 import System.Directory (listDirectory)
 import System.FilePath
@@ -39,31 +37,33 @@ import Text.Read (readEither)
 
 main :: IO ()
 main = hspec $ do
-  --lexerSpec
+  jsonRoundTrip
   parserSpec
   evalSpec
 
 --------------------------------------------------------------------------------
--- Lexing tests.
+-- JSON Roundtripping test.
 
--- | Lexer tests.
--- TODO: Round Trip tests don't make sense with spans unless we also
--- have a pretty printer. This test should be reintroduced and
--- rewritten once we have a working pretty printer.
-lexerSpec :: Spec
-lexerSpec = describe "Lexer" $
+-- | Since Aeson Values do not contain Spans, we cannot check for
+-- equality between ValueExt and JSON in a meaningful way. However, if
+-- we parse /and evaluate/ JSON data then it should return the same
+-- Value terms as Aeson.
+jsonRoundTrip :: Spec
+jsonRoundTrip = describe "JSON Roundtripping" $
   describe "QuickCheck" $
-    -- Note: This should be a pretty printer round trip test to account for spans
-    it "lexes serialized tokens and yields those tokens modulo spans" $
-      Q.property $ \tokens ->
-        let serialized = T.intercalate " " $ fmap P.serializeToken tokens
-            tokens' = P.lexer $ encodeUtf8 serialized
-         in case tokens' of
-              Left lexError -> expectationFailure (show $ serialize lexError)
-              Right lexemes -> normalizeSpans lexemes `shouldBe` normalizeSpans (tokens :: [P.Token])
-
-normalizeSpans :: [P.Token] -> [P.Token]
-normalizeSpans = fmap (P.overLoc (P.setSpan (P.Span P.alexStartPos P.alexStartPos)))
+    it "matches Aeson for standard JSON values" $
+      Q.property $ \(value :: J.Value) -> do
+        result <- runExceptT $ do
+          let serialized = BL.toStrict $ J.encode value
+          ast <- hoistEither $ first renderPretty $ parser serialized
+          json <- hoistEither $ first renderPretty $ runEval serialized ast []
+          if json == value
+            then pure ()
+            else throwError $ TE.decodeLatin1 $ BL.toStrict $ "from Kriti: " <> J.encode json <> " , " <> "from aeson: " <> J.encode value
+            --else throwError $ "Failed to roundtrip '" <> decodeUtf8 serialized <> "', got '" <> decodeUtf8 (BL.toStrict $ J.encode @J.Value json) <> "'."
+        case result of
+          Left err -> expectationFailure $ T.unpack err
+          Right _ -> pure ()
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -72,24 +72,6 @@ normalizeSpans = fmap (P.overLoc (P.setSpan (P.Span P.alexStartPos P.alexStartPo
 parserSpec :: Spec
 parserSpec = describe "Parser" $ do
   parserGoldenSpec
-
--- TODO: Round Trip tests don't make sense with spans unless we also
--- have a pretty printer. This test should be reintroduced and
--- rewritten once we have a working pretty printer.
---
--- describe "QuickCheck" $
---   it "matches Aeson for standard JSON values" $
---     Q.property $ \value ->
---       let serialized = J.encode @J.Value value -- Serialized JSON via Aeson
---           tokens = P.parser $ BL.toStrict serialized -- Either _ ValueExt via kriti
---           --viaAeson = fromJust $ J.decode @P.ValueExt serialized
---        in case tokens of
---             Left err -> expectationFailure (show $ render err)
---             Right viaKriti ->
---               let serializedKriti = BL8.fromStrict $ encodeUtf8 $ P.serialize viaKriti
---               in case J.decode @J.Value serializedKriti of
---                 Nothing -> expectationFailure $ "Failed to roundtrip '" <> T.unpack (decodeUtf8 $ BL8.toStrict serialized) <> "'."
---                 Just _ -> pure () -- viaKriti `shouldBe` viaAeson
 
 -- | 'Golden' parser tests for each of the files in the @examples@ subdirectory
 -- found in the project directory hard-coded into this function.
@@ -114,7 +96,7 @@ parserGoldenSpec = describe "Golden" $ do
 
 -- | Parse a template file that is expected to succeed; parse failures are
 -- rendered as 'String's and thrown in 'IO'.
-parseTemplateSuccess :: FilePath -> IO (BS.ByteString, P.ValueExt)
+parseTemplateSuccess :: FilePath -> IO (BS.ByteString, ValueExt)
 parseTemplateSuccess path = do
   tmpl <- BS.readFile $ path
   case P.parser tmpl of
@@ -187,7 +169,7 @@ goldenReadShow dir name val = Golden {..}
     failFirstTime = False
 
 -- | Alias for 'goldenReadShow' specialized to 'ValueExt's.
-goldenValueExt :: FilePath -> String -> P.ValueExt -> Golden P.ValueExt
+goldenValueExt :: FilePath -> String -> ValueExt -> Golden ValueExt
 goldenValueExt = goldenReadShow
 
 -- | Construct a 'Golden' test for 'ParseError's rendered as 'String's.
@@ -241,13 +223,7 @@ alphabet = ['a' .. 'z'] ++ ['A' .. 'Z']
 alphaNumerics :: String
 alphaNumerics = alphabet ++ "0123456789"
 
-whitespace :: Q.Gen Text
-whitespace = do
-  i <- Q.chooseInt (1, 10)
-  spaces <- replicateM i $ Q.frequency [(10, pure (" " :: Text)), (1, pure "\n")]
-  pure $ mconcat spaces
-
-instance Q.Arbitrary Text where
+instance Q.Arbitrary T.Text where
   arbitrary = do
     x <- Q.listOf1 (Q.elements alphabet)
     y <- Q.listOf1 (Q.elements alphaNumerics)
@@ -312,10 +288,5 @@ fetchGoldenFiles dir = do
   examples <- listDirectory exampleDir
   pure (dir, map (exampleDir </>) examples)
 
-succeeds :: Eq a => a -> Either e a -> Bool
-succeeds s (Right s') = s == s'
-succeeds _ _ = False
-
-fails :: Either e a -> Bool
-fails (Right _) = False
-fails _ = True
+hoistEither :: Monad m => Either e a -> ExceptT e m a
+hoistEither = ExceptT . pure

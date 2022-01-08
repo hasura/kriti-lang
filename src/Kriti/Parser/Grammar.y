@@ -69,6 +69,8 @@ ident       { TokIdentifier $$ }
 string_lit :: { ValueExt }
 string_lit
   : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
+  | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
+  
 
 string_template :: { V.Vector ValueExt }
 string_template
@@ -101,7 +103,6 @@ boolean
 null :: { ValueExt }
 null
   : 'null'  { Null (locate $1) }
-  | '{' '}' { Null (locate $1 <> locate $2) }
 
 array :: { ValueExt }
 array
@@ -115,7 +116,8 @@ list_elements
 
 object :: { ValueExt }
 object
-: '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
+  : '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
+  | '{' '}'               { Object (locate $1 <> locate $2) mempty }
 
 object_fields :: { [(T.Text, ValueExt)] }
 object_fields
@@ -125,6 +127,7 @@ object_fields
 object_field :: { (T.Text, ValueExt) }
 object_field
   : 's"' string '"e' ':' term { (unLoc $2, $5) }
+  | 's"' '"e' ':' term { ("", $4) }
 
 operator :: { ValueExt }
 operator

@@ -11,6 +11,7 @@ import Kriti.Parser.Token
 $digit = 0-9
 $alpha = [a-zA-Z]
 $alphanum = [a-zA-Z09]
+$hex = [A-F09]
 
 tokens :-
 
@@ -57,7 +58,16 @@ tokens :-
 -- NOTE: The escape handling in this regex seems correct but we should
 -- investigate precisely how escaping is handling in other examples of
 -- string templating.
-<string> (\\ \\ | \\ \` | [^ \" \{ ])+ { token TokStringLit }
+<string> (\\ \") { textToken TokStringLit "\"" }
+<string> (\\ \\) { textToken TokStringLit "\\" }
+<string> (\\ \/) { textToken TokStringLit "\\/" }
+<string> (\\ b) { textToken TokStringLit "\b" }
+<string> (\\ f) { textToken TokStringLit "\f" }
+<string> (\\ n) { textToken TokStringLit "\n" }
+<string> (\\ r) { textToken TokStringLit "\r" }
+<string> (\\ t) { textToken TokStringLit "\t" }
+<string> (\\ u $hex $hex $hex $hex) { token TokStringLit }
+<string> [^ \\ \" \{ ]+ { token TokStringLit }
 -- 2. Capture a '{' as a string literal
 <string> \{ { token TokStringLit}
 -- 3. Capture '{{', enter <expr> mode, and emit a 'ExprBegin' token. This will win over the '{' rule due to the longest capture rule.

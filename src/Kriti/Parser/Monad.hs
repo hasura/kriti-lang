@@ -156,10 +156,13 @@ parseError err = throwError err
 --- Tokens ---
 --------------
 
+textToken :: (Loc T.Text -> Token) -> T.Text -> B.ByteString -> Parser Token
+textToken k txt _ = k <$> located txt
+
 -- | Construct a Token from the matched Text and the current `parseSpan`.
 {-# INLINE token #-}
 token :: (Loc T.Text -> Token) -> B.ByteString -> Parser Token
-token k bs = k <$> located (TE.decodeUtf8 bs)
+token k bs = k <$> located (TE.decodeLatin1 bs)
 
 -- | Construct a `(TokenSymbol (Loc _))` using the current `parseSpan`
 -- to construct the `Loc _`.
