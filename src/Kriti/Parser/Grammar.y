@@ -1,4 +1,6 @@
 {
+-- We have to disable -XStrictData here, as it doesn't play nicely with Happy.
+{-# LANGUAGE NoStrictData #-}
 module Kriti.Parser.Grammar where
 
 import Control.Monad.State (gets)
