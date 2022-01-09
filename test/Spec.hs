@@ -8,9 +8,14 @@ import Control.Monad.Except
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Encode.Pretty as JEP (encodePretty)
 import Data.Bifunctor (first)
+import Data.Either (isRight)
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.UTF8 as UTF8
+-- [TODO: Reed M, 08/01/2022] Char8 is evil, and should be banished!
+-- Using any of the functions from this module on unicode codepoints
+-- above U+007F will cause issues.
+import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Foldable (for_)
 import Data.Scientific (Scientific)
@@ -37,6 +42,7 @@ import Text.Read (readEither)
 
 main :: IO ()
 main = hspec $ do
+  jsonParse
   jsonRoundTrip
   parserSpec
   evalSpec
@@ -44,23 +50,54 @@ main = hspec $ do
 --------------------------------------------------------------------------------
 -- JSON Roundtripping test.
 
+-- | Ensure that the grammar of Kriti is a superset of JSON.
+-- In simpler terms, we should be able to parse any JSON as
+-- a Kriti expression.
+jsonParse :: Spec  
+jsonParse = describe "JSON Parsing" $ do
+    describe "Edge Cases" $ do
+      it "can handle unicode escape sequences" $ do
+        (parser $ UTF8.fromString "\"\\u001c\"") `shouldSatisfy` isRight
+      it "can handle unicode keys" $ do
+        (parser $ UTF8.fromString "\"σ\"") `shouldSatisfy` isRight
+    describe "QuickCheck" $ do
+      it "can parse JSON as Kriti" $
+        Q.property \(value :: J.Value) ->
+          let enc = BL.toStrict $ J.encode value
+              res = first renderPretty $ parser enc
+          in case res of
+            Left err -> expectationFailure $ T.unpack err
+            Right _ -> pure ()
+
+-- | Try to evaluate JSON as if it were a Kriti expression.
+evalJson :: J.Value -> Either T.Text J.Value
+evalJson value = do
+    let enc = BL.toStrict $ J.encode value
+    ast <- first renderPretty $ parser enc
+    first renderPretty $ runEval enc ast []
+
+-- | Encode a JSON value as 'T.Text'.
+encodeText :: J.Value -> T.Text
+encodeText = TE.decodeUtf8 . BL.toStrict . J.encode
+
 -- | Since Aeson Values do not contain Spans, we cannot check for
 -- equality between ValueExt and JSON in a meaningful way. However, if
 -- we parse /and evaluate/ JSON data then it should return the same
 -- Value terms as Aeson.
 jsonRoundTrip :: Spec
-jsonRoundTrip = describe "JSON Roundtripping" $
-  describe "QuickCheck" $
-    it "matches Aeson for standard JSON values" $
+jsonRoundTrip = describe "JSON Roundtripping" $ do
+  describe "Edge Cases" $ do
+    it "can roundtrip unicode" $ do
+        let result = evalJson $ J.Object $ Compat.fromList [("σ", J.Null)]
+        result `shouldSatisfy` isRight
+  describe "QuickCheck" $ do
+    it "matches Aeson for standard JSON values" $ do
       Q.property $ \(value :: J.Value) -> do
         result <- runExceptT $ do
-          let serialized = BL.toStrict $ J.encode value
-          ast <- hoistEither $ first renderPretty $ parser serialized
-          json <- hoistEither $ first renderPretty $ runEval serialized ast []
-          if json == value
+            json <- hoistEither $ evalJson value
+            if json == value
             then pure ()
-            else throwError $ TE.decodeLatin1 $ BL.toStrict $ "from Kriti: " <> J.encode json <> " , " <> "from aeson: " <> J.encode value
-            --else throwError $ "Failed to roundtrip '" <> decodeUtf8 serialized <> "', got '" <> decodeUtf8 (BL.toStrict $ J.encode @J.Value json) <> "'."
+            else throwError $ "Failed to roundtrip '" <> encodeText value <> "', got '" <> encodeText json <> "'."
         case result of
           Left err -> expectationFailure $ T.unpack err
           Right _ -> pure ()
@@ -290,3 +327,4 @@ fetchGoldenFiles dir = do
 
 hoistEither :: Monad m => Either e a -> ExceptT e m a
 hoistEither = ExceptT . pure
+
