@@ -10,8 +10,8 @@ import Kriti.Parser.Token
 
 $digit = 0-9
 $alpha = [a-zA-Z]
-$alphanum = [a-zA-Z09]
-$hex = [A-F09]
+$alphanum = [a-zA-Z0-9]
+$hex = [A-Fa-f0-9]
 
 tokens :-
 
