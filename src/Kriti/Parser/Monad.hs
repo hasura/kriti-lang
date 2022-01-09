@@ -18,9 +18,9 @@ import Prettyprinter hiding (line)
 
 data ParserState = ParserState
   { parseSource :: B.ByteString,
-    parseInput :: {-# UNPACK #-} !AlexInput,
-    parseStartCodes :: {-# UNPACK #-} !(NE.NonEmpty Int),
-    parseSpan :: !Span
+    parseInput :: {-# UNPACK #-} AlexInput,
+    parseStartCodes :: {-# UNPACK #-} (NE.NonEmpty Int),
+    parseSpan :: Span
   }
 
 initState :: [Int] -> B.ByteString -> ParserState
@@ -162,7 +162,7 @@ textToken k txt _ = k <$> located txt
 -- | Construct a Token from the matched Text and the current `parseSpan`.
 {-# INLINE token #-}
 token :: (Loc T.Text -> Token) -> B.ByteString -> Parser Token
-token k bs = k <$> located (TE.decodeLatin1 bs)
+token k bs = k <$> located (TE.decodeUtf8 bs)
 
 -- | Construct a `(TokenSymbol (Loc _))` using the current `parseSpan`
 -- to construct the `Loc _`.
@@ -244,4 +244,4 @@ alexPrevInputChar = lexPrevChar
 
 {-# INLINE slice #-}
 slice :: Int -> AlexInput -> B.ByteString
-slice n AlexInput {..} = B.take n lexBytes
+slice n AlexInput {..} = UTFBS.take n lexBytes
