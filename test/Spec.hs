@@ -24,9 +24,9 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Lazy as TL
 #if !MIN_VERSION_aeson(2,0,3)
 import qualified Data.Vector as V
-import qualified Kriti.Aeson.Compat as Compat
 #endif
 import Kriti
+import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
 import qualified Kriti.Parser as P
 import System.Directory (listDirectory)
