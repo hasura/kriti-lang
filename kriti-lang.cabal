@@ -26,6 +26,7 @@ common common-settings
     LambdaCase
     NamedFieldPuns
     OverloadedStrings
+    StrictData
     RecordWildCards
     TupleSections
     DerivingVia
