@@ -202,15 +202,18 @@ path_element
 
 value :: { ValueExt }
 value
-  : num_lit { $1}
-  | string_lit { $1 }
-  | boolean  { $1 }
-  | null { $1 }
-  | object { $1 }
-  | path_vector { uncurry Path $1 }
-  | iff { $1 }
-  | operator { $1 }
-  | not { $1 }
+  : num_lit	  { $1 }
+  | string_lit	  { $1 }
+  | boolean	  { $1 }
+  | null	  { $1 }
+  | array	  { $1 }
+  | object	  { $1 }
+  | path_vector	  { uncurry Path $1 }
+  | iff		  { $1 }
+  | operator	  { $1 }
+  | not		  { $1 }
+  | range         { $1 }
+  | functions function_params { $1 $2 }
   | '(' value ')' { $2 }
 
 term :: { ValueExt }
