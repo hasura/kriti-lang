@@ -7,9 +7,9 @@ import Data.Aeson (decode, encode)
 import Data.Bifoldable (bifoldMap)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LBS8
-import qualified Data.Text.IO as TIO
 import Data.Maybe (fromJust)
 import Data.Text
+import qualified Data.Text.IO as TIO
 import Kriti (runKriti)
 import Options.Applicative
 import System.IO (IOMode (ReadMode), openFile)
