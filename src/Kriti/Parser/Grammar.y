@@ -47,8 +47,11 @@ ident       { TokIdentifier $$ }
 '.'         { TokSymbol (Loc $$ SymDot) }
 ','         { TokSymbol (Loc $$ SymComma) }
 '=='        { TokSymbol (Loc $$ SymEq) }
+'!='        { TokSymbol (Loc $$ SymNotEq) }
 '>'         { TokSymbol (Loc $$ SymGt) }
 '<'         { TokSymbol (Loc $$ SymLt) }
+'<='        { TokSymbol (Loc $$ SymLte) }
+'>='        { TokSymbol (Loc $$ SymGte) }
 '&&'        { TokSymbol (Loc $$ SymAnd) }
 '||'        { TokSymbol (Loc $$ SymOr) }
 '_'         { TokSymbol (Loc $$ SymUnderscore) }
@@ -134,6 +137,9 @@ operator :: { ValueExt }
 operator
   : value '>' value  { Gt (locate $1 <> locate $3) $1 $3 }
   | value '<' value  { Lt (locate $1 <> locate $3) $1 $3 }
+  | value '>=' value { Gte (locate $1 <> locate $3) $1 $3 }
+  | value '<=' value { Lte (locate $1 <> locate $3) $1 $3 }
+  | value '!=' value { NotEq (locate $1 <> locate $3) $1 $3 }
   | value '==' value { Eq (locate $1 <> locate $3) $1 $3 }
   | value '&&' value { And (locate $1 <> locate $3) $1 $3 }
   | value '||' value { Or (locate $1 <> locate $3) $1 $3 }

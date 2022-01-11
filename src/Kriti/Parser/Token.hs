@@ -19,8 +19,11 @@ data Symbol
   | SymDot
   | SymComma
   | SymEq
+  | SymNotEq
   | SymGt
+  | SymGte
   | SymLt
+  | SymLte
   | SymAnd
   | SymOr
   | SymSingleQuote
@@ -74,8 +77,11 @@ serialize = \case
   TokSymbol (Loc _ SymDoubleCurlyOpen) -> "{{"
   TokSymbol (Loc _ SymDoubleCurlyClose) -> "}}"
   TokSymbol (Loc _ SymEq) -> "=="
+  TokSymbol (Loc _ SymNotEq) -> "!="
   TokSymbol (Loc _ SymGt) -> ">"
   TokSymbol (Loc _ SymLt) -> "<"
+  TokSymbol (Loc _ SymGte) -> ">="
+  TokSymbol (Loc _ SymLte) -> "<="
   TokSymbol (Loc _ SymAnd) -> "&&"
   TokSymbol (Loc _ SymOr) -> "||"
   TokSymbol (Loc _ SymCurlyOpen) -> "{"
@@ -120,8 +126,11 @@ data ValueExt
   | Path Span (V.Vector Accessor)
   | Iff Span ValueExt ValueExt ValueExt
   | Eq Span ValueExt ValueExt
+  | NotEq Span ValueExt ValueExt
   | Gt Span ValueExt ValueExt
+  | Gte Span ValueExt ValueExt
   | Lt Span ValueExt ValueExt
+  | Lte Span ValueExt ValueExt
   | And Span ValueExt ValueExt
   | Or Span ValueExt ValueExt
   | Not Span ValueExt
@@ -142,8 +151,11 @@ instance Located ValueExt where
     Path s _ -> s
     Iff s _ _ _ -> s
     Eq s _ _ -> s
+    NotEq s _ _ -> s
     Gt s _ _ -> s
     Lt s _ _ -> s
+    Gte s _ _ -> s
+    Lte s _ _ -> s
     And s _ _ -> s
     Or s _ _ -> s
     Not s _ -> s

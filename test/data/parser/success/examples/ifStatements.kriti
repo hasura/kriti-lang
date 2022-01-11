@@ -7,5 +7,8 @@
   {{ if ((1) == 3) }} true {{ else }} false {{ end }},
   {{ if ((1) == 3) }} {{ $path['lookup']}} {{ else }} false {{ end }},
   {{ if $[0].isActive == false }} true {{ else }} false {{ end }},
-  {{ if $[0].isActive }} true {{ else }} false {{ end }}
+  {{ if $[0].isActive }} true {{ else }} false {{ end }},
+  {{ if ((1) != 3) }} true {{ else }} false {{ end }},
+  {{ if ((1) >= 3) }} true {{ else }} false {{ end }},
+  {{ if ((1) <= 3) }} true {{ else }} false {{ end }}
 ]

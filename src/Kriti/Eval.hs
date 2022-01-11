@@ -96,6 +96,9 @@ eval = \case
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
+  NotEq _ t1 t2 -> do
+    res <- (/=) <$> eval t1 <*> eval t2
+    pure $ J.Bool res
   Lt _ t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
@@ -104,6 +107,14 @@ eval = \case
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' > t2'
+  Lte _ t1 t2 -> do
+    t1' <- eval t1
+    t2' <- eval t2
+    pure $ J.Bool $ t1' <= t2'
+  Gte _ t1 t2 -> do
+    t1' <- eval t1
+    t2' <- eval t2
+    pure $ J.Bool $ t1' >= t2'
   And sp t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
