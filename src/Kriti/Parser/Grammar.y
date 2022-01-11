@@ -148,7 +148,7 @@ function_call
 
 functions :: { ValueExt -> ValueExt }
 functions
-: 'escapeUri' { buildFunc EscapeURI (locate $1) }
+  : 'escapeUri' { buildFunc EscapeURI (locate $1) }
   | 'not' { buildFunc Not (locate $1) }
 
 function_params :: { ValueExt }
