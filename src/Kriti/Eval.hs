@@ -129,13 +129,15 @@ eval = \case
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p || q
       (t1'', J.Bool _) -> throwError $ TypeError sp $ T.pack $ show t1'' <> "' is not a boolean."
       (_, t2'') -> throwError $ TypeError sp $ T.pack $ show t2'' <> "' is not a boolean."
-  Member sp t ts -> do
-    ts' <- eval ts
-    case ts' of
-      J.Array xs -> do
-        t' <- eval t
-        pure $ J.Bool $ t' `V.elem` xs
-      _ -> throwError $ TypeError sp $ T.pack $ show ts' <> " is not an array."
+  In sp t1 ts -> 
+    eval t1 >>= \case
+     J.String key ->
+       eval ts >>= \case
+        J.Object fields -> do
+          let fields' = fmap fst $ Compat.toList fields
+          pure $ J.Bool $ key `elem` fields'
+        json -> throwError $ TypeError sp $ T.pack $ show json <> " is not an Object."
+     json -> throwError $ TypeError sp $ T.pack $ show json <> " is not a String."
   Range sp idx binder path body -> do
     ctx <- ask
     pathResult <- evalPath (J.Object ctx) path

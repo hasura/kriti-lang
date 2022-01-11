@@ -36,10 +36,11 @@ string      { TokStringLit $$ }
 'if'        { TokIdentifier (Loc $$ "if") }
 'else'      { TokIdentifier (Loc $$ "else") }
 'end'       { TokIdentifier (Loc $$ "end") }
-'null'      { TokIdentifier (Loc $$ "null" )}
+'null'      { TokIdentifier (Loc $$ "null" ) }
 'range'     { TokIdentifier (Loc $$ "range") }
 'escapeUri' { TokIdentifier (Loc $$ "escapeUri") }
-'not'       { TokIdentifier (Loc $$ "not")}
+'not'       { TokIdentifier (Loc $$ "not") }
+'in'        { TokIdentifier (Loc $$ "in") }
 ident       { TokIdentifier $$ }
 
 '\''        { TokSymbol (Loc $$ SymSingleQuote) }
@@ -143,6 +144,7 @@ operator
   | value '==' value { Eq (locate $1 <> locate $3) $1 $3 }
   | value '&&' value { And (locate $1 <> locate $3) $1 $3 }
   | value '||' value { Or (locate $1 <> locate $3) $1 $3 }
+  | value 'in' value { In (locate $1 <> locate $3) $1 $3 }
 
 iff :: { ValueExt }
 iff
@@ -204,6 +206,7 @@ value
   | string_lit { $1 }
   | boolean  { $1 }
   | null { $1 }
+  | object { $1 }
   | path_vector { uncurry Path $1 }
   | iff { $1 }
   | operator { $1 }

@@ -26,6 +26,7 @@ tokens :-
 <0, expr> false                                { token (TokBoolLit . (\(Loc sp _) -> Loc sp False)) }
 <0, expr> \$                                   { token TokIdentifier }
 <0, expr> \$? $alpha [\$ $alpha $digit \_ \-]* { token TokIdentifier }
+<0, expr> in                                   { token TokIdentifier }
 
 -- | String Templating
 --
@@ -85,7 +86,7 @@ tokens :-
 
 <0, expr> \-? $digit+                                       { token (\loc -> TokIntLit (unLoc loc) (read . T.unpack <$> loc)) }
 <0, expr> \-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\+\-]?[0-9]+)? { token (\loc -> TokNumLit (unLoc loc) (read . T.unpack <$> loc)) }
-<0> \:                                                      { symbol SymColon }
+<0, expr> \:                                                { symbol SymColon }
 <0, expr> \.                                                { symbol SymDot }
 <0, expr> \,                                                { symbol SymComma }
 <0, expr> \= \=                                             { symbol SymEq }

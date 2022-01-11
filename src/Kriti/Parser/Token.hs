@@ -133,8 +133,8 @@ data ValueExt
   | Lte Span ValueExt ValueExt
   | And Span ValueExt ValueExt
   | Or Span ValueExt ValueExt
+  | In Span ValueExt ValueExt
   | Not Span ValueExt
-  | Member Span ValueExt ValueExt
   | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
   | EscapeURI Span ValueExt
   deriving (Show, Eq, Read, Generic)
@@ -158,8 +158,8 @@ instance Located ValueExt where
     Lte s _ _ -> s
     And s _ _ -> s
     Or s _ _ -> s
+    In s _ _ -> s
     Not s _ -> s
-    Member s _ _ -> s
     Range s _ _ _ _ -> s
     EscapeURI s _ -> s
 
