@@ -58,6 +58,7 @@ tokens :-
 -- NOTE: The escape handling in this regex seems correct but we should
 -- investigate precisely how escaping is handling in other examples of
 -- string templating.
+<string> (\\ \{)  { textToken TokStringLit "{" }
 <string> (\\ \") { textToken TokStringLit "\"" }
 <string> (\\ \\) { textToken TokStringLit "\\" }
 <string> (\\ \/) { textToken TokStringLit "\\/" }
