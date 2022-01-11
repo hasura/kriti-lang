@@ -105,6 +105,8 @@ test-suite kriti-lang-test
     , hspec
     , hspec-core
     , hspec-golden
+    , lens
+    , lens-aeson
     , mtl
     , parsec
     , pretty-simple

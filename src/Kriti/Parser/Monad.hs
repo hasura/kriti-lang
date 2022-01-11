@@ -4,17 +4,19 @@ import qualified Codec.Binary.UTF8.String as UTF8
 import Control.Monad.Except
 import Control.Monad.State
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as B
+import qualified Data.ByteString.Char8 as Char8
 import qualified Data.ByteString.Internal as B
 import qualified Data.ByteString.UTF8 as UTFBS
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import Data.Word (Word8)
 import qualified Kriti.Error as E
 import Kriti.Parser.Spans
 import Kriti.Parser.Token
 import Prettyprinter hiding (line)
+import Numeric (readHex)
+import GHC.Word
+import GHC.Char (chr)
 
 data ParserState = ParserState
   { parseSource :: B.ByteString,
@@ -141,7 +143,7 @@ instance Pretty ParseError where
     InvalidLexeme AlexSourcePos {..} source -> mkPretty "Invalid Lexeme" col line source 1
     where
       mkPretty msg col line source len =
-        let sourceLine = B.lines source !! line
+        let sourceLine = Char8.lines source !! line
         in vsep [ "Parse Error:",
                   indent 2 $ msg,
                   indent (line + 1) "|",
@@ -156,6 +158,7 @@ parseError err = throwError err
 --- Tokens ---
 --------------
 
+{-# INLINE textToken #-}
 textToken :: (Loc T.Text -> Token) -> T.Text -> B.ByteString -> Parser Token
 textToken k txt _ = k <$> located txt
 
@@ -163,6 +166,17 @@ textToken k txt _ = k <$> located txt
 {-# INLINE token #-}
 token :: (Loc T.Text -> Token) -> B.ByteString -> Parser Token
 token k bs = k <$> located (TE.decodeUtf8 bs)
+
+{-# INLINE tokenizeHex #-}
+tokenizeHex :: (Loc T.Text -> Token) -> B.ByteString -> Parser Token
+tokenizeHex k bs = do
+  sp <- start <$> location
+  case UTFBS.toString bs of
+    ('\\':'u':xs) -> 
+      case readHex xs of
+        [(x, _)] -> token k $ UTFBS.fromString [chr x]
+        _ -> throwError $ InvalidLexeme sp bs
+    _ -> throwError $ InvalidLexeme sp bs
 
 -- | Construct a `(TokenSymbol (Loc _))` using the current `parseSpan`
 -- to construct the `Loc _`.

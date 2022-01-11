@@ -4,8 +4,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 import Control.Exception.Safe (throwString)
+import Control.Lens hiding ((<.>))
 import Control.Monad.Except
 import qualified Data.Aeson as J
+import Data.Aeson.Lens()
 import qualified Data.Aeson.Encode.Pretty as JEP (encodePretty)
 import Data.Bifunctor (first)
 import Data.Either (isRight)
@@ -37,6 +39,7 @@ import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 import Text.Pretty.Simple (pShowNoColor)
 import Text.Read (readEither)
+import Data.Monoid
 
 --------------------------------------------------------------------------------
 
@@ -50,9 +53,10 @@ main = hspec $ do
 --------------------------------------------------------------------------------
 -- JSON Roundtripping test.
 
--- | Ensure that the grammar of Kriti is a superset of JSON.
--- In simpler terms, we should be able to parse any JSON as
--- a Kriti expression.
+-- | Ensure that the grammar of Kriti is a superset of JSON with the
+-- exception of '{{' characters. This is due to our templating
+-- syntax. We should be able to parse any other JSON as a Kriti
+-- expression.
 jsonParse :: Spec  
 jsonParse = describe "JSON Parsing" $ do
     describe "Edge Cases" $ do
@@ -60,14 +64,47 @@ jsonParse = describe "JSON Parsing" $ do
         (parser $ UTF8.fromString "\"\\u001c\"") `shouldSatisfy` isRight
       it "can handle unicode keys" $ do
         (parser $ UTF8.fromString "\"σ\"") `shouldSatisfy` isRight
-    describe "QuickCheck" $ do
+      it "can handle '{'" $ do
+        (parser $ UTF8.fromString "\"{\"") `shouldSatisfy` isRight
+      it "can handle '{{' when escaped properly" $ do
+        (parser $ UTF8.fromString "\"\\{{\"") `shouldSatisfy` isRight
+      it "can parse '\\{{' as '{{" $
+        let res = evalBS "\"\\{{\""
+        in case res of
+            Left err -> expectationFailure $ show err
+            Right _ -> res `shouldBe` Right (J.String "{{")
+      it "can parse 'U+03C3' as 'σ'" $
+        let res = evalBS "\"\\u03C3\""
+        in case res of
+            Left err -> expectationFailure $ show err
+            Right _ -> res `shouldBe` Right (J.String "σ")
+      it "can parse 'U+0041' as 'A'" $
+        let res = evalBS "\"\\u0041\""
+        in case res of
+            Left err -> expectationFailure $ show err
+            Right _ -> res `shouldBe` Right (J.String "A")
       it "can parse JSON as Kriti" $
-        Q.property \(value :: J.Value) ->
+        Q.property \(value :: J.Value) -> containsNoCurlies value Q.==> do
           let enc = BL.toStrict $ J.encode value
               res = first renderPretty $ parser enc
-          in case res of
+          case res of
             Left err -> expectationFailure $ T.unpack err
             Right _ -> pure ()
+
+-- | The 'Arbitrary' instance for 'Value' will construct 'String' and
+-- 'Object' key values with '{{'. Such values must be escaped in Kriti
+-- due to our templating syntax. Therefore, we reject such generated
+-- values quickcheck implication.
+containsNoCurlies :: J.Value -> Bool
+containsNoCurlies = getAll . foldMap (f checkStr) . universe 
+ where
+   f :: (T.Text -> All) -> J.Value -> All
+   f p = \case
+     J.String str -> p str
+     J.Object fields -> foldMap (p . fst) $ Compat.toList fields
+     J.Array _ -> All True
+     _ -> All True
+   checkStr str = All $ not $ "{{" `T.isInfixOf` str
 
 -- | Try to evaluate JSON as if it were a Kriti expression.
 evalJson :: J.Value -> Either T.Text J.Value
@@ -75,6 +112,11 @@ evalJson value = do
     let enc = BL.toStrict $ J.encode value
     ast <- first renderPretty $ parser enc
     first renderPretty $ runEval enc ast []
+
+evalBS :: BS.ByteString -> Either T.Text J.Value
+evalBS input = do
+    ast <- first renderPretty $ parser input
+    first renderPretty $ runEval "" ast []
 
 -- | Encode a JSON value as 'T.Text'.
 encodeText :: J.Value -> T.Text
@@ -86,13 +128,9 @@ encodeText = TE.decodeUtf8 . BL.toStrict . J.encode
 -- Value terms as Aeson.
 jsonRoundTrip :: Spec
 jsonRoundTrip = describe "JSON Roundtripping" $ do
-  describe "Edge Cases" $ do
-    it "can roundtrip unicode" $ do
-        let result = evalJson $ J.Object $ Compat.fromList [("σ", J.Null)]
-        result `shouldSatisfy` isRight
   describe "QuickCheck" $ do
     it "matches Aeson for standard JSON values" $ do
-      Q.property $ \(value :: J.Value) -> do
+      Q.property $ \(value :: J.Value) -> containsNoCurlies value Q.==> do
         result <- runExceptT $ do
             json <- hoistEither $ evalJson value
             if json == value

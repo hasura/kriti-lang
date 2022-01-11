@@ -133,7 +133,7 @@ object_field
 
 object_key :: { Loc T.Text }
 object_key
-  : object_key string { $2 <> $1 }
+  : object_key string { $1 <> $2 }
   | string { $1 }
 
 operator :: { ValueExt }

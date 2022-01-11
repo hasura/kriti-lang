@@ -67,7 +67,8 @@ tokens :-
 <string> (\\ n) { textToken TokStringLit "\n" }
 <string> (\\ r) { textToken TokStringLit "\r" }
 <string> (\\ t) { textToken TokStringLit "\t" }
-<string> (\\ u $hex $hex $hex $hex) { token TokStringLit }
+-- NOTE: Capture the '\\ u' are being captured along with the subsequent group.
+<string> \\ u ($hex $hex $hex $hex) { \bs -> tokenizeHex TokStringLit bs }
 <string> [^ \\ \" \{ ]+ { token TokStringLit }
 -- 2. Capture a '{' as a string literal
 <string> \{ { token TokStringLit}
