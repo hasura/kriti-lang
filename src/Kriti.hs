@@ -1,12 +1,14 @@
-module Kriti ( SerializedError (..),
-               ErrorCode (..),
-               AlexSourcePos (..),
-               ValueExt (..),
-               parser,
-               renderPretty,
-               runKriti,
-               runEval
-             ) where
+module Kriti
+  ( SerializedError (..),
+    ErrorCode (..),
+    AlexSourcePos (..),
+    ValueExt (..),
+    parser,
+    renderPretty,
+    runKriti,
+    runEval,
+  )
+where
 
 import qualified Data.Aeson as J
 import Data.Bifunctor (first)

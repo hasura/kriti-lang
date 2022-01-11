@@ -3,8 +3,8 @@
 
 module Kriti.Parser.Token where
 
-import Data.Scientific (Scientific)
 import qualified Data.ByteString.Lazy as BL
+import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
@@ -162,25 +162,27 @@ instance Pretty ValueExt where
   pretty = \case
     Object _ km ->
       let p :: (T.Text, ValueExt) -> Doc a
-          p (k, v) = pretty k <> colon <+> pretty v <> comma 
-      in braces $ braces $ foldMap p $ Compat.toList km
+          p (k, v) = pretty k <> colon <+> pretty v <> comma
+       in braces $ braces $ foldMap p $ Compat.toList km
     Array _ vec -> pretty $ V.toList vec
     String _ txt -> dquotes (pretty txt)
     Number _ sci -> pretty $ show sci
     Boolean _ b -> pretty b
-    Null _ -> "null" 
+    Null _ -> "null"
     StringTem _ vec ->
-      dquotes $ flip foldMap vec $ \case
-        String _ txt -> pretty txt
-        t1 -> "{{" <+> pretty t1 <+> "}}"
-    Path _ vec -> surround (foldMap pretty vec) "{{ " " }}" 
+      dquotes $
+        flip foldMap vec $ \case
+          String _ txt -> pretty txt
+          t1 -> "{{" <+> pretty t1 <+> "}}"
+    Path _ vec -> surround (foldMap pretty vec) "{{ " " }}"
     Iff _ p t1 t2 ->
-      vsep [ "{{" <+> "if" <+> pretty p <+> "}}",
-             indent 2 $ pretty t1,
-             "{{" <+> "else" <+> "}}",
-             indent 2 $ pretty t2,
-             "{{" <+> "end" <+> "}}"
-           ]
+      vsep
+        [ "{{" <+> "if" <+> pretty p <+> "}}",
+          indent 2 $ pretty t1,
+          "{{" <+> "else" <+> "}}",
+          indent 2 $ pretty t2,
+          "{{" <+> "end" <+> "}}"
+        ]
     Eq _ t1 t2 -> pretty t1 <+> equals <+> pretty t2
     Gt _ t1 t2 -> pretty t1 <+> ">" <+> pretty t2
     Lt _ t1 t2 -> pretty t1 <+> "<" <+> pretty t2
@@ -188,14 +190,15 @@ instance Pretty ValueExt where
     Or _ t1 t2 -> pretty t1 <+> "||" <+> pretty t2
     Member _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
     Range _ i bndr xs t1 ->
-      vsep [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> foldMap pretty xs <+> "}}",
-             indent 2 $ pretty t1,
-             "{{" <+> "end" <+> "}}"
-           ]
+      vsep
+        [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> foldMap pretty xs <+> "}}",
+          indent 2 $ pretty t1,
+          "{{" <+> "end" <+> "}}"
+        ]
     EscapeURI _ t1 -> "{{" <+> "escapeUri" <+> pretty t1 <+> "}}"
 
-renderDoc :: Doc ann -> T.Text 
-renderDoc = renderStrict . layoutPretty defaultLayoutOptions 
+renderDoc :: Doc ann -> T.Text
+renderDoc = renderStrict . layoutPretty defaultLayoutOptions
 
 renderPretty :: Pretty a => a -> T.Text
 renderPretty = renderDoc . pretty

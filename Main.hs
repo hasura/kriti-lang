@@ -6,7 +6,7 @@ import Data.Bifunctor (first)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
-import Kriti (parser, runEval, renderPretty)
+import Kriti (parser, renderPretty, runEval)
 import Options.Applicative
 import Prettyprinter
 import System.IO (IOMode (ReadMode), openFile)
@@ -26,20 +26,20 @@ kritiOpts =
       ( long "json" <> short 'j' <> metavar "JSON_FILE"
           <> help "The JSON file to read"
       )
-         <*> strOption
-      ( long "template" <> short 't' <> metavar "TEMPLATE_FILE"
-          <> help "The template file to use"
-      )
-    <*> strOption
-      ( long "bind" <> short 'b' <> metavar "BINDING_SYMBOL"
-          <> showDefault
-          <> value "$"
-               <> help "The symbol that's used to represent a JSON binding within the template"
-      )
+      <*> strOption
+        ( long "template" <> short 't' <> metavar "TEMPLATE_FILE"
+            <> help "The template file to use"
+        )
+      <*> strOption
+        ( long "bind" <> short 'b' <> metavar "BINDING_SYMBOL"
+            <> showDefault
+            <> value "$"
+            <> help "The symbol that's used to represent a JSON binding within the template"
+        )
 
 main :: IO ()
 main = do
-  let parserOptions = 
+  let parserOptions =
         info (kritiOpts <**> helper) $
           fullDesc
             <> progDesc "transform JSON using the Kriti language"
@@ -58,4 +58,3 @@ runKriti (KritiOptions jsonFile templateFile rootSymbol) = do
   template <- liftIO $ B.readFile templateFile
   kritiAst <- ExceptT $ pure $ first renderPretty $ parser template
   ExceptT $ pure $ first renderPretty $ runEval template kritiAst [(rootSymbol, json)]
-    

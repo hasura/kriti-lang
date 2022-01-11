@@ -9,13 +9,13 @@ import qualified Data.ByteString.UTF8 as UTFBS
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+import GHC.Char (chr)
+import GHC.Word
 import qualified Kriti.Error as E
 import Kriti.Parser.Spans
 import Kriti.Parser.Token
-import Prettyprinter hiding (line)
 import Numeric (readHex)
-import GHC.Word
-import GHC.Char (chr)
+import Prettyprinter hiding (line)
 
 data ParserState = ParserState
   { parseSource :: B.ByteString,
@@ -133,22 +133,23 @@ instance Pretty ParseError where
   pretty = \case
     EmptyTokenStream sp source ->
       let AlexSourcePos {..} = start sp
-          AlexSourcePos { col = endCol } = end sp
-      in mkPretty "Unexpected end of input" col line source (endCol - col)
+          AlexSourcePos {col = endCol} = end sp
+       in mkPretty "Unexpected end of input" col line source (endCol - col)
     UnexpectedToken loc source ->
       let AlexSourcePos {..} = start $ locate loc
-          AlexSourcePos { col = endCol } = end $ locate loc
-      in mkPretty "Unexpected token" col line source (endCol - col)
+          AlexSourcePos {col = endCol} = end $ locate loc
+       in mkPretty "Unexpected token" col line source (endCol - col)
     InvalidLexeme AlexSourcePos {..} source -> mkPretty "Invalid Lexeme" col line source 1
     where
       mkPretty msg col line source len =
         let sourceLine = T.lines (TE.decodeUtf8 source) !! line
-        in vsep [ "Parse Error:",
-                  indent 2 $ msg,
-                  indent (line + 1) "|",
-                  pretty line <+>  "|" <+> pretty sourceLine,
-                  indent (line + 1) $ "|" <> indent (col - 1) (pretty (replicate len '^'))
-                 ]
+         in vsep
+              [ "Parse Error:",
+                indent 2 $ msg,
+                indent (line + 1) "|",
+                pretty line <+> "|" <+> pretty sourceLine,
+                indent (line + 1) $ "|" <> indent (col - 1) (pretty (replicate len '^'))
+              ]
 
 parseError :: ParseError -> Parser a
 parseError err = throwError err
@@ -171,7 +172,7 @@ tokenizeHex :: (Loc T.Text -> Token) -> B.ByteString -> Parser Token
 tokenizeHex k bs = do
   sp <- start <$> location
   case UTFBS.toString bs of
-    ('\\':'u':xs) -> 
+    ('\\' : 'u' : xs) ->
       case readHex xs of
         [(x, _)] -> token k $ UTFBS.fromString [chr x]
         _ -> throwError $ InvalidLexeme sp bs

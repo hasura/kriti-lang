@@ -4,6 +4,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Aeson as J
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.UTF8 as B
 import Data.Foldable (foldlM)
 import Data.Function
 import Data.Maybe (maybeToList)
@@ -14,38 +15,38 @@ import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
 import Kriti.Parser.Spans as Spans
 import Kriti.Parser.Token
-import Prettyprinter as P
 import qualified Network.URI as URI
-import qualified Data.ByteString.UTF8 as B
+import Prettyprinter as P
 
 data EvalError
   = InvalidPath B.ByteString Span (V.Vector Accessor)
-  | TypeError B.ByteString Span T.Text 
+  | TypeError B.ByteString Span T.Text
   | RangeError B.ByteString Span
-  deriving Show
+  deriving (Show)
 
 instance Pretty EvalError where
-   pretty = \case
-     InvalidPath src term _ -> mkPretty src "Invalid path lookup" term
-     TypeError src term msg -> mkPretty src msg term
-     RangeError src term -> mkPretty src "Index out of range" term
-     where
-       mkPretty source msg term =
-         let AlexSourcePos { line = startLine, col = startCol } = start $ locate term
-             AlexSourcePos { col = endCol } = end $ locate term
-             sourceLine = B.lines source !! startLine
-         in vsep [ "Runtime Error:" ,
-                   indent 2 $ pretty (msg :: T.Text),
-                   indent (startLine + 1) "|",
-                   pretty startLine <+>  "|" <+> pretty (TE.decodeUtf8 sourceLine),
-                   indent (startLine + 1) $ "|" <> indent (startCol) (pretty $ replicate (endCol - startCol) '^')
-                 ]
+  pretty = \case
+    InvalidPath src term _ -> mkPretty src "Invalid path lookup" term
+    TypeError src term msg -> mkPretty src msg term
+    RangeError src term -> mkPretty src "Index out of range" term
+    where
+      mkPretty source msg term =
+        let AlexSourcePos {line = startLine, col = startCol} = start $ locate term
+            AlexSourcePos {col = endCol} = end $ locate term
+            sourceLine = B.lines source !! startLine
+         in vsep
+              [ "Runtime Error:",
+                indent 2 $ pretty (msg :: T.Text),
+                indent (startLine + 1) "|",
+                pretty startLine <+> "|" <+> pretty (TE.decodeUtf8 sourceLine),
+                indent (startLine + 1) $ "|" <> indent (startCol) (pretty $ replicate (endCol - startCol) '^')
+              ]
 
 instance SerializeError EvalError where
-  serialize :: EvalError -> SerializedError 
-  serialize (InvalidPath _ term path) = SerializedError  {_code = InvalidPathCode, _message = "\"" <> renderVect path <> "\"", _span = locate term}
-  serialize (TypeError _ term msg) = SerializedError  {_code = TypeErrorCode, _message = msg, _span = locate term}
-  serialize (RangeError _ term) = SerializedError  {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
+  serialize :: EvalError -> SerializedError
+  serialize (InvalidPath _ term path) = SerializedError {_code = InvalidPathCode, _message = "\"" <> renderVect path <> "\"", _span = locate term}
+  serialize (TypeError _ term msg) = SerializedError {_code = TypeErrorCode, _message = msg, _span = locate term}
+  serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
 
 type Ctxt = (B.ByteString, Compat.Object J.Value)
 
@@ -145,7 +146,7 @@ eval term = case term of
       _ -> throwError $ TypeError src sp $ T.pack $ "'" <> show ts' <> "' is not an array."
   Range sp idx binder path body -> do
     (src, ctx) <- ask
-    pathResult <- evalPath sp (J.Object ctx) path 
+    pathResult <- evalPath sp (J.Object ctx) path
     case pathResult of
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]

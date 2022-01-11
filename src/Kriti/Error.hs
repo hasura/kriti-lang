@@ -3,8 +3,8 @@ module Kriti.Error where
 import qualified Data.Aeson as J
 import qualified Data.Text as T
 import qualified Kriti.Parser.Spans as S
-import Prettyprinter (Pretty(..))
 import Kriti.Parser.Token (renderPretty)
+import Prettyprinter (Pretty (..))
 
 data ErrorCode
   = InvalidPathCode
@@ -23,7 +23,7 @@ instance Pretty ErrorCode where
     LexErrorCode -> "Lex Error"
 
 data SerializedError = SerializedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
-  deriving Show
+  deriving (Show)
 
 instance J.ToJSON SerializedError where
   toJSON (SerializedError ec msg span') =

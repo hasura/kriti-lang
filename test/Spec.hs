@@ -7,23 +7,24 @@ import Control.Exception.Safe (throwString)
 import Control.Lens hiding ((<.>))
 import Control.Monad.Except
 import qualified Data.Aeson as J
-import Data.Aeson.Lens()
 import qualified Data.Aeson.Encode.Pretty as JEP (encodePretty)
+import Data.Aeson.Lens ()
 import Data.Bifunctor (first)
-import Data.Either (isRight)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.UTF8 as UTF8
+import Data.Either (isRight)
 import Data.Foldable (for_)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import qualified Data.Text.Lazy.Encoding as TEL
 import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Encoding as TEL
 import qualified Data.Text.Lazy.IO as TLIO
 #if !MIN_VERSION_aeson(2,0,3)
 import qualified Data.Vector as V
 #endif
+import Data.Monoid
 import Kriti
 import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
@@ -36,7 +37,6 @@ import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 import Text.Pretty.Simple (pShowNoColor)
 import Text.Read (readEither)
-import Data.Monoid
 
 --------------------------------------------------------------------------------
 
@@ -54,34 +54,35 @@ main = hspec $ do
 -- exception of '{{' characters. This is due to our templating
 -- syntax. We should be able to parse any other JSON as a Kriti
 -- expression.
-jsonParse :: Spec  
+jsonParse :: Spec
 jsonParse = describe "JSON Parsing" $ do
-    describe "Edge Cases" $ do
-      it "can handle unicode escape sequences" $ do
-        (parser $ UTF8.fromString "\"\\u001c\"") `shouldSatisfy` isRight
-      it "can handle unicode keys" $ do
-        (parser $ UTF8.fromString "\"σ\"") `shouldSatisfy` isRight
-      it "can handle '{'" $ do
-        (parser $ UTF8.fromString "\"{\"") `shouldSatisfy` isRight
-      it "can handle '{{' when escaped properly" $ do
-        (parser $ UTF8.fromString "\"\\{{\"") `shouldSatisfy` isRight
-      it "can parse '\\{{' as '{{" $
-        let res = evalBS "\"\\{{\""
-        in case res of
+  describe "Edge Cases" $ do
+    it "can handle unicode escape sequences" $ do
+      (parser $ UTF8.fromString "\"\\u001c\"") `shouldSatisfy` isRight
+    it "can handle unicode keys" $ do
+      (parser $ UTF8.fromString "\"σ\"") `shouldSatisfy` isRight
+    it "can handle '{'" $ do
+      (parser $ UTF8.fromString "\"{\"") `shouldSatisfy` isRight
+    it "can handle '{{' when escaped properly" $ do
+      (parser $ UTF8.fromString "\"\\{{\"") `shouldSatisfy` isRight
+    it "can parse '\\{{' as '{{" $
+      let res = evalBS "\"\\{{\""
+       in case res of
             Left err -> expectationFailure $ show err
             Right _ -> res `shouldBe` Right (J.String "{{")
-      it "can parse 'U+03C3' as 'σ'" $
-        let res = evalBS "\"\\u03C3\""
-        in case res of
+    it "can parse 'U+03C3' as 'σ'" $
+      let res = evalBS "\"\\u03C3\""
+       in case res of
             Left err -> expectationFailure $ show err
             Right _ -> res `shouldBe` Right (J.String "σ")
-      it "can parse 'U+0041' as 'A'" $
-        let res = evalBS "\"\\u0041\""
-        in case res of
+    it "can parse 'U+0041' as 'A'" $
+      let res = evalBS "\"\\u0041\""
+       in case res of
             Left err -> expectationFailure $ show err
             Right _ -> res `shouldBe` Right (J.String "A")
-      it "can parse JSON as Kriti" $
-        Q.property \(value :: J.Value) -> containsNoCurlies value Q.==> do
+    it "can parse JSON as Kriti" $
+      Q.property \(value :: J.Value) ->
+        containsNoCurlies value Q.==> do
           let enc = BL.toStrict $ J.encode value
               res = first renderPretty $ parser enc
           case res of
@@ -93,27 +94,27 @@ jsonParse = describe "JSON Parsing" $ do
 -- due to our templating syntax. Therefore, we reject such generated
 -- values quickcheck implication.
 containsNoCurlies :: J.Value -> Bool
-containsNoCurlies = getAll . foldMap (f checkStr) . universe 
- where
-   f :: (T.Text -> All) -> J.Value -> All
-   f p = \case
-     J.String str -> p str
-     J.Object fields -> foldMap (p . fst) $ Compat.toList fields
-     J.Array _ -> All True
-     _ -> All True
-   checkStr str = All $ not $ "{{" `T.isInfixOf` str
+containsNoCurlies = getAll . foldMap (f checkStr) . universe
+  where
+    f :: (T.Text -> All) -> J.Value -> All
+    f p = \case
+      J.String str -> p str
+      J.Object fields -> foldMap (p . fst) $ Compat.toList fields
+      J.Array _ -> All True
+      _ -> All True
+    checkStr str = All $ not $ "{{" `T.isInfixOf` str
 
 -- | Try to evaluate JSON as if it were a Kriti expression.
 evalJson :: J.Value -> Either T.Text J.Value
 evalJson value = do
-    let enc = BL.toStrict $ J.encode value
-    ast <- first renderPretty $ parser enc
-    first renderPretty $ runEval enc ast []
+  let enc = BL.toStrict $ J.encode value
+  ast <- first renderPretty $ parser enc
+  first renderPretty $ runEval enc ast []
 
 evalBS :: BS.ByteString -> Either T.Text J.Value
 evalBS input = do
-    ast <- first renderPretty $ parser input
-    first renderPretty $ runEval "" ast []
+  ast <- first renderPretty $ parser input
+  first renderPretty $ runEval "" ast []
 
 -- | Encode a JSON value as 'T.Text'.
 encodeText :: J.Value -> T.Text
@@ -127,15 +128,16 @@ jsonRoundTrip :: Spec
 jsonRoundTrip = describe "JSON Roundtripping" $ do
   describe "QuickCheck" $ do
     it "matches Aeson for standard JSON values" $ do
-      Q.property $ \(value :: J.Value) -> containsNoCurlies value Q.==> do
-        result <- runExceptT $ do
+      Q.property $ \(value :: J.Value) ->
+        containsNoCurlies value Q.==> do
+          result <- runExceptT $ do
             json <- hoistEither $ evalJson value
             if json == value
-            then pure ()
-            else throwError $ "Failed to roundtrip '" <> encodeText value <> "', got '" <> encodeText json <> "'."
-        case result of
-          Left err -> expectationFailure $ T.unpack err
-          Right _ -> pure ()
+              then pure ()
+              else throwError $ "Failed to roundtrip '" <> encodeText value <> "', got '" <> encodeText json <> "'."
+          case result of
+            Left err -> expectationFailure $ T.unpack err
+            Right _ -> pure ()
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
@@ -362,4 +364,3 @@ fetchGoldenFiles dir = do
 
 hoistEither :: Monad m => Either e a -> ExceptT e m a
 hoistEither = ExceptT . pure
-
