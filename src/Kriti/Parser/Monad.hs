@@ -4,7 +4,6 @@ import qualified Codec.Binary.UTF8.String as UTF8
 import Control.Monad.Except
 import Control.Monad.State
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as Char8
 import qualified Data.ByteString.Internal as B
 import qualified Data.ByteString.UTF8 as UTFBS
 import qualified Data.List.NonEmpty as NE
@@ -143,11 +142,11 @@ instance Pretty ParseError where
     InvalidLexeme AlexSourcePos {..} source -> mkPretty "Invalid Lexeme" col line source 1
     where
       mkPretty msg col line source len =
-        let sourceLine = Char8.lines source !! line
+        let sourceLine = T.lines (TE.decodeUtf8 source) !! line
         in vsep [ "Parse Error:",
                   indent 2 $ msg,
                   indent (line + 1) "|",
-                  pretty line <+>  "|" <+> pretty (TE.decodeUtf8 sourceLine),
+                  pretty line <+>  "|" <+> pretty sourceLine,
                   indent (line + 1) $ "|" <> indent (col - 1) (pretty (replicate len '^'))
                  ]
 

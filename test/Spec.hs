@@ -14,16 +14,13 @@ import Data.Either (isRight)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.UTF8 as UTF8
--- [TODO: Reed M, 08/01/2022] Char8 is evil, and should be banished!
--- Using any of the functions from this module on unicode codepoints
--- above U+007F will cause issues.
-import qualified Data.ByteString.Char8 as BS8
-import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Foldable (for_)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+import qualified Data.Text.Lazy.Encoding as TEL
 import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.IO as TLIO
 #if !MIN_VERSION_aeson(2,0,3)
 import qualified Data.Vector as V
 #endif
@@ -235,9 +232,9 @@ goldenReadShow dir name val = Golden {..}
     output = val
     encodePretty = TL.unpack . pShowNoColor
     writeToFile path actual =
-      BS.writeFile path . BS8.pack . TL.unpack . pShowNoColor $ actual
+      BS.writeFile path . BL.toStrict . TEL.encodeUtf8 . pShowNoColor $ actual
     readFromFile path = do
-      eVal <- readEither . BS8.unpack <$> BS.readFile path
+      eVal <- readEither . TL.unpack <$> TLIO.readFile path
       either throwString pure eVal
     goldenFile = dir </> "golden" </> name <.> "txt"
     actualFile = Just $ dir </> "actual" </> name <.> "txt"
@@ -257,8 +254,8 @@ goldenParseError dir name parseError = Golden {..}
   where
     output = show $ serialize parseError
     encodePretty = id
-    writeToFile path actual = BS.writeFile path . BS8.pack $ actual
-    readFromFile path = BS8.unpack <$> BS.readFile path
+    writeToFile path actual = BS.writeFile path . TE.encodeUtf8 . T.pack $ actual
+    readFromFile path = T.unpack . TE.decodeUtf8 <$> BS.readFile path
     goldenFile = dir </> "golden" </> name <.> "txt"
     actualFile = Just $ dir </> "actual" </> name <.> "txt"
     failFirstTime = False
@@ -275,7 +272,7 @@ goldenAeson ::
 goldenAeson dir name val = Golden {..}
   where
     output = val
-    encodePretty = BL8.unpack . JEP.encodePretty
+    encodePretty = TL.unpack . TEL.decodeUtf8 . JEP.encodePretty
     writeToFile path actual =
       BL.writeFile path . JEP.encodePretty $ actual
     readFromFile path = do
