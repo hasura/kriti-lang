@@ -19,6 +19,7 @@ import Kriti.Parser.Spans
 }
 
 %name parser term
+%name templateParser string_lit 
 %tokentype { Token }
 %monad { Parser }
 %error { failure }
@@ -68,6 +69,10 @@ ident       { TokIdentifier $$ }
 string_lit :: { ValueExt }
 string_lit
   : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
+
+template_parser :: { ValueExt }
+template_parser
+  : string_template { StringTem (locate $1) $1}
 
 string_template :: { V.Vector ValueExt }
 string_template

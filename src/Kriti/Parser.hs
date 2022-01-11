@@ -6,6 +6,7 @@ module Kriti.Parser
     module T,
     lexer,
     parser,
+    templateParser'
   )
 where
 
@@ -25,3 +26,8 @@ parser :: B.ByteString -> Either ParseError T.ValueExt
 parser bs = M.runParser [] bs $ do
   toks <- LL.lexer
   GG.parser toks
+
+templateParser' :: B.ByteString -> Either ParseError T.ValueExt
+templateParser' bs = M.runParser [] bs $ do
+  toks <- LL.lexer
+  GG.templateParser toks

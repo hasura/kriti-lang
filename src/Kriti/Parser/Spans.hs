@@ -3,6 +3,7 @@
 module Kriti.Parser.Spans where
 
 import GHC.Generics
+import qualified Data.Vector as V
 
 ------------------------
 --- Source Positions ---
@@ -76,3 +77,8 @@ instance (Located a, Located b) => Located (Either a b) where
   locate = \case
     Left a -> locate a
     Right b -> locate b
+
+instance Located a => Located (V.Vector a) where
+  {-# INLINE locate #-}
+  locate = V.foldl (\s a -> s <> locate a) (Span alexStartPos alexStartPos)
+
