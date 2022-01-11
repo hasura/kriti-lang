@@ -2,13 +2,13 @@ module Kriti (RenderedError (..), ErrorCode (..), AlexSourcePos (..), ValueExt (
 
 import qualified Data.Aeson as J
 import Data.Bifunctor (first)
-import qualified Data.ByteString as B
 import qualified Data.Text as T
 import Kriti.Error
 import Kriti.Eval
 import Kriti.Parser
+import qualified Data.Text.Encoding as T
 
-runKriti :: B.ByteString -> [(T.Text, J.Value)] -> Either RenderedError J.Value
+runKriti :: T.Text -> [(T.Text, J.Value)] -> Either RenderedError J.Value
 runKriti template source = do
-  template' <- first render $ parser template
+  template' <- first render $ parser $ T.encodeUtf8 template
   first render $ runEval template' source

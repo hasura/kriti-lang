@@ -5,9 +5,9 @@ module Main where
 import Control.Monad (void)
 import Data.Aeson (decode, encode)
 import Data.Bifoldable (bifoldMap)
-import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LBS8
+import qualified Data.Text.IO as TIO
 import Data.Maybe (fromJust)
 import Data.Text
 import Kriti (runKriti)
@@ -55,7 +55,7 @@ runKritiInteractive (KritiOptions jsonFile templateFile rootSymbol) = do
   void $ checkFilePath templateFile
 
   json <- LBS.readFile jsonFile
-  template <- B.readFile templateFile
+  template <- TIO.readFile templateFile
   LBS8.putStrLn $ bifoldMap encode encode $ runKriti template [(rootSymbol, fromJust . decode $ json)]
   where
     checkFilePath = flip openFile ReadMode
