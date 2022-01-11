@@ -128,8 +128,13 @@ object_fields
 
 object_field :: { (T.Text, ValueExt) }
 object_field
-  : 's"' string '"e' ':' term { (unLoc $2, $5) }
+  : 's"' object_key '"e' ':' term { (unLoc $2, $5) }
   | 's"' '"e' ':' term { ("", $4) }
+
+object_key :: { Loc T.Text }
+object_key
+  : object_key string { $2 <> $1 }
+  | string { $1 }
 
 operator :: { ValueExt }
 operator
