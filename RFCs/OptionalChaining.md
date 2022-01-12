@@ -80,6 +80,8 @@ runKriti "{{ $body?.foo }}" [($body, 1)]
 Left (RenderedError {_code = InvalidPathCode, _message = "Path Lookup Error: \"$foo\"", _span = Span {start = AlexSourcePos {line = 0, col = 3}, end = AlexSourcePos {line = 0, col = 7}}})
 ```
 
+*RESOLUTION*: This will be an exception with a `TypeError: "'x' is not an Object."`.
+
 ### Future Work / Out of Scope
 
 As mentioned earlier, a Nullish style operator would be a great further addition.
