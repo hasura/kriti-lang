@@ -4,6 +4,7 @@
 module Kriti.Parser.Token where
 
 import qualified Data.ByteString.Lazy as BL
+import Data.Function ((&))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -171,7 +172,7 @@ instance Pretty ValueExt where
     Null _ -> "null"
     StringTem _ vec ->
       dquotes $
-        flip foldMap vec $ \case
+        vec & foldMap \case
           String _ txt -> pretty txt
           t1 -> "{{" <+> pretty t1 <+> "}}"
     Path _ vec -> surround (foldMap pretty vec) "{{ " " }}"
