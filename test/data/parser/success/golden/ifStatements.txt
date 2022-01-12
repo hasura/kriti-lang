@@ -45,7 +45,7 @@ Array
                         , col = 10
                         }
                     }
-                ) "p"
+                ) "p" Head
             ]
         )
         ( Boolean
@@ -109,7 +109,7 @@ Array
                         , col = 11
                         }
                     }
-                ) "p"
+                ) "p" Head
             ]
         )
         ( Boolean
@@ -185,7 +185,7 @@ Array
                             , col = 10
                             }
                         }
-                    ) "p"
+                    ) "p" Head
                 ]
             )
             ( Path
@@ -211,7 +211,7 @@ Array
                             , col = 15
                             }
                         }
-                    ) "q"
+                    ) "q" Head
                 ]
             )
         )
@@ -288,7 +288,7 @@ Array
                             , col = 11
                             }
                         }
-                    ) "p"
+                    ) "p" Head
                 ]
             )
             ( Path
@@ -314,7 +314,7 @@ Array
                             , col = 16
                             }
                         }
-                    ) "q"
+                    ) "q" Head
                 ]
             )
         )
@@ -403,7 +403,7 @@ Array
                                 , col = 11
                                 }
                             }
-                        ) "p"
+                        ) "p" Head
                     ]
                 )
                 ( Path
@@ -429,7 +429,7 @@ Array
                                 , col = 16
                                 }
                             }
-                        ) "q"
+                        ) "q" Head
                     ]
                 )
             )
@@ -456,7 +456,7 @@ Array
                             , col = 22
                             }
                         }
-                    ) "q"
+                    ) "q" Head
                 ]
             )
         )
@@ -618,11 +618,11 @@ Array
             ( Span
                 { start = AlexSourcePos
                     { line = 7
-                    , col = 23
+                    , col = 26
                     }
                 , end = AlexSourcePos
                     { line = 7
-                    , col = 43
+                    , col = 41
                     }
                 }
             )
@@ -637,7 +637,7 @@ Array
                         , col = 31
                         }
                     }
-                ) "$path"
+                ) "$path" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -649,7 +649,7 @@ Array
                         , col = 41
                         }
                     }
-                ) "lookup"
+                ) "lookup" BracketAccess
             ]
         )
         ( Boolean
@@ -712,7 +712,7 @@ Array
                             , col = 10
                             }
                         }
-                    ) "$"
+                    ) "$" Head
                 , Arr
                     ( Span
                         { start = AlexSourcePos
@@ -736,7 +736,7 @@ Array
                             , col = 22
                             }
                         }
-                    ) "isActive"
+                    ) "isActive" DotAccess
                 ]
             )
             ( Boolean
@@ -814,7 +814,7 @@ Array
                         , col = 10
                         }
                     }
-                ) "$"
+                ) "$" Head
             , Arr
                 ( Span
                     { start = AlexSourcePos
@@ -838,7 +838,7 @@ Array
                         , col = 22
                         }
                     }
-                ) "isActive"
+                ) "isActive" DotAccess
             ]
         )
         ( Boolean

@@ -15,7 +15,7 @@ fromList :: [(T.Text, v)] -> Object v
 fromList = KM.fromList . map (first K.fromText)
 
 toList :: Object v -> [(T.Text, v)]
-toList = fmap (first K.toText) . KM.toList
+toList = map (first K.toText) . KM.toList
 
 lookup :: T.Text -> Object v -> Maybe v
 lookup = KM.lookup . K.fromText

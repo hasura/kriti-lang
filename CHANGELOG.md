@@ -1,6 +1,8 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
+  - Fixes unicode support.
+  - Adds a Pretty Printer.
   - Adds `!=`, `>=`, `<=`, `in` operators and `not` function.
   - Adds support for Aeson >=2.0.0
   - Parser rewrite with Happy and Alex with improved source span generation.

@@ -1,4 +1,14 @@
-module Kriti (RenderedError (..), ErrorCode (..), AlexSourcePos (..), ValueExt (..), runKriti) where
+module Kriti
+  ( SerializedError (..),
+    ErrorCode (..),
+    AlexSourcePos (..),
+    ValueExt (..),
+    parser,
+    renderPretty,
+    runKriti,
+    runEval,
+  )
+where
 
 import qualified Data.Aeson as J
 import Data.Bifunctor (first)
@@ -8,7 +18,7 @@ import Kriti.Error
 import Kriti.Eval
 import Kriti.Parser
 
-runKriti :: B.ByteString -> [(T.Text, J.Value)] -> Either RenderedError J.Value
-runKriti template source = do
-  template' <- first render $ parser template
-  first render $ runEval template' source
+runKriti :: B.ByteString -> [(T.Text, J.Value)] -> Either SerializedError J.Value
+runKriti templateSrc json = do
+  ast <- first serialize $ parser templateSrc
+  first serialize $ runEval templateSrc ast json

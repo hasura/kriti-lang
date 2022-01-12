@@ -1,6 +1,7 @@
 {
 module Kriti.Parser.Lexer where
 
+import Control.Monad.State (gets)
 import qualified Data.Text as T
 import Kriti.Parser.Monad
 import Kriti.Parser.Spans
@@ -9,7 +10,8 @@ import Kriti.Parser.Token
 
 $digit = 0-9
 $alpha = [a-zA-Z]
-$alphanum = [a-zA-Z09]
+$alphanum = [a-zA-Z0-9]
+$hex = [A-Fa-f0-9]
 
 tokens :-
 
@@ -58,7 +60,18 @@ tokens :-
 -- NOTE: The escape handling in this regex seems correct but we should
 -- investigate precisely how escaping is handling in other examples of
 -- string templating.
-<string> (\\ \\ | \\ \` | [^ \" \{ ])+ { token TokStringLit }
+<string> (\\ \{)  { textToken TokStringLit "{" }
+<string> (\\ \") { textToken TokStringLit "\"" }
+<string> (\\ \\) { textToken TokStringLit "\\" }
+<string> (\\ \/) { textToken TokStringLit "\\/" }
+<string> (\\ b) { textToken TokStringLit "\b" }
+<string> (\\ f) { textToken TokStringLit "\f" }
+<string> (\\ n) { textToken TokStringLit "\n" }
+<string> (\\ r) { textToken TokStringLit "\r" }
+<string> (\\ t) { textToken TokStringLit "\t" }
+-- NOTE: Capture the '\\ u' are being captured along with the subsequent group.
+<string> \\ u ($hex $hex $hex $hex) { \bs -> tokenizeHex TokStringLit bs }
+<string> [^ \\ \" \{ ]+ { token TokStringLit }
 -- 2. Capture a '{' as a string literal
 <string> \{ { token TokStringLit}
 -- 3. Capture '{{', enter <expr> mode, and emit a 'ExprBegin' token. This will win over the '{' rule due to the longest capture rule.
@@ -125,10 +138,11 @@ scan :: Parser Token
 scan = do
   input <- getInput
   code <- startCode
+  src <- gets parseSource
   case alexScan input code of
     AlexEOF -> pure EOF
-    AlexError (AlexInput pos _ inp _) ->
-      parseError $ InvalidLexeme pos inp
+    AlexError (AlexInput pos _ _ _) ->
+      parseError $ InvalidLexeme pos src
     AlexSkip rest _ -> do
       advance rest
       scan

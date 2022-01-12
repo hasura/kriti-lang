@@ -14,11 +14,11 @@ Array
         ( Span
             { start = AlexSourcePos
                 { line = 1
-                , col = 3
+                , col = 6
                 }
             , end = AlexSourcePos
                 { line = 1
-                , col = 13
+                , col = 10
                 }
             }
         )
@@ -33,17 +33,17 @@ Array
                     , col = 10
                     }
                 }
-            ) "$foo"
+            ) "$foo" Head
         ]
     , Path
         ( Span
             { start = AlexSourcePos
                 { line = 2
-                , col = 3
+                , col = 6
                 }
             , end = AlexSourcePos
                 { line = 2
-                , col = 21
+                , col = 18
                 }
             }
         )
@@ -58,7 +58,7 @@ Array
                     , col = 10
                     }
                 }
-            ) "$foo"
+            ) "$foo" Head
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -70,7 +70,7 @@ Array
                     , col = 14
                     }
                 }
-            ) "bar"
+            ) "bar" DotAccess
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -82,17 +82,17 @@ Array
                     , col = 18
                     }
                 }
-            ) "baz"
+            ) "baz" DotAccess
         ]
     , Path
         ( Span
             { start = AlexSourcePos
                 { line = 3
-                , col = 3
+                , col = 6
                 }
             , end = AlexSourcePos
                 { line = 3
-                , col = 28
+                , col = 25
                 }
             }
         )
@@ -107,7 +107,7 @@ Array
                     , col = 10
                     }
                 }
-            ) "$foo"
+            ) "$foo" Head
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -119,7 +119,7 @@ Array
                     , col = 21
                     }
                 }
-            ) "bar baz"
+            ) "bar baz" BracketAccess
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -131,17 +131,17 @@ Array
                     , col = 25
                     }
                 }
-            ) "qux"
+            ) "qux" DotAccess
         ]
     , Path
         ( Span
             { start = AlexSourcePos
                 { line = 4
-                , col = 3
+                , col = 6
                 }
             , end = AlexSourcePos
                 { line = 4
-                , col = 25
+                , col = 22
                 }
             }
         )
@@ -156,7 +156,7 @@ Array
                     , col = 10
                     }
                 }
-            ) "$foo"
+            ) "$foo" Head
         , Arr
             ( Span
                 { start = AlexSourcePos
@@ -204,6 +204,6 @@ Array
                     , col = 22
                     }
                 }
-            ) "ok"
+            ) "ok" DotAccess
         ]
     ]

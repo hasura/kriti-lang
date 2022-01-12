@@ -26,6 +26,7 @@ common common-settings
     LambdaCase
     NamedFieldPuns
     OverloadedStrings
+    StrictData
     RecordWildCards
     TupleSections
     DerivingVia
@@ -50,6 +51,7 @@ common common-libraries
     , text
     , utf8-string
     , optparse-applicative
+    , prettyprinter
 
 -------------------------------------------------------------------------------
 
@@ -103,8 +105,12 @@ test-suite kriti-lang-test
     , hspec
     , hspec-core
     , hspec-golden
+    , lens
+    , lens-aeson
+    , mtl
     , parsec
     , pretty-simple
+    , prettyprinter
     , raw-strings-qq
     , QuickCheck
     , safe-exceptions
@@ -123,3 +129,4 @@ executable kriti
   main-is: Main.hs
   build-depends:
     , kriti-lang
+    , mtl

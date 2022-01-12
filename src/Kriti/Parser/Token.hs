@@ -3,13 +3,17 @@
 
 module Kriti.Parser.Token where
 
-import qualified Data.List as L
+import qualified Data.ByteString.Lazy as BL
+import Data.Function ((&))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
 import GHC.Generics
 import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Parser.Spans
+import Prettyprinter
+import Prettyprinter.Render.Text (renderStrict)
 
 -- | The type of non literal/identifer symbols extracted from
 -- source. This type is factored out of `Token` for clarity.
@@ -61,8 +65,8 @@ overLoc f (TokIntLit txt loc) = TokIntLit txt $ f loc
 overLoc f (TokBoolLit loc) = TokBoolLit $ f loc
 overLoc _ EOF = EOF
 
-serialize :: Token -> T.Text
-serialize = \case
+serializeToken :: Token -> T.Text
+serializeToken = \case
   TokStringLit str -> "\"" <> unLoc str <> "\""
   TokIdentifier iden -> unLoc iden
   TokIntLit str _ -> str
@@ -96,19 +100,20 @@ serialize = \case
   TokSymbol (Loc _ SymStringEnd) -> "\""
   EOF -> ""
 
--- | Path lookups are represented as a stack of object and array lookups. eg., `Vector Accessor`.
-data Accessor = Obj Span T.Text | Arr Span Int
+-- | Annotates whether the object lookup used '.' or brace syntax for pretty printing.
+data ObjAccType = Head | DotAccess | BracketAccess
   deriving (Show, Eq, Read)
 
-renderAccessor :: Accessor -> T.Text
-renderAccessor = \case
-  -- TODO: Doesn't correctly account for `['foo bar']` object lookup syntax
-  Obj _ txt -> txt
-  Arr _ i -> T.pack $ show i
+-- | Path lookups are represented as a stack of object and array lookups. eg., `Vector Accessor`.
+data Accessor = Obj Span T.Text ObjAccType | Arr Span Int
+  deriving (Show, Eq, Read)
 
--- TODO: Should not insert a '.' when encountering an 'Arr' or square bracket object lookup
-renderPath :: V.Vector Accessor -> T.Text
-renderPath = mconcat . L.intersperse "." . V.toList . fmap renderAccessor
+instance Pretty Accessor where
+  pretty = \case
+    Obj _ txt DotAccess -> dot <> pretty txt
+    Obj _ txt BracketAccess -> brackets (squotes $ pretty txt)
+    Obj _ txt Head -> pretty txt
+    Arr _ i -> brackets (pretty i)
 
 -- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
 -- terms which are then evaluated and converted into Aeson `Value`
@@ -165,5 +170,60 @@ instance Located ValueExt where
 
 instance Located Accessor where
   locate = \case
-    Obj s _ -> s
+    Obj s _ _ -> s
     Arr s _ -> s
+
+instance Pretty ValueExt where
+  pretty = \case
+    Object _ km ->
+      let p :: (T.Text, ValueExt) -> Doc a
+          p (k, v) = pretty k <> colon <+> pretty v <> comma
+       in braces $ braces $ foldMap p $ Compat.toList km
+    Array _ vec -> pretty $ V.toList vec
+    String _ txt -> dquotes (pretty txt)
+    Number _ sci -> pretty $ show sci
+    Boolean _ b -> pretty b
+    Null _ -> "null"
+    StringTem _ vec ->
+      dquotes $
+        vec & foldMap \case
+          String _ txt -> pretty txt
+          t1 -> "{{" <+> pretty t1 <+> "}}"
+    Path _ vec -> surround (foldMap pretty vec) "{{ " " }}"
+    Iff _ p t1 t2 ->
+      vsep
+        [ "{{" <+> "if" <+> pretty p <+> "}}",
+          indent 2 $ pretty t1,
+          "{{" <+> "else" <+> "}}",
+          indent 2 $ pretty t2,
+          "{{" <+> "end" <+> "}}"
+        ]
+    Eq _ t1 t2 -> pretty t1 <+> equals <+> pretty t2
+    NotEq _ t1 t2 -> pretty t1 <+> "!=" <+> pretty t2
+    Gt _ t1 t2 -> pretty t1 <+> ">" <+> pretty t2
+    Lt _ t1 t2 -> pretty t1 <+> "<" <+> pretty t2
+    Gte _ t1 t2 -> pretty t1 <+> ">=" <+> pretty t2
+    Lte _ t1 t2 -> pretty t1 <+> "<=" <+> pretty t2
+    And _ t1 t2 -> pretty t1 <+> "&&" <+> pretty t2
+    Or _ t1 t2 -> pretty t1 <+> "||" <+> pretty t2
+    In _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
+    Not _ t1 -> "not" <+> pretty t1
+    Range _ i bndr xs t1 ->
+      vsep
+        [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> foldMap pretty xs <+> "}}",
+          indent 2 $ pretty t1,
+          "{{" <+> "end" <+> "}}"
+        ]
+    EscapeURI _ t1 -> "{{" <+> "escapeUri" <+> pretty t1 <+> "}}"
+
+renderDoc :: Doc ann -> T.Text
+renderDoc = renderStrict . layoutPretty defaultLayoutOptions
+
+renderPretty :: Pretty a => a -> T.Text
+renderPretty = renderDoc . pretty
+
+renderVect :: Pretty a => V.Vector a -> T.Text
+renderVect = renderDoc . foldMap pretty
+
+renderBL :: BL.ByteString -> T.Text
+renderBL = TE.decodeUtf8 . BL.toStrict

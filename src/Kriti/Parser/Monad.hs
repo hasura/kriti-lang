@@ -9,21 +9,26 @@ import qualified Data.ByteString.UTF8 as UTFBS
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import Data.Word (Word8)
+import GHC.Char (chr)
+import GHC.Word
 import qualified Kriti.Error as E
 import Kriti.Parser.Spans
 import Kriti.Parser.Token
+import Numeric (readHex)
+import Prettyprinter hiding (line)
 
 data ParserState = ParserState
-  { parseInput :: {-# UNPACK #-} !AlexInput,
-    parseStartCodes :: {-# UNPACK #-} !(NE.NonEmpty Int),
-    parseSpan :: !Span
+  { parseSource :: B.ByteString,
+    parseInput :: {-# UNPACK #-} AlexInput,
+    parseStartCodes :: {-# UNPACK #-} (NE.NonEmpty Int),
+    parseSpan :: Span
   }
 
 initState :: [Int] -> B.ByteString -> ParserState
 initState codes bs =
   ParserState
-    { parseInput = AlexInput (AlexSourcePos 0 1) '\n' bs [],
+    { parseSource = bs,
+      parseInput = AlexInput (AlexSourcePos 0 1) '\n' bs [],
       parseStartCodes = NE.fromList (codes ++ [0]),
       parseSpan = Span (AlexSourcePos 0 1) (AlexSourcePos 0 1)
     }
@@ -97,32 +102,54 @@ popStartCode = modify' $ \st ->
 ----------------------
 
 data ParseError
-  = EmptyTokenStream Span
-  | UnexpectedToken (Loc Token)
+  = EmptyTokenStream Span B.ByteString
+  | UnexpectedToken (Loc Token) B.ByteString
   | InvalidLexeme AlexSourcePos B.ByteString
   deriving (Show)
 
-instance E.RenderError ParseError where
-  render (EmptyTokenStream s) =
-    E.RenderedError
+instance E.SerializeError ParseError where
+  serialize (EmptyTokenStream s _) =
+    E.SerializedError
       { _code = E.ParseErrorCode,
         _message = "ParseError: Empty token stream.",
         _span = s
       }
-  render (UnexpectedToken tok) =
-    let tok' = serialize $ unLoc tok
+  serialize (UnexpectedToken tok _) =
+    let tok' = serializeToken $ unLoc tok
         span' = locate tok
-     in E.RenderedError
+     in E.SerializedError
           { _code = E.ParseErrorCode,
-            _message = "ParseError: Unexpected token '" <> tok' <> "'.",
+            _message = "Unexpected token '" <> tok' <> "'.",
             _span = span'
           }
-  render (InvalidLexeme start inp) =
-    E.RenderedError
+  serialize (InvalidLexeme start inp) =
+    E.SerializedError
       { _code = E.LexErrorCode,
-        _message = "LexError: Invalid Lexeme: '" <> TE.decodeUtf8 inp <> "'",
+        _message = "Invalid Lexeme: '" <> TE.decodeUtf8 inp <> "'",
         _span = Span start (overCol (+ (B.length inp)) start)
       }
+
+instance Pretty ParseError where
+  pretty = \case
+    EmptyTokenStream sp source ->
+      let AlexSourcePos {..} = start sp
+          AlexSourcePos {col = endCol} = end sp
+       in mkPretty "Unexpected end of input" col line source (endCol - col)
+    UnexpectedToken loc source ->
+      let AlexSourcePos {..} = start $ locate loc
+          AlexSourcePos {col = endCol} = end $ locate loc
+       in mkPretty "Unexpected token" col line source (endCol - col)
+    InvalidLexeme AlexSourcePos {..} source -> mkPretty "Invalid Lexeme" col line source 1
+    where
+      mkPretty msg col line source len =
+        let sourceLine = T.lines (TE.decodeUtf8 source) !! line
+         in vsep
+              [ "Parse Error:",
+                indent 2 $ msg,
+                indent (line + 1) "|",
+                pretty line <+> "|" <+> pretty sourceLine,
+                indent (line + 1) $ "|" <> indent (col - 1) (pretty (replicate len '^'))
+              ]
 
 parseError :: ParseError -> Parser a
 parseError err = throwError err
@@ -131,10 +158,25 @@ parseError err = throwError err
 --- Tokens ---
 --------------
 
+{-# INLINE textToken #-}
+textToken :: (Loc T.Text -> Token) -> T.Text -> B.ByteString -> Parser Token
+textToken k txt _ = k <$> located txt
+
 -- | Construct a Token from the matched Text and the current `parseSpan`.
 {-# INLINE token #-}
 token :: (Loc T.Text -> Token) -> B.ByteString -> Parser Token
 token k bs = k <$> located (TE.decodeUtf8 bs)
+
+{-# INLINE tokenizeHex #-}
+tokenizeHex :: (Loc T.Text -> Token) -> B.ByteString -> Parser Token
+tokenizeHex k bs = do
+  sp <- start <$> location
+  case UTFBS.toString bs of
+    ('\\' : 'u' : xs) ->
+      case readHex xs of
+        [(x, _)] -> token k $ UTFBS.fromString [chr x]
+        _ -> throwError $ InvalidLexeme sp bs
+    _ -> throwError $ InvalidLexeme sp bs
 
 -- | Construct a `(TokenSymbol (Loc _))` using the current `parseSpan`
 -- to construct the `Loc _`.
@@ -216,4 +258,4 @@ alexPrevInputChar = lexPrevChar
 
 {-# INLINE slice #-}
 slice :: Int -> AlexInput -> B.ByteString
-slice n AlexInput {..} = B.take n lexBytes
+slice n AlexInput {..} = UTFBS.take n lexBytes
