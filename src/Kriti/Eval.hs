@@ -110,10 +110,11 @@ eval = \case
       J.Bool False -> eval t2
       p' -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode p' <> "' is not a boolean."
   Not sp t1 -> do
+    src <- asks fst
     v1 <- eval t1
     case v1 of
       J.Bool p -> pure $ J.Bool $ not p
-      _ -> throwError $ TypeError sp $ T.pack $ show t1 <> "is not a boolean."
+      _ -> throwError $ TypeError src sp $ T.pack $ show t1 <> "is not a boolean."
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
@@ -153,6 +154,7 @@ eval = \case
       (t1'', J.Bool _) -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1'' <> "' is not a boolean."
       (_, t2'') -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t2'' <> "' is not a boolean."
   In sp t1 t2 -> do
+    src <- asks fst
     v1 <- eval t1
     v2 <- eval t2
     case (v1, v2) of

@@ -199,11 +199,15 @@ instance Pretty ValueExt where
           "{{" <+> "end" <+> "}}"
         ]
     Eq _ t1 t2 -> pretty t1 <+> equals <+> pretty t2
+    NotEq _ t1 t2 -> pretty t1 <+> "!=" <+> pretty t2
     Gt _ t1 t2 -> pretty t1 <+> ">" <+> pretty t2
     Lt _ t1 t2 -> pretty t1 <+> "<" <+> pretty t2
+    Gte _ t1 t2 -> pretty t1 <+> ">=" <+> pretty t2
+    Lte _ t1 t2 -> pretty t1 <+> "<=" <+> pretty t2
     And _ t1 t2 -> pretty t1 <+> "&&" <+> pretty t2
     Or _ t1 t2 -> pretty t1 <+> "||" <+> pretty t2
-    Member _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
+    In _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
+    Not _ t1 -> "not" <+> pretty t1
     Range _ i bndr xs t1 ->
       vsep
         [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> foldMap pretty xs <+> "}}",
