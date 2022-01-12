@@ -36,9 +36,11 @@ string      { TokStringLit $$ }
 'if'        { TokIdentifier (Loc $$ "if") }
 'else'      { TokIdentifier (Loc $$ "else") }
 'end'       { TokIdentifier (Loc $$ "end") }
-'null'      { TokIdentifier (Loc $$ "null" )}
+'null'      { TokIdentifier (Loc $$ "null" ) }
 'range'     { TokIdentifier (Loc $$ "range") }
 'escapeUri' { TokIdentifier (Loc $$ "escapeUri") }
+'not'       { TokIdentifier (Loc $$ "not") }
+'in'        { TokIdentifier (Loc $$ "in") }
 ident       { TokIdentifier $$ }
 
 '\''        { TokSymbol (Loc $$ SymSingleQuote) }
@@ -46,8 +48,11 @@ ident       { TokIdentifier $$ }
 '.'         { TokSymbol (Loc $$ SymDot) }
 ','         { TokSymbol (Loc $$ SymComma) }
 '=='        { TokSymbol (Loc $$ SymEq) }
+'!='        { TokSymbol (Loc $$ SymNotEq) }
 '>'         { TokSymbol (Loc $$ SymGt) }
 '<'         { TokSymbol (Loc $$ SymLt) }
+'<='        { TokSymbol (Loc $$ SymLte) }
+'>='        { TokSymbol (Loc $$ SymGte) }
 '&&'        { TokSymbol (Loc $$ SymAnd) }
 '||'        { TokSymbol (Loc $$ SymOr) }
 '_'         { TokSymbol (Loc $$ SymUnderscore) }
@@ -102,6 +107,10 @@ null
   : 'null'  { Null (locate $1) }
   | '{' '}' { Null (locate $1 <> locate $2) }
 
+not :: { ValueExt }
+not
+  : 'not' value { Not (locate $1 <> locate $2) $2 }
+
 array :: { ValueExt }
 array
   : '[' list_elements ']' { Array (locate $1 <> locate $3) $2 }
@@ -129,9 +138,13 @@ operator :: { ValueExt }
 operator
   : value '>' value  { Gt (locate $1 <> locate $3) $1 $3 }
   | value '<' value  { Lt (locate $1 <> locate $3) $1 $3 }
+  | value '>=' value { Gte (locate $1 <> locate $3) $1 $3 }
+  | value '<=' value { Lte (locate $1 <> locate $3) $1 $3 }
+  | value '!=' value { NotEq (locate $1 <> locate $3) $1 $3 }
   | value '==' value { Eq (locate $1 <> locate $3) $1 $3 }
   | value '&&' value { And (locate $1 <> locate $3) $1 $3 }
   | value '||' value { Or (locate $1 <> locate $3) $1 $3 }
+  | value 'in' value { In (locate $1 <> locate $3) $1 $3 }
 
 iff :: { ValueExt }
 iff
@@ -143,7 +156,8 @@ function_call
 
 functions :: { ValueExt -> ValueExt }
 functions
-  : 'escapeUri' { function EscapeURI (locate $1) }
+  : 'escapeUri' { buildFunc EscapeURI (locate $1) }
+  | 'not' { buildFunc Not (locate $1) }
 
 function_params :: { ValueExt }
 function_params
@@ -188,13 +202,18 @@ path_element
 
 value :: { ValueExt }
 value
-  : num_lit { $1}
-  | string_lit { $1 }
-  | boolean  { $1 }
-  | null { $1 }
-  | path_vector { uncurry Path $1 }
-  | iff { $1 }
-  | operator { $1 }
+  : num_lit	  { $1 }
+  | string_lit	  { $1 }
+  | boolean	  { $1 }
+  | null	  { $1 }
+  | array	  { $1 }
+  | object	  { $1 }
+  | path_vector	  { uncurry Path $1 }
+  | iff		  { $1 }
+  | operator	  { $1 }
+  | not		  { $1 }
+  | range         { $1 }
+  | functions function_params { $1 $2 }
   | '(' value ')' { $2 }
 
 term :: { ValueExt }
@@ -207,6 +226,8 @@ term
   | object        { $1 }
   | path          { $1 }
   | iff           { $1 }
+  | operator      { $1 }
+  | not           { $1 }
   | function_call { $1 }
   | range         { $1 }
   | '(' term ')'  { $2 }
@@ -219,4 +240,7 @@ failure [] = do
 failure (tok:_) = do
   sp <- location
   parseError $ UnexpectedToken (Loc sp tok)
+
+buildFunc :: (Span -> ValueExt -> ValueExt) -> Span -> ValueExt -> ValueExt
+buildFunc f sp param = f (sp <> locate param) param
 }

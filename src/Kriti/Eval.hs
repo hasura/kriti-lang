@@ -88,8 +88,16 @@ eval = \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
       p' -> throwError $ TypeError sp $ T.pack $ show p' <> "' is not a boolean."
+  Not sp t1 -> do
+    v1 <- eval t1
+    case v1 of
+      J.Bool p -> pure $ J.Bool $ not p
+      _ -> throwError $ TypeError sp $ T.pack $ show t1 <> "is not a boolean."
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
+    pure $ J.Bool res
+  NotEq _ t1 t2 -> do
+    res <- (/=) <$> eval t1 <*> eval t2
     pure $ J.Bool res
   Lt _ t1 t2 -> do
     t1' <- eval t1
@@ -99,6 +107,14 @@ eval = \case
     t1' <- eval t1
     t2' <- eval t2
     pure $ J.Bool $ t1' > t2'
+  Lte _ t1 t2 -> do
+    t1' <- eval t1
+    t2' <- eval t2
+    pure $ J.Bool $ t1' <= t2'
+  Gte _ t1 t2 -> do
+    t1' <- eval t1
+    t2' <- eval t2
+    pure $ J.Bool $ t1' >= t2'
   And sp t1 t2 -> do
     t1' <- eval t1
     t2' <- eval t2
@@ -113,13 +129,16 @@ eval = \case
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p || q
       (t1'', J.Bool _) -> throwError $ TypeError sp $ T.pack $ show t1'' <> "' is not a boolean."
       (_, t2'') -> throwError $ TypeError sp $ T.pack $ show t2'' <> "' is not a boolean."
-  Member sp t ts -> do
-    ts' <- eval ts
-    case ts' of
-      J.Array xs -> do
-        t' <- eval t
-        pure $ J.Bool $ t' `V.elem` xs
-      _ -> throwError $ TypeError sp $ T.pack $ show ts' <> " is not an array."
+  In sp t1 t2 -> do
+    v1 <- eval t1
+    v2 <- eval t2
+    case (v1, v2) of
+      (J.String key, J.Object fields) -> do
+        let fields' = fmap fst $ Compat.toList fields
+        pure $ J.Bool $ key `elem` fields'
+      (json, J.Object _) -> throwError $ TypeError sp $ T.pack $ show json <> " is not a String."
+      (_, J.Array vals) -> pure $ J.Bool $ v1 `V.elem` vals
+      (_, json) -> throwError $ TypeError sp $ T.pack $ show json <> " is not an Object or Array."
   Range sp idx binder path body -> do
     ctx <- ask
     pathResult <- evalPath (J.Object ctx) path
