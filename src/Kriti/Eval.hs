@@ -13,7 +13,7 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
 import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
-import Kriti.Parser.Spans as Spans
+import Kriti.Parser.Spans
 import Kriti.Parser.Token
 import qualified Network.URI as URI
 import Prettyprinter as P
