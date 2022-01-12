@@ -83,7 +83,7 @@ typoOfJSON J.Bool {} = "Boolean"
 typoOfJSON J.Null = "Null"
 
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
-eval term = case term of
+eval = \case
   String _ str -> pure $ J.String str
   Number _ i -> pure $ J.Number i
   Boolean _ p -> pure $ J.Bool p
