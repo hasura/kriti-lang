@@ -1,6 +1,9 @@
 {
+-- We have to disable -XStrictData here, as it doesn't play nicely with Happy.
+{-# LANGUAGE NoStrictData #-}
 module Kriti.Parser.Grammar where
 
+import Control.Monad.State (gets)
 import qualified Data.Aeson as J
 import Data.Bifunctor (first)
 import qualified Data.HashMap.Strict as M
@@ -36,9 +39,11 @@ string      { TokStringLit $$ }
 'if'        { TokIdentifier (Loc $$ "if") }
 'else'      { TokIdentifier (Loc $$ "else") }
 'end'       { TokIdentifier (Loc $$ "end") }
-'null'      { TokIdentifier (Loc $$ "null" )}
+'null'      { TokIdentifier (Loc $$ "null" ) }
 'range'     { TokIdentifier (Loc $$ "range") }
 'escapeUri' { TokIdentifier (Loc $$ "escapeUri") }
+'not'       { TokIdentifier (Loc $$ "not") }
+'in'        { TokIdentifier (Loc $$ "in") }
 ident       { TokIdentifier $$ }
 
 '\''        { TokSymbol (Loc $$ SymSingleQuote) }
@@ -46,8 +51,11 @@ ident       { TokIdentifier $$ }
 '.'         { TokSymbol (Loc $$ SymDot) }
 ','         { TokSymbol (Loc $$ SymComma) }
 '=='        { TokSymbol (Loc $$ SymEq) }
+'!='        { TokSymbol (Loc $$ SymNotEq) }
 '>'         { TokSymbol (Loc $$ SymGt) }
 '<'         { TokSymbol (Loc $$ SymLt) }
+'<='        { TokSymbol (Loc $$ SymLte) }
+'>='        { TokSymbol (Loc $$ SymGte) }
 '&&'        { TokSymbol (Loc $$ SymAnd) }
 '||'        { TokSymbol (Loc $$ SymOr) }
 '_'         { TokSymbol (Loc $$ SymUnderscore) }
@@ -68,6 +76,8 @@ ident       { TokIdentifier $$ }
 string_lit :: { ValueExt }
 string_lit
   : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
+  | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
+  
 
 string_template :: { V.Vector ValueExt }
 string_template
@@ -100,7 +110,10 @@ boolean
 null :: { ValueExt }
 null
   : 'null'  { Null (locate $1) }
-  | '{' '}' { Null (locate $1 <> locate $2) }
+
+not :: { ValueExt }
+not
+  : 'not' value { Not (locate $1 <> locate $2) $2 }
 
 array :: { ValueExt }
 array
@@ -114,7 +127,8 @@ list_elements
 
 object :: { ValueExt }
 object
-: '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
+  : '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
+  | '{' '}'               { Object (locate $1 <> locate $2) mempty }
 
 object_fields :: { [(T.Text, ValueExt)] }
 object_fields
@@ -123,15 +137,25 @@ object_fields
 
 object_field :: { (T.Text, ValueExt) }
 object_field
-  : 's"' string '"e' ':' term { (unLoc $2, $5) }
+  : 's"' object_key '"e' ':' term { (unLoc $2, $5) }
+  | 's"' '"e' ':' term { ("", $4) }
+
+object_key :: { Loc T.Text }
+object_key
+  : object_key string { $1 <> $2 }
+  | string { $1 }
 
 operator :: { ValueExt }
 operator
   : value '>' value  { Gt (locate $1 <> locate $3) $1 $3 }
   | value '<' value  { Lt (locate $1 <> locate $3) $1 $3 }
+  | value '>=' value { Gte (locate $1 <> locate $3) $1 $3 }
+  | value '<=' value { Lte (locate $1 <> locate $3) $1 $3 }
+  | value '!=' value { NotEq (locate $1 <> locate $3) $1 $3 }
   | value '==' value { Eq (locate $1 <> locate $3) $1 $3 }
   | value '&&' value { And (locate $1 <> locate $3) $1 $3 }
   | value '||' value { Or (locate $1 <> locate $3) $1 $3 }
+  | value 'in' value { In (locate $1 <> locate $3) $1 $3 }
 
 iff :: { ValueExt }
 iff
@@ -143,7 +167,8 @@ function_call
 
 functions :: { ValueExt -> ValueExt }
 functions
-  : 'escapeUri' { function EscapeURI (locate $1) }
+  : 'escapeUri' { buildFunc EscapeURI (locate $1) }
+  | 'not' { buildFunc Not (locate $1) }
 
 function_params :: { ValueExt }
 function_params
@@ -168,12 +193,12 @@ range_decl
 
 path :: { ValueExt }
 path
-  : '{{' path_vector '}}' { Path (locate $1 <> locate $3) (snd $2) }
+  : '{{' path_vector '}}' { Path (fst $2) (snd $2) }
 
 path_vector :: { (Span, V.Vector Accessor) }
 path_vector
-  : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) (unLoc $1)) (snd $2))  }
-  | ident { (locate $1, V.singleton (Obj (locate $1) (unLoc $1))) }
+  : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) (unLoc $1) Head) (snd $2))  }
+  | ident { (locate $1, V.singleton (Obj (locate $1) (unLoc $1) Head)) }
 
 path_tail :: { (Span, V.Vector Accessor) }
 path_tail
@@ -182,19 +207,24 @@ path_tail
 
 path_element :: { Accessor }
 path_element
-  : '.' ident { Obj (locate $1 <> locate $2) (unLoc $2) }
-  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) (unLoc $3) }
+  : '.' ident { Obj (locate $1 <> locate $2) (unLoc $2) DotAccess }
+  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) (unLoc $3) BracketAccess }
   | '[' int ']' { Arr (locate $1 <> locate $3) (unLoc $2) }
 
 value :: { ValueExt }
 value
-  : num_lit { $1}
-  | string_lit { $1 }
-  | boolean  { $1 }
-  | null { $1 }
-  | path_vector { uncurry Path $1 }
-  | iff { $1 }
-  | operator { $1 }
+  : num_lit	  { $1 }
+  | string_lit	  { $1 }
+  | boolean	  { $1 }
+  | null	  { $1 }
+  | array	  { $1 }
+  | object	  { $1 }
+  | path_vector	  { uncurry Path $1 }
+  | iff		  { $1 }
+  | operator	  { $1 }
+  | not		  { $1 }
+  | range         { $1 }
+  | functions function_params { $1 $2 }
   | '(' value ')' { $2 }
 
 term :: { ValueExt }
@@ -207,6 +237,8 @@ term
   | object        { $1 }
   | path          { $1 }
   | iff           { $1 }
+  | operator      { $1 }
+  | not           { $1 }
   | function_call { $1 }
   | range         { $1 }
   | '(' term ')'  { $2 }
@@ -215,8 +247,14 @@ term
 failure :: [Token] -> Parser a
 failure [] = do
   sp <- location
-  parseError $ EmptyTokenStream sp
+  src <- gets parseSource
+  parseError $ EmptyTokenStream sp src
 failure (tok:_) = do
   sp <- location
-  parseError $ UnexpectedToken (Loc sp tok)
+  src <- gets parseSource
+  -- TODO: fix source position capture here. I think we need the prior span.
+  parseError $ UnexpectedToken (Loc sp tok) src
+
+buildFunc :: (Span -> ValueExt -> ValueExt) -> Span -> ValueExt -> ValueExt
+buildFunc f sp param = f (sp <> locate param) param
 }

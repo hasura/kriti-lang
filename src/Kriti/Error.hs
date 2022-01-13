@@ -3,6 +3,8 @@ module Kriti.Error where
 import qualified Data.Aeson as J
 import qualified Data.Text as T
 import qualified Kriti.Parser.Spans as S
+import Kriti.Parser.Token (renderPretty)
+import Prettyprinter (Pretty (..))
 
 data ErrorCode
   = InvalidPathCode
@@ -12,15 +14,23 @@ data ErrorCode
   | LexErrorCode
   deriving (Show)
 
-data RenderedError = RenderedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
+instance Pretty ErrorCode where
+  pretty = \case
+    InvalidPathCode -> "Invalid Path"
+    TypeErrorCode -> "Type Error"
+    RangeErrorCode -> "Out of Range Error"
+    ParseErrorCode -> "Parse Error"
+    LexErrorCode -> "Lex Error"
+
+data SerializedError = SerializedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
   deriving (Show)
 
-instance J.ToJSON RenderedError where
-  toJSON (RenderedError ec msg span') =
+instance J.ToJSON SerializedError where
+  toJSON (SerializedError ec msg span') =
     let (S.AlexSourcePos startLine startCol) = S.start span'
         (S.AlexSourcePos endLine endCol) = S.end span'
      in J.object
-          [ "error_code" J..= J.String (T.pack $ show ec),
+          [ "error_code" J..= J.String (renderPretty ec),
             "message" J..= J.String msg,
             "source_position"
               J..= J.object
@@ -31,5 +41,5 @@ instance J.ToJSON RenderedError where
                 ]
           ]
 
-class RenderError e where
-  render :: e -> RenderedError
+class SerializeError e where
+  serialize :: e -> SerializedError

@@ -316,6 +316,21 @@ Array
                     )
                     ( fromList
                         [
+                            ( "age"
+                            , Number
+                                ( Span
+                                    { start = AlexSourcePos
+                                        { line = 15
+                                        , col = 12
+                                        }
+                                    , end = AlexSourcePos
+                                        { line = 15
+                                        , col = 14
+                                        }
+                                    }
+                                ) 27.0
+                            )
+                        ,
                             ( "author"
                             , Object
                                 ( Span
@@ -358,6 +373,51 @@ Array
                                                 )
                                                 ( fromList
                                                     [
+                                                        ( "id"
+                                                        , Number
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 18
+                                                                    , col = 17
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 18
+                                                                    , col = 18
+                                                                    }
+                                                                }
+                                                            ) 0.0
+                                                        )
+                                                    ,
+                                                        ( "length"
+                                                        , Number
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 18
+                                                                    , col = 55
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 18
+                                                                    , col = 58
+                                                                    }
+                                                                }
+                                                            ) 150.0
+                                                        )
+                                                    ,
+                                                        ( "published"
+                                                        , Boolean
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 18
+                                                                    , col = 73
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 18
+                                                                    , col = 77
+                                                                    }
+                                                                }
+                                                            ) True
+                                                        )
+                                                    ,
                                                         ( "title"
                                                         , StringTem
                                                             ( Span
@@ -385,51 +445,6 @@ Array
                                                                 ) "The Elements"
                                                             ]
                                                         )
-                                                    ,
-                                                        ( "published"
-                                                        , Boolean
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 18
-                                                                    , col = 73
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 18
-                                                                    , col = 77
-                                                                    }
-                                                                }
-                                                            ) True
-                                                        )
-                                                    ,
-                                                        ( "length"
-                                                        , Number
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 18
-                                                                    , col = 55
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 18
-                                                                    , col = 58
-                                                                    }
-                                                                }
-                                                            ) 150.0
-                                                        )
-                                                    ,
-                                                        ( "id"
-                                                        , Number
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 18
-                                                                    , col = 17
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 18
-                                                                    , col = 18
-                                                                    }
-                                                                }
-                                                            ) 0.0
-                                                        )
                                                     ]
                                                 )
                                             , Object
@@ -446,6 +461,51 @@ Array
                                                 )
                                                 ( fromList
                                                     [
+                                                        ( "id"
+                                                        , Number
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 19
+                                                                    , col = 17
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 19
+                                                                    , col = 18
+                                                                    }
+                                                                }
+                                                            ) 1.0
+                                                        )
+                                                    ,
+                                                        ( "length"
+                                                        , Number
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 19
+                                                                    , col = 56
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 19
+                                                                    , col = 60
+                                                                    }
+                                                                }
+                                                            ) 1000.0
+                                                        )
+                                                    ,
+                                                        ( "published"
+                                                        , Boolean
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 19
+                                                                    , col = 75
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 19
+                                                                    , col = 79
+                                                                    }
+                                                                }
+                                                            ) True
+                                                        )
+                                                    ,
                                                         ( "title"
                                                         , StringTem
                                                             ( Span
@@ -473,51 +533,6 @@ Array
                                                                 ) "ARRL Handbook"
                                                             ]
                                                         )
-                                                    ,
-                                                        ( "published"
-                                                        , Boolean
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 19
-                                                                    , col = 75
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 19
-                                                                    , col = 79
-                                                                    }
-                                                                }
-                                                            ) True
-                                                        )
-                                                    ,
-                                                        ( "length"
-                                                        , Number
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 19
-                                                                    , col = 56
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 19
-                                                                    , col = 60
-                                                                    }
-                                                                }
-                                                            ) 1000.0
-                                                        )
-                                                    ,
-                                                        ( "id"
-                                                        , Number
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 19
-                                                                    , col = 17
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 19
-                                                                    , col = 18
-                                                                    }
-                                                                }
-                                                            ) 1.0
-                                                        )
                                                     ]
                                                 )
                                             , Object
@@ -534,6 +549,51 @@ Array
                                                 )
                                                 ( fromList
                                                     [
+                                                        ( "id"
+                                                        , Number
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 20
+                                                                    , col = 17
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 20
+                                                                    , col = 18
+                                                                    }
+                                                                }
+                                                            ) 2.0
+                                                        )
+                                                    ,
+                                                        ( "length"
+                                                        , Number
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 20
+                                                                    , col = 59
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 20
+                                                                    , col = 62
+                                                                    }
+                                                                }
+                                                            ) 500.0
+                                                        )
+                                                    ,
+                                                        ( "published"
+                                                        , Boolean
+                                                            ( Span
+                                                                { start = AlexSourcePos
+                                                                    { line = 20
+                                                                    , col = 77
+                                                                    }
+                                                                , end = AlexSourcePos
+                                                                    { line = 20
+                                                                    , col = 82
+                                                                    }
+                                                                }
+                                                            ) False
+                                                        )
+                                                    ,
                                                         ( "title"
                                                         , StringTem
                                                             ( Span
@@ -560,51 +620,6 @@ Array
                                                                     }
                                                                 ) "The Mars Trilogy"
                                                             ]
-                                                        )
-                                                    ,
-                                                        ( "published"
-                                                        , Boolean
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 20
-                                                                    , col = 77
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 20
-                                                                    , col = 82
-                                                                    }
-                                                                }
-                                                            ) False
-                                                        )
-                                                    ,
-                                                        ( "length"
-                                                        , Number
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 20
-                                                                    , col = 59
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 20
-                                                                    , col = 62
-                                                                    }
-                                                                }
-                                                            ) 500.0
-                                                        )
-                                                    ,
-                                                        ( "id"
-                                                        , Number
-                                                            ( Span
-                                                                { start = AlexSourcePos
-                                                                    { line = 20
-                                                                    , col = 17
-                                                                    }
-                                                                , end = AlexSourcePos
-                                                                    { line = 20
-                                                                    , col = 18
-                                                                    }
-                                                                }
-                                                            ) 2.0
                                                         )
                                                     ]
                                                 )
@@ -640,21 +655,6 @@ Array
                                         }
                                     ) "Freddie Jones"
                                 ]
-                            )
-                        ,
-                            ( "age"
-                            , Number
-                                ( Span
-                                    { start = AlexSourcePos
-                                        { line = 15
-                                        , col = 12
-                                        }
-                                    , end = AlexSourcePos
-                                        { line = 15
-                                        , col = 14
-                                        }
-                                    }
-                                ) 27.0
                             )
                         ]
                     )

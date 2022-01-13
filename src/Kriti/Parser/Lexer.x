@@ -1,6 +1,7 @@
 {
 module Kriti.Parser.Lexer where
 
+import Control.Monad.State (gets)
 import qualified Data.Text as T
 import Kriti.Parser.Monad
 import Kriti.Parser.Spans
@@ -9,7 +10,8 @@ import Kriti.Parser.Token
 
 $digit = 0-9
 $alpha = [a-zA-Z]
-$alphanum = [a-zA-Z09]
+$alphanum = [a-zA-Z0-9]
+$hex = [A-Fa-f0-9]
 
 tokens :-
 
@@ -21,10 +23,12 @@ tokens :-
 
 -- Syntax
 <0> range                                      { token TokIdentifier }
+<0> not                                        { token TokIdentifier }
 <0, expr> true                                 { token (TokBoolLit . (\(Loc sp _) -> Loc sp True)) }
 <0, expr> false                                { token (TokBoolLit . (\(Loc sp _) -> Loc sp False)) }
 <0, expr> \$                                   { token TokIdentifier }
 <0, expr> \$? $alpha [\$ $alpha $digit \_ \-]* { token TokIdentifier }
+<0, expr> in                                   { token TokIdentifier }
 
 -- | String Templating
 --
@@ -56,7 +60,18 @@ tokens :-
 -- NOTE: The escape handling in this regex seems correct but we should
 -- investigate precisely how escaping is handling in other examples of
 -- string templating.
-<string> (\\ \\ | \\ \` | [^ \" \{ ])+ { token TokStringLit }
+<string> (\\ \{)  { textToken TokStringLit "{" }
+<string> (\\ \") { textToken TokStringLit "\"" }
+<string> (\\ \\) { textToken TokStringLit "\\" }
+<string> (\\ \/) { textToken TokStringLit "\\/" }
+<string> (\\ b) { textToken TokStringLit "\b" }
+<string> (\\ f) { textToken TokStringLit "\f" }
+<string> (\\ n) { textToken TokStringLit "\n" }
+<string> (\\ r) { textToken TokStringLit "\r" }
+<string> (\\ t) { textToken TokStringLit "\t" }
+-- NOTE: Capture the '\\ u' are being captured along with the subsequent group.
+<string> \\ u ($hex $hex $hex $hex) { \bs -> tokenizeHex TokStringLit bs }
+<string> [^ \\ \" \{ ]+ { token TokStringLit }
 -- 2. Capture a '{' as a string literal
 <string> \{ { token TokStringLit}
 -- 3. Capture '{{', enter <expr> mode, and emit a 'ExprBegin' token. This will win over the '{' rule due to the longest capture rule.
@@ -84,17 +99,19 @@ tokens :-
 
 <0, expr> \-? $digit+                                       { token (\loc -> TokIntLit (unLoc loc) (read . T.unpack <$> loc)) }
 <0, expr> \-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\+\-]?[0-9]+)? { token (\loc -> TokNumLit (unLoc loc) (read . T.unpack <$> loc)) }
-<0> \:                                                      { symbol SymColon }
+<0, expr> \:                                                { symbol SymColon }
 <0, expr> \.                                                { symbol SymDot }
 <0, expr> \,                                                { symbol SymComma }
-<0, expr> \==                                               { symbol SymEq }
+<0, expr> \= \=                                             { symbol SymEq }
+<0, expr> \! \=                                             { symbol SymNotEq }
 <0, expr> \>                                                { symbol SymGt }
 <0, expr> \<                                                { symbol SymLt }
-<0, expr> \<                                                { symbol SymLt }
-<0, expr> \&\&                                              { symbol SymAnd }
-<0, expr> \|\|                                              { symbol SymOr }
+<0, expr> \> \=                                             { symbol SymGte }
+<0, expr> \< \=                                             { symbol SymLte }
+<0, expr> \& \&                                             { symbol SymAnd }
+<0, expr> \| \|                                             { symbol SymOr }
 <0, expr> \_                                                { symbol SymUnderscore }
-<0, expr> \:\=                                              { symbol SymAssignment }
+<0, expr> \: \=                                             { symbol SymAssignment }
 <0, expr> \{                                                { symbol SymCurlyOpen }
 <0, expr> \}                                                { symbol SymCurlyClose }
 
@@ -121,10 +138,11 @@ scan :: Parser Token
 scan = do
   input <- getInput
   code <- startCode
+  src <- gets parseSource
   case alexScan input code of
     AlexEOF -> pure EOF
-    AlexError (AlexInput pos _ inp _) ->
-      parseError $ InvalidLexeme pos inp
+    AlexError (AlexInput pos _ _ _) ->
+      parseError $ InvalidLexeme pos src
     AlexSkip rest _ -> do
       advance rest
       scan
