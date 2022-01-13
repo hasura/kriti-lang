@@ -267,8 +267,6 @@ goldenParseError dir name parseError = Golden {..}
 --
 -- That is, something serialized with 'J.toJSON' can be read without error by
 -- 'J.fromJSON'.
---
--- NOTE: If
 goldenAeson ::
   (J.FromJSON val, J.ToJSON val) => FilePath -> String -> val -> Golden val
 goldenAeson dir name val = Golden {..}
