@@ -22,6 +22,7 @@ data Symbol
   | SymColon
   | SymDot
   | SymComma
+  | SymQuestionMark
   | SymEq
   | SymNotEq
   | SymGt
@@ -77,6 +78,7 @@ serializeToken = \case
   TokSymbol (Loc _ SymColon) -> ":"
   TokSymbol (Loc _ SymDot) -> "."
   TokSymbol (Loc _ SymComma) -> ","
+  TokSymbol (Loc _ SymQuestionMark) -> "?"
   TokSymbol (Loc _ SymSingleQuote) -> "'"
   TokSymbol (Loc _ SymDoubleCurlyOpen) -> "{{"
   TokSymbol (Loc _ SymDoubleCurlyClose) -> "}}"
@@ -104,16 +106,22 @@ serializeToken = \case
 data ObjAccType = Head | DotAccess | BracketAccess
   deriving (Show, Eq, Read)
 
+data Optionality = Optional | NotOptional
+  deriving (Show, Eq, Read)
+
 -- | Path lookups are represented as a stack of object and array lookups. eg., `Vector Accessor`.
-data Accessor = Obj Span T.Text ObjAccType | Arr Span Int
+data Accessor = Obj Span Optionality T.Text ObjAccType | Arr Span Optionality Int
   deriving (Show, Eq, Read)
 
 instance Pretty Accessor where
   pretty = \case
-    Obj _ txt DotAccess -> dot <> pretty txt
-    Obj _ txt BracketAccess -> brackets (squotes $ pretty txt)
-    Obj _ txt Head -> pretty txt
-    Arr _ i -> brackets (pretty i)
+    Obj _ NotOptional txt DotAccess -> dot <> pretty txt
+    Obj _ NotOptional txt BracketAccess -> brackets (squotes $ pretty txt)
+    Obj _ _ txt Head -> pretty txt
+    Arr _ NotOptional i -> brackets (pretty i)
+    Obj _ Optional txt DotAccess -> "?." <> pretty txt
+    Obj _ Optional txt BracketAccess -> "?." <> brackets (squotes $ pretty txt)
+    Arr _ Optional i -> "?." <> brackets (pretty i)
 
 -- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
 -- terms which are then evaluated and converted into Aeson `Value`
@@ -170,8 +178,8 @@ instance Located ValueExt where
 
 instance Located Accessor where
   locate = \case
-    Obj s _ _ -> s
-    Arr s _ -> s
+    Obj s _ _ _ -> s
+    Arr s _ _ -> s
 
 instance Pretty ValueExt where
   pretty = \case

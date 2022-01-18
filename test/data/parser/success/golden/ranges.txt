@@ -34,7 +34,7 @@ Array
                     , col = 24
                     }
                 }
-            ) "$foo" Head
+            ) NotOptional "$foo" Head
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -46,7 +46,7 @@ Array
                     , col = 28
                     }
                 }
-            ) "bar" DotAccess
+            ) NotOptional "bar" DotAccess
         , Arr
             ( Span
                 { start = AlexSourcePos
@@ -58,7 +58,7 @@ Array
                     , col = 31
                     }
                 }
-            ) 0
+            ) NotOptional 0
         ]
         ( Object
             ( Span
@@ -127,7 +127,7 @@ Array
                     , col = 24
                     }
                 }
-            ) "$foo" Head
+            ) NotOptional "$foo" Head
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -139,7 +139,7 @@ Array
                     , col = 28
                     }
                 }
-            ) "bar" DotAccess
+            ) NotOptional "bar" DotAccess
         , Arr
             ( Span
                 { start = AlexSourcePos
@@ -151,7 +151,7 @@ Array
                     , col = 31
                     }
                 }
-            ) 0
+            ) NotOptional 0
         ]
         ( Object
             ( Span
@@ -220,7 +220,7 @@ Array
                     , col = 24
                     }
                 }
-            ) "$foo" Head
+            ) NotOptional "$foo" Head
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -232,7 +232,7 @@ Array
                     , col = 28
                     }
                 }
-            ) "bar" DotAccess
+            ) NotOptional "bar" DotAccess
         , Arr
             ( Span
                 { start = AlexSourcePos
@@ -244,7 +244,7 @@ Array
                     , col = 31
                     }
                 }
-            ) 0
+            ) NotOptional 0
         ]
         ( Object
             ( Span
@@ -284,7 +284,7 @@ Array
                                     , col = 21
                                     }
                                 }
-                            ) "$foo" Head
+                            ) NotOptional "$foo" Head
                         , Obj
                             ( Span
                                 { start = AlexSourcePos
@@ -296,7 +296,7 @@ Array
                                     , col = 25
                                     }
                                 }
-                            ) "bar" DotAccess
+                            ) NotOptional "bar" DotAccess
                         ]
                     )
                 ]
@@ -338,7 +338,7 @@ Array
                         , col = 22
                         }
                     }
-                ) "$" Head
+                ) NotOptional "$" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -350,7 +350,7 @@ Array
                         , col = 29
                         }
                     }
-                ) "events" DotAccess
+                ) NotOptional "events" DotAccess
             ]
             ( Object
                 ( Span
@@ -390,7 +390,7 @@ Array
                                         , col = 47
                                         }
                                     }
-                                ) "x" Head
+                                ) NotOptional "x" Head
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
@@ -402,7 +402,7 @@ Array
                                         , col = 52
                                         }
                                     }
-                                ) "name" DotAccess
+                                ) NotOptional "name" DotAccess
                             ]
                         )
                     ]

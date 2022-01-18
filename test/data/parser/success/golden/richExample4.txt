@@ -51,7 +51,7 @@ Object
                                         , col = 15
                                         }
                                     }
-                                ) "$" Head
+                                ) NotOptional "$" Head
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
@@ -63,7 +63,7 @@ Object
                                         , col = 21
                                         }
                                     }
-                                ) "event" DotAccess
+                                ) NotOptional "event" DotAccess
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
@@ -75,7 +75,7 @@ Object
                                         , col = 25
                                         }
                                     }
-                                ) "age" DotAccess
+                                ) NotOptional "age" DotAccess
                             ]
                         )
                     ,
@@ -115,7 +115,7 @@ Object
                                             , col = 19
                                             }
                                         }
-                                    ) "$" Head
+                                    ) NotOptional "$" Head
                                 , Obj
                                     ( Span
                                         { start = AlexSourcePos
@@ -127,7 +127,7 @@ Object
                                             , col = 25
                                             }
                                         }
-                                    ) "event" DotAccess
+                                    ) NotOptional "event" DotAccess
                                 , Obj
                                     ( Span
                                         { start = AlexSourcePos
@@ -139,7 +139,7 @@ Object
                                             , col = 32
                                             }
                                         }
-                                    ) "author" DotAccess
+                                    ) NotOptional "author" DotAccess
                                 , Obj
                                     ( Span
                                         { start = AlexSourcePos
@@ -151,7 +151,7 @@ Object
                                             , col = 41
                                             }
                                         }
-                                    ) "articles" DotAccess
+                                    ) NotOptional "articles" DotAccess
                                 ]
                                 ( Object
                                     ( Span
@@ -191,7 +191,7 @@ Object
                                                             , col = 18
                                                             }
                                                         }
-                                                    ) "x" Head
+                                                    ) NotOptional "x" Head
                                                 , Obj
                                                     ( Span
                                                         { start = AlexSourcePos
@@ -203,7 +203,7 @@ Object
                                                             , col = 21
                                                             }
                                                         }
-                                                    ) "id" DotAccess
+                                                    ) NotOptional "id" DotAccess
                                                 ]
                                             )
                                         ,
@@ -231,7 +231,7 @@ Object
                                                             , col = 21
                                                             }
                                                         }
-                                                    ) "x" Head
+                                                    ) NotOptional "x" Head
                                                 , Obj
                                                     ( Span
                                                         { start = AlexSourcePos
@@ -243,7 +243,7 @@ Object
                                                             , col = 27
                                                             }
                                                         }
-                                                    ) "title" DotAccess
+                                                    ) NotOptional "title" DotAccess
                                                 ]
                                             )
                                         ]
@@ -276,7 +276,7 @@ Object
                                         , col = 16
                                         }
                                     }
-                                ) "$" Head
+                                ) NotOptional "$" Head
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
@@ -288,7 +288,7 @@ Object
                                         , col = 22
                                         }
                                     }
-                                ) "event" DotAccess
+                                ) NotOptional "event" DotAccess
                             , Obj
                                 ( Span
                                     { start = AlexSourcePos
@@ -300,7 +300,7 @@ Object
                                         , col = 27
                                         }
                                     }
-                                ) "name" DotAccess
+                                ) NotOptional "name" DotAccess
                             ]
                         )
                     ]

@@ -102,6 +102,7 @@ tokens :-
 <0, expr> \:                                                { symbol SymColon }
 <0, expr> \.                                                { symbol SymDot }
 <0, expr> \,                                                { symbol SymComma }
+<0, expr> \?                                                { symbol SymQuestionMark }
 <0, expr> \= \=                                             { symbol SymEq }
 <0, expr> \! \=                                             { symbol SymNotEq }
 <0, expr> \>                                                { symbol SymGt }
