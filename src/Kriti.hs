@@ -17,7 +17,7 @@ import qualified Data.Text.Encoding as T
 import Kriti.Error
 import Kriti.Eval
 import Kriti.Parser
-import Prettyprinter (Pretty(..))
+import Prettyprinter (Pretty (..))
 
 data KritiError = KritiParseError ParseError | KritiEvalError EvalError
 
@@ -34,7 +34,7 @@ instance SerializeError KritiError where
 -- | Entry point for Kriti when given a template as 'Text'.
 runKriti :: T.Text -> [(T.Text, J.Value)] -> Either KritiError J.Value
 runKriti templateSrc source = do
-  let templateSrc' =  T.encodeUtf8 templateSrc
+  let templateSrc' = T.encodeUtf8 templateSrc
   template' <- first KritiParseError $ parser templateSrc'
   first KritiEvalError $ runEval templateSrc' template' source
 
