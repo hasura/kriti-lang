@@ -28,6 +28,7 @@ import Data.Monoid
 import Kriti
 import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
+import Kriti.Eval
 import qualified Kriti.Parser as P
 import System.Directory (listDirectory)
 import System.FilePath
@@ -58,13 +59,13 @@ jsonParse :: Spec
 jsonParse = describe "JSON Parsing" $ do
   describe "Edge Cases" $ do
     it "can handle unicode escape sequences" $ do
-      (parser $ UTF8.fromString "\"\\u001c\"") `shouldSatisfy` isRight
+      (P.parser $ UTF8.fromString "\"\\u001c\"") `shouldSatisfy` isRight
     it "can handle unicode keys" $ do
-      (parser $ UTF8.fromString "\"σ\"") `shouldSatisfy` isRight
+      (P.parser $ UTF8.fromString "\"σ\"") `shouldSatisfy` isRight
     it "can handle '{'" $ do
-      (parser $ UTF8.fromString "\"{\"") `shouldSatisfy` isRight
+      (P.parser $ UTF8.fromString "\"{\"") `shouldSatisfy` isRight
     it "can handle '{{' when escaped properly" $ do
-      (parser $ UTF8.fromString "\"\\{{\"") `shouldSatisfy` isRight
+      (P.parser $ UTF8.fromString "\"\\{{\"") `shouldSatisfy` isRight
     it "can parse '\\{{' as '{{" $
       let res = evalBS "\"\\{{\""
        in case res of
@@ -84,7 +85,7 @@ jsonParse = describe "JSON Parsing" $ do
       Q.property \(value :: J.Value) ->
         containsNoCurlies value Q.==> do
           let enc = BL.toStrict $ J.encode value
-              res = first renderPretty $ parser enc
+              res = first renderPretty $ P.parser enc
           case res of
             Left err -> expectationFailure $ T.unpack err
             Right _ -> pure ()
@@ -108,12 +109,12 @@ containsNoCurlies = getAll . foldMap (f checkStr) . universe
 evalJson :: J.Value -> Either T.Text J.Value
 evalJson value = do
   let enc = BL.toStrict $ J.encode value
-  ast <- first renderPretty $ parser enc
+  ast <- first renderPretty $ P.parser enc
   first renderPretty $ runEval enc ast []
 
 evalBS :: BS.ByteString -> Either T.Text J.Value
 evalBS input = do
-  ast <- first renderPretty $ parser input
+  ast <- first renderPretty $ P.parser input
   first renderPretty $ runEval "" ast []
 
 -- | Encode a JSON value as 'T.Text'.
