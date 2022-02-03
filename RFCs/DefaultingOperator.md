@@ -1,4 +1,4 @@
-# Nullish Operator
+# Defaulting Operator
 
 ## Metadata
 
@@ -42,7 +42,7 @@ return a default value.
 
 ## What
 
-`??`, aka `nullish`, is a binary associative operator which returns
+`??`, aka `defaulting`, is a binary associative operator which returns
 its right hand operand if the left hand is `null` or unbound,
 otherwise it returns the left hand operand.
 
@@ -85,14 +85,14 @@ However, we would end up with a garbage span and this doesn't address exception 
 ```
 data ValueExt
   = ...
-  | Nullish Span ValueExt ValueExt
+  | Defaulting Span ValueExt ValueExt
 ```
 
 And then for interpretation we simply do:
 ```
 eval = \case
   ...
-  Nullish _ t1 t2 -> do
+  Defaulting _ t1 t2 -> do
     case t1 of
       Null _ -> eval t2
       Path _ path -> do
