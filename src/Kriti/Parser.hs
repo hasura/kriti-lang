@@ -21,7 +21,7 @@ import Kriti.Parser.Token as T
 lexer :: B.ByteString -> Either ParseError [T.Token]
 lexer bs = M.runParser [] bs LL.lexer
 
-parser :: B.ByteString -> Either ParseError T.ValueExt
+parser :: B.ByteString -> Either ParseError T.Expr
 parser bs = M.runParser [] bs $ do
   toks <- LL.lexer
   GG.parser toks

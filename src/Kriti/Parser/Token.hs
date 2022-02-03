@@ -1,19 +1,28 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Kriti.Parser.Token where
 
 import qualified Data.ByteString.Lazy as BL
+import Data.Fix
 import Data.Function ((&))
+import Data.Functor.Classes.Generic
+import Data.HashMap.Strict as M
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
 import GHC.Generics
-import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Parser.Spans
-import Prettyprinter
+import Prettyprinter hiding (align)
 import Prettyprinter.Render.Text (renderStrict)
+import Data.Functor.Sum
+import Data.Functor.Classes
 
 -- | The type of non literal/identifer symbols extracted from
 -- source. This type is factored out of `Token` for clarity.
@@ -118,33 +127,74 @@ instance Pretty Accessor where
 -- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
 -- terms which are then evaluated and converted into Aeson `Value`
 -- terms.
-data ValueExt
+
+data JsonF r
   = -- | Core Aeson Terms
-    Object Span (Compat.Object ValueExt)
-  | Array Span (V.Vector ValueExt)
+    Object Span (M.HashMap T.Text r)
+  | Array Span (V.Vector r)
   | String Span T.Text
   | Number Span Scientific
   | Boolean Span Bool
   | Null Span
-  | -- | Extended Kriti Terms
-    StringTem Span (V.Vector ValueExt)
-  | Path Span (V.Vector Accessor)
-  | Iff Span ValueExt ValueExt ValueExt
-  | Eq Span ValueExt ValueExt
-  | NotEq Span ValueExt ValueExt
-  | Gt Span ValueExt ValueExt
-  | Gte Span ValueExt ValueExt
-  | Lt Span ValueExt ValueExt
-  | Lte Span ValueExt ValueExt
-  | And Span ValueExt ValueExt
-  | Or Span ValueExt ValueExt
-  | In Span ValueExt ValueExt
-  | Not Span ValueExt
-  | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
-  | EscapeURI Span ValueExt
-  deriving (Show, Eq, Read, Generic)
+  deriving (Show, Eq, Read, Functor, Generic, Generic1)
 
-instance Located ValueExt where
+instance Eq1 JsonF where
+  liftEq = liftEqDefault
+
+instance Show1 JsonF where
+  liftShowsPrec = liftShowsPrecDefault
+
+instance Read1 JsonF where
+  liftReadsPrec = liftReadsPrecDefault
+
+-- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
+-- terms which are then evaluated and converted into Aeson `Value`
+-- terms.
+data ValueExtF r
+  = StringTemF Span (V.Vector r)
+  | PathF Span (V.Vector Accessor)
+  | IffF Span r r r
+  | EqF Span r r
+  | NotEqF Span r r
+  | GtF Span r r
+  | GteF Span r r
+  | LtF Span r r
+  | LteF Span r r
+  | AndF Span r r
+  | OrF Span r r
+  | InF Span r r
+  | NotF Span r
+  | RangeF Span (Maybe T.Text) T.Text (V.Vector Accessor) r
+  | EscapeURIF Span r
+  deriving (Show, Eq, Read, Functor, Generic, Generic1)
+
+instance Eq1 ValueExtF where
+  liftEq = liftEqDefault
+
+instance Show1 ValueExtF where
+  liftShowsPrec = liftShowsPrecDefault
+
+instance Read1 ValueExtF where
+  liftReadsPrec = liftReadsPrecDefault
+
+mkKriti :: ValueExtF Expr -> Expr
+mkKriti = Fix . InR
+
+mkJson :: JsonF Expr -> Expr
+mkJson = Fix . InL
+
+--pattern StringTem :: Span -> (V.Vector (ValueExtF r)) -> ValueExtF r
+--pattern StringTem = _
+  
+type ExprF = Sum JsonF ValueExtF
+type Expr = Fix ExprF
+  
+instance Located Expr where
+  locate (Fix expr) = case expr of
+    InL json -> locate json
+    InR kriti -> locate kriti
+
+instance Located (JsonF r) where
   locate = \case
     Object s _ -> s
     Array s _ -> s
@@ -152,45 +202,48 @@ instance Located ValueExt where
     Number s _ -> s
     Boolean s _ -> s
     Null s -> s
-    StringTem s _ -> s
-    Path s _ -> s
-    Iff s _ _ _ -> s
-    Eq s _ _ -> s
-    NotEq s _ _ -> s
-    Gt s _ _ -> s
-    Lt s _ _ -> s
-    Gte s _ _ -> s
-    Lte s _ _ -> s
-    And s _ _ -> s
-    Or s _ _ -> s
-    In s _ _ -> s
-    Not s _ -> s
-    Range s _ _ _ _ -> s
-    EscapeURI s _ -> s
+   
+instance Located (ValueExtF r) where
+  locate = \case
+    StringTemF s _ -> s
+    PathF s _ -> s
+    IffF s _ _ _ -> s
+    EqF s _ _ -> s
+    NotEqF s _ _ -> s
+    GtF s _ _ -> s
+    LtF s _ _ -> s
+    GteF s _ _ -> s
+    LteF s _ _ -> s
+    AndF s _ _ -> s
+    OrF s _ _ -> s
+    InF s _ _ -> s
+    NotF s _ -> s
+    RangeF s _ _ _ _ -> s
+    EscapeURIF s _ -> s
 
 instance Located Accessor where
   locate = \case
     Obj s _ _ -> s
     Arr s _ -> s
 
-instance Pretty ValueExt where
+instance Pretty r => Pretty (JsonF r) where
   pretty = \case
     Object _ km ->
-      let p :: (T.Text, ValueExt) -> Doc a
+      let p :: (T.Text, r) -> Doc a
           p (k, v) = pretty k <> colon <+> pretty v <> comma
-       in braces $ braces $ foldMap p $ Compat.toList km
-    Array _ vec -> pretty $ V.toList vec
+       in braces $ braces $ foldMap p $ M.toList km
+    Array _ vec -> pretty (V.toList vec)
     String _ txt -> dquotes (pretty txt)
-    Number _ sci -> pretty $ show sci
+    Number _ sci -> pretty (show sci) -- TODO: correct scientific printing
     Boolean _ b -> pretty b
     Null _ -> "null"
-    StringTem _ vec ->
-      dquotes $
-        vec & foldMap \case
-          String _ txt -> pretty txt
-          t1 -> "{{" <+> pretty t1 <+> "}}"
-    Path _ vec -> surround (foldMap pretty vec) "{{ " " }}"
-    Iff _ p t1 t2 ->
+
+instance Pretty r => Pretty (ValueExtF r) where
+  pretty = \case
+    StringTemF _ vec ->
+      dquotes $ vec & foldMap pretty
+    PathF _ vec -> surround (foldMap pretty vec) "{{ " " }}"
+    IffF _ p t1 t2 ->
       vsep
         [ "{{" <+> "if" <+> pretty p <+> "}}",
           indent 2 $ pretty t1,
@@ -198,23 +251,27 @@ instance Pretty ValueExt where
           indent 2 $ pretty t2,
           "{{" <+> "end" <+> "}}"
         ]
-    Eq _ t1 t2 -> pretty t1 <+> equals <+> pretty t2
-    NotEq _ t1 t2 -> pretty t1 <+> "!=" <+> pretty t2
-    Gt _ t1 t2 -> pretty t1 <+> ">" <+> pretty t2
-    Lt _ t1 t2 -> pretty t1 <+> "<" <+> pretty t2
-    Gte _ t1 t2 -> pretty t1 <+> ">=" <+> pretty t2
-    Lte _ t1 t2 -> pretty t1 <+> "<=" <+> pretty t2
-    And _ t1 t2 -> pretty t1 <+> "&&" <+> pretty t2
-    Or _ t1 t2 -> pretty t1 <+> "||" <+> pretty t2
-    In _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
-    Not _ t1 -> "not" <+> pretty t1
-    Range _ i bndr xs t1 ->
+    EqF _ t1 t2 -> pretty t1 <+> equals <+> pretty t2
+    NotEqF _ t1 t2 -> pretty t1 <+> "!=" <+> pretty t2
+    GtF _ t1 t2 -> pretty t1 <+> ">" <+> pretty t2
+    LtF _ t1 t2 -> pretty t1 <+> "<" <+> pretty t2
+    GteF _ t1 t2 -> pretty t1 <+> ">=" <+> pretty t2
+    LteF _ t1 t2 -> pretty t1 <+> "<=" <+> pretty t2
+    AndF _ t1 t2 -> pretty t1 <+> "&&" <+> pretty t2
+    OrF _ t1 t2 -> pretty t1 <+> "||" <+> pretty t2
+    InF _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
+    NotF _ t1 -> "not" <+> pretty t1
+    RangeF _ i bndr xs t1 ->
       vsep
         [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> foldMap pretty xs <+> "}}",
           indent 2 $ pretty t1,
           "{{" <+> "end" <+> "}}"
         ]
-    EscapeURI _ t1 -> "{{" <+> "escapeUri" <+> pretty t1 <+> "}}"
+    EscapeURIF _ t1 -> "{{" <+> "escapeUri" <+> pretty t1 <+> "}}"
+
+instance Pretty Expr where
+  pretty (Fix (InL json)) = pretty json
+  pretty (Fix (InR kriti)) = pretty kriti
 
 renderDoc :: Doc ann -> T.Text
 renderDoc = renderStrict . layoutPretty defaultLayoutOptions

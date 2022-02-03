@@ -2,7 +2,7 @@ module Kriti
   ( SerializedError (..),
     ErrorCode (..),
     AlexSourcePos (..),
-    ValueExt (..),
+    Expr,
     renderPretty,
     runKriti,
     runKritiBS,

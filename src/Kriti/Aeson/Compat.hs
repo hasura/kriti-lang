@@ -10,7 +10,7 @@ import Data.Bifunctor (first)
 import qualified Data.Text as T
 
 type Object v = KM.KeyMap v
-
+    
 fromList :: [(T.Text, v)] -> Object v
 fromList = KM.fromList . map (first K.fromText)
 

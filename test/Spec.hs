@@ -21,9 +21,6 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TEL
 import qualified Data.Text.Lazy.IO as TLIO
-#if !MIN_VERSION_aeson(2,0,3)
-import qualified Data.Vector as V
-#endif
 import Data.Monoid
 import Kriti
 import qualified Kriti.Aeson.Compat as Compat
@@ -36,8 +33,8 @@ import Test.Hspec
 import Test.Hspec.Golden
 import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
-import Text.Pretty.Simple (pShowNoColor)
 import Text.Read (readEither)
+import Prettyprinter (Pretty) 
 
 --------------------------------------------------------------------------------
 
@@ -171,7 +168,7 @@ parserGoldenSpec = describe "Golden" $ do
 
 -- | Parse a template file that is expected to succeed; parse failures are
 -- rendered as 'String's and thrown in 'IO'.
-parseTemplateSuccess :: FilePath -> IO (BS.ByteString, ValueExt)
+parseTemplateSuccess :: FilePath -> IO (BS.ByteString, Expr)
 parseTemplateSuccess path = do
   tmpl <- BS.readFile $ path
   case P.parser tmpl of
@@ -184,7 +181,7 @@ parseTemplateFailure path = do
   tmpl <- BS.readFile $ path
   case P.parser tmpl of
     Left err -> pure err
-    Right valueExt -> throwString $ "Unexpected parsing success " <> show valueExt
+    Right valueExt -> throwString $ "Unexpected parsing success " <> T.unpack (renderPretty valueExt)
 
 --------------------------------------------------------------------------------
 -- Evaluation tests.
@@ -223,19 +220,19 @@ evalSuccess source path = do
 --------------------------------------------------------------------------------
 -- Golden test construction functions.
 
--- | Construct a 'Golden' test for any value with valid 'Read' and 'Show'
+-- | Construct a 'Golden' test for any value with valid 'Read' and 'Pretty'
 -- instances.
 --
 -- In this case, "valid" means that the value satisfies the roundtrip law where
 -- @read . show === id@.
 goldenReadShow ::
-  (Read val, Show val) => FilePath -> String -> val -> Golden val
+  (Read val, Pretty val) => FilePath -> String -> val -> Golden val
 goldenReadShow dir name val = Golden {..}
   where
     output = val
-    encodePretty = TL.unpack . pShowNoColor
+    encodePretty = T.unpack . renderPretty
     writeToFile path actual =
-      BS.writeFile path . BL.toStrict . TEL.encodeUtf8 . pShowNoColor $ actual
+      BS.writeFile path . TE.encodeUtf8 . renderPretty $ actual
     readFromFile path = do
       eVal <- readEither . TL.unpack <$> TLIO.readFile path
       either throwString pure eVal
@@ -244,7 +241,7 @@ goldenReadShow dir name val = Golden {..}
     failFirstTime = False
 
 -- | Alias for 'goldenReadShow' specialized to 'ValueExt's.
-goldenValueExt :: FilePath -> String -> ValueExt -> Golden ValueExt
+goldenValueExt :: FilePath -> String -> Expr -> Golden Expr
 goldenValueExt = goldenReadShow
 
 -- | Construct a 'Golden' test for 'ParseError's rendered as 'String's.
@@ -363,3 +360,4 @@ fetchGoldenFiles dir = do
 
 hoistEither :: Monad m => Either e a -> ExceptT e m a
 hoistEither = ExceptT . pure
+

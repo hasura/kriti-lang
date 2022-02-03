@@ -52,6 +52,7 @@ common common-libraries
     , utf8-string
     , optparse-applicative
     , prettyprinter
+    , transformers-compat
 
 -------------------------------------------------------------------------------
 
@@ -63,12 +64,15 @@ library
   hs-source-dirs: src
   build-depends:
     , array
+    , data-fix
     , lens
     , megaparsec
     , mtl
     , network-uri
     , parser-combinators == 1.3.0
     , scientific
+    , semialign
+    , these
     , unordered-containers
     , vector
   build-tool-depends:
@@ -116,6 +120,7 @@ test-suite kriti-lang-test
     , prettyprinter
     , raw-strings-qq
     , QuickCheck
+    , semialign
     , safe-exceptions
     , scientific
     , unordered-containers

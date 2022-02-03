@@ -6,18 +6,19 @@ module Kriti.Parser.Grammar where
 import Control.Monad.State (gets)
 import qualified Data.Aeson as J
 import Data.Bifunctor (first)
+import Data.Functor.Sum
 import qualified Data.HashMap.Strict as M
 import qualified Data.List as List
 import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import GHC.Generics
-import qualified Kriti.Aeson.Compat as Compat
 import qualified Kriti.Error as E
 import qualified Kriti.Parser.Lexer as L
 import Kriti.Parser.Monad
 import Kriti.Parser.Token
 import Kriti.Parser.Spans
+
 
 }
 
@@ -69,73 +70,69 @@ ident       { TokIdentifier $$ }
 '('         { TokSymbol (Loc $$ SymParenOpen) }
 ')'         { TokSymbol (Loc $$ SymParenClose) }
 
-%left '<' '>' '==' '||' '&&' functions
+%right in
+%nonassoc '<' '>' '<=' '>=' '!=' '==' '||' '&&'
 
 %%
 
-string_lit :: { ValueExt }
+string_lit :: { Expr }
 string_lit
-  : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
-  | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
-  
+  : 's"' string_template '"e' { mkKriti (StringTemF (locate $1 <> $3) $2) }
+  | 's"' '"e' { mkKriti (StringTemF (locate $1 <> locate $2) mempty) }
 
-string_template :: { V.Vector ValueExt }
+string_template :: { V.Vector Expr }
 string_template
   -- Template to the right
   : string_template '{{' template '}}' { V.snoc $1 $3 }
   -- String Lit to the right
-  | string_template string { V.snoc $1 (String (locate $2) (unLoc $2)) }
+  | string_template string { V.snoc $1 (mkJson (String (locate $2) (unLoc $2))) }
   -- Template Base Case
   | '{{' template '}}' { V.singleton $2 }
   -- String Base Case
-  | string { V.singleton (String (locate $1) (unLoc $1))}
+  | string { V.singleton (mkJson (String (locate $1) (unLoc $1)))}
 
-template :: { ValueExt }
+template :: { Expr }
 template
-  : path_vector { uncurry Path $1 }
-  | functions function_params { $1 $2 }
-  | boolean { $1 }
+--  : path_vector { uncurry PathF $1 }
+--  | functions function_params { $1 $2 }
+  : boolean { $1 }
   | num_lit { $1 }
 
-num_lit :: { ValueExt }
+num_lit :: { Expr }
 num_lit
-  : number { Number (locate $1) (unLoc $1)  }
-  | int { Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0) }
+  : number { mkJson (Number (locate $1) (unLoc $1))  }
+  | int { mkJson (Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0)) }
 
-boolean :: { ValueExt }
+boolean :: { Expr }
 boolean
-  : 'true'  { Boolean (locate $1) (unLoc $1) }
-  | 'false' { Boolean (locate $1) (unLoc $1) }
+  : 'true'  { mkJson (Boolean (locate $1) (unLoc $1)) }
+  | 'false' { mkJson (Boolean (locate $1) (unLoc $1)) }
 
-null :: { ValueExt }
+null :: { Expr }
 null
-  : 'null'  { Null (locate $1) }
+  : 'null'  { mkJson (Null (locate $1)) }
 
-not :: { ValueExt }
-not
-  : 'not' value { Not (locate $1 <> locate $2) $2 }
-
-array :: { ValueExt }
+array :: { Expr }
 array
-  : '[' list_elements ']' { Array (locate $1 <> locate $3) $2 }
-  | '[' ']'               { Array (locate $1 <> locate $2) V.empty }
+  : '[' list_elements ']' { mkJson (Array (locate $1 <> locate $3) $2) }
+  | '[' ']'               { mkJson (Array (locate $1 <> locate $2) V.empty) }
 
-list_elements :: { V.Vector ValueExt }
+list_elements :: { V.Vector Expr }
 list_elements
   : term { V.singleton $1 }
   | list_elements ',' term { V.snoc $1 $3 }
 
-object :: { ValueExt }
+object :: { Expr }
 object
-  : '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
-  | '{' '}'               { Object (locate $1 <> locate $2) mempty }
+  : '{' object_fields '}' { mkJson (Object (locate $1 <> locate $3) (M.fromList $2)) }
+  | '{' '}'               { mkJson (Object (locate $1 <> locate $2) mempty) }
 
-object_fields :: { [(T.Text, ValueExt)] }
+object_fields :: { [(T.Text, Expr)] }
 object_fields
   : object_field { [$1] }
   | object_fields ',' object_field { $3 : $1 }
 
-object_field :: { (T.Text, ValueExt) }
+object_field :: { (T.Text, Expr) }
 object_field
   : 's"' object_key '"e' ':' term { (unLoc $2, $5) }
   | 's"' '"e' ':' term { ("", $4) }
@@ -145,55 +142,55 @@ object_key
   : object_key string { $1 <> $2 }
   | string { $1 }
 
-operator :: { ValueExt }
+operator :: { Expr }
 operator
-  : value '>' value  { Gt (locate $1 <> locate $3) $1 $3 }
-  | value '<' value  { Lt (locate $1 <> locate $3) $1 $3 }
-  | value '>=' value { Gte (locate $1 <> locate $3) $1 $3 }
-  | value '<=' value { Lte (locate $1 <> locate $3) $1 $3 }
-  | value '!=' value { NotEq (locate $1 <> locate $3) $1 $3 }
-  | value '==' value { Eq (locate $1 <> locate $3) $1 $3 }
-  | value '&&' value { And (locate $1 <> locate $3) $1 $3 }
-  | value '||' value { Or (locate $1 <> locate $3) $1 $3 }
-  | value 'in' value { In (locate $1 <> locate $3) $1 $3 }
+  : value '>' value  { mkKriti (GtF (locate $1 <> locate $3) $1 $3)}
+  | value '<' value  { mkKriti (LtF (locate $1 <> locate $3) $1 $3) }
+  | value '>=' value { mkKriti (GteF (locate $1 <> locate $3) $1 $3) }
+  | value '<=' value { mkKriti (LteF (locate $1 <> locate $3) $1 $3) }
+  | value '!=' value { mkKriti (NotEqF (locate $1 <> locate $3) $1 $3) }
+  | value '==' value { mkKriti (EqF (locate $1 <> locate $3) $1 $3) }
+  | value '&&' value { mkKriti (AndF (locate $1 <> locate $3) $1 $3) }
+  | value '||' value { mkKriti (OrF (locate $1 <> locate $3) $1 $3) }
+  | value 'in' value { mkKriti (InF (locate $1 <> locate $3) $1 $3) }
 
-iff :: { ValueExt }
+iff :: { Expr }
 iff
-  : '{{' 'if' value '}}' term '{{' 'else' '}}' term '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
+  : '{{' 'if' value '}}' term '{{' 'else' '}}' term '{{' 'end' '}}' { mkKriti (IffF (locate $1 <> locate $12) $3 $5 $9) }
 
-function_call :: { ValueExt }
+function_call :: { Expr }
 function_call
   : '{{' functions function_params '}}' { $2 $3 }
 
-functions :: { ValueExt -> ValueExt }
+functions :: { Expr -> Expr }
 functions
-  : 'escapeUri' { buildFunc EscapeURI (locate $1) }
-  | 'not' { buildFunc Not (locate $1) }
+  : 'escapeUri' { buildFunc (fmap (fmap mkKriti) EscapeURIF) (locate $1) }
+  | 'not' { buildFunc (fmap (fmap mkKriti) NotF) (locate $1) }
 
-function_params :: { ValueExt }
+function_params :: { Expr }
 function_params
   : null { $1 }
   | boolean { $1 }
   | string_lit { $1 }
   | num_lit { $1 }
-  | path_vector { uncurry Path $1 }
+  | path_vector { mkKriti (uncurry PathF $1) }
   | array { $1 }
   | object { $1 }
   | functions function_params { $1 $2 }
   | '(' function_params ')' { $2 }
 
-range :: { ValueExt }
+range :: { Expr }
 range
   : range_decl term '{{' 'end' '}}' { $1 (locate $5) $2 }
 
-range_decl :: { Span -> ValueExt -> ValueExt }
+range_decl :: { Span -> Expr -> Expr }
 range_decl
-  : '{{' 'range' ident ',' ident ':=' path_vector '}}' { \s b -> Range (locate $1 <> s) (Just (unLoc $3)) (unLoc $5) (snd $7) b }
-  | '{{' 'range' '_' ',' ident ':=' path_vector '}}' { \s b -> Range (locate $1 <> s) Nothing (unLoc $5) (snd $7) b }
+  : '{{' 'range' ident ',' ident ':=' path_vector '}}' { \s b -> mkKriti (RangeF (locate $1 <> s) (Just (unLoc $3)) (unLoc $5) (snd $7) b) }
+  | '{{' 'range' '_' ',' ident ':=' path_vector '}}' { \s b -> mkKriti (RangeF (locate $1 <> s) Nothing (unLoc $5) (snd $7) b) }
 
-path :: { ValueExt }
+path :: { Expr }
 path
-  : '{{' path_vector '}}' { Path (fst $2) (snd $2) }
+  : '{{' path_vector '}}' { mkKriti (PathF (fst $2) (snd $2)) }
 
 path_vector :: { (Span, V.Vector Accessor) }
 path_vector
@@ -211,7 +208,7 @@ path_element
   | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) (unLoc $3) BracketAccess }
   | '[' int ']' { Arr (locate $1 <> locate $3) (unLoc $2) }
 
-value :: { ValueExt }
+value :: { Expr }
 value
   : num_lit	  { $1 }
   | string_lit	  { $1 }
@@ -219,15 +216,14 @@ value
   | null	  { $1 }
   | array	  { $1 }
   | object	  { $1 }
-  | path_vector	  { uncurry Path $1 }
+  | path_vector	  { mkKriti (uncurry PathF $1) }
   | iff		  { $1 }
   | operator	  { $1 }
-  | not		  { $1 }
   | range         { $1 }
   | functions function_params { $1 $2 }
   | '(' value ')' { $2 }
 
-term :: { ValueExt }
+term :: { Expr }
 term
   : num_lit       { $1 }
   | string_lit    { $1 }
@@ -238,7 +234,6 @@ term
   | path          { $1 }
   | iff           { $1 }
   | operator      { $1 }
-  | not           { $1 }
   | function_call { $1 }
   | range         { $1 }
   | '(' term ')'  { $2 }
@@ -255,6 +250,6 @@ failure (tok:_) = do
   -- TODO: fix source position capture here. I think we need the prior span.
   parseError $ UnexpectedToken (Loc sp tok) src
 
-buildFunc :: (Span -> ValueExt -> ValueExt) -> Span -> ValueExt -> ValueExt
+buildFunc :: (Span -> Expr -> Expr) -> Span -> Expr -> Expr
 buildFunc f sp param = f (sp <> locate param) param
 }
