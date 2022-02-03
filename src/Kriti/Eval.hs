@@ -58,12 +58,14 @@ getSourcePos (RangeError _ pos) = locate pos
 evalPath :: Span -> J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath sp ctx path = do
   src <- asks fst
-  let step :: Monad m => J.Value -> Accessor -> ExceptT EvalError m J.Value
-      step (J.Object o) (Obj _ k _) = maybe (throwError $ InvalidPath src sp path) pure $ Compat.lookup k o
-      step (J.Array xs) (Arr _ i) = maybe (throwError $ InvalidPath src sp path) pure $ xs V.!? i
-      step _ (Obj _ _ _) = throwError $ TypeError src sp "Expected object"
-      step _ (Arr _ _) = throwError $ TypeError src sp "Expected array"
-   in foldlM step ctx path
+  let maybeThrow NotOptional = maybe (throwError $ Left $ InvalidPath src sp path) pure
+      maybeThrow Optional = maybe (throwError $ Right ()) pure
+      step :: J.Value -> Accessor -> ExceptT (Either EvalError ()) (Reader Ctxt) J.Value
+      step (J.Object o) (Obj _ optional k _) = maybeThrow optional $ Compat.lookup k o
+      step (J.Array xs) (Arr _ optional i) = maybeThrow optional $ xs V.!? i
+      step _ (Obj _ _ _ _) = throwError $ Left $ TypeError src sp "Expected object"
+      step _ (Arr _ _ _) = throwError $ Left $ TypeError src sp "Expected array"
+   in mapExceptT (fmap $ either (either throwError (pure . const J.Null)) pure) $ foldlM step ctx path
 
 isString :: J.Value -> Bool
 isString J.String {} = True

@@ -57,7 +57,7 @@ Array
                         , col = 16
                         }
                     }
-                ) "world" Head
+                ) NotOptional "world" Head
             ]
         ]
     , StringTem
@@ -107,7 +107,7 @@ Array
                         , col = 17
                         }
                     }
-                ) "$world" Head
+                ) NotOptional "$world" Head
             ]
         ]
     , StringTem
@@ -157,7 +157,7 @@ Array
                         , col = 13
                         }
                     }
-                ) "$bar" Head
+                ) NotOptional "$bar" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -169,7 +169,7 @@ Array
                         , col = 17
                         }
                     }
-                ) "baz" DotAccess
+                ) NotOptional "baz" DotAccess
             ]
         , String
             ( Span
@@ -206,7 +206,7 @@ Array
                         , col = 26
                         }
                     }
-                ) "$qux" Head
+                ) NotOptional "$qux" Head
             ]
         ]
     , StringTem
@@ -244,7 +244,7 @@ Array
                         , col = 9
                         }
                     }
-                ) "obj" Head
+                ) NotOptional "obj" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -256,7 +256,7 @@ Array
                         , col = 16
                         }
                     }
-                ) "x-y" BracketAccess
+                ) NotOptional "x-y" BracketAccess
             ]
         ]
     , StringTem
@@ -294,7 +294,7 @@ Array
                         , col = 9
                         }
                     }
-                ) "obj" Head
+                ) NotOptional "obj" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -306,7 +306,7 @@ Array
                         , col = 16
                         }
                     }
-                ) "x y" BracketAccess
+                ) NotOptional "x y" BracketAccess
             ]
         ]
     , StringTem
@@ -344,7 +344,7 @@ Array
                         , col = 9
                         }
                     }
-                ) "obj" Head
+                ) NotOptional "obj" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -356,7 +356,7 @@ Array
                         , col = 16
                         }
                     }
-                ) "x y" BracketAccess
+                ) NotOptional "x y" BracketAccess
             ]
         , String
             ( Span
@@ -504,7 +504,7 @@ Array
                         , col = 11
                         }
                     }
-                ) "$" Head
+                ) NotOptional "$" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -516,7 +516,7 @@ Array
                         , col = 15
                         }
                     }
-                ) "baz" DotAccess
+                ) NotOptional "baz" DotAccess
             ]
         , String
             ( Span
@@ -664,7 +664,7 @@ Array
                         , col = 9
                         }
                     }
-                ) "obj" Head
+                ) NotOptional "obj" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -676,7 +676,7 @@ Array
                         , col = 24
                         }
                     }
-                ) "a b cde-fgh" BracketAccess
+                ) NotOptional "a b cde-fgh" BracketAccess
             ]
         ]
     ]

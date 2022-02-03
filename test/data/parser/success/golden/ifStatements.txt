@@ -45,7 +45,7 @@ Array
                         , col = 10
                         }
                     }
-                ) "p" Head
+                ) NotOptional "p" Head
             ]
         )
         ( Boolean
@@ -109,7 +109,7 @@ Array
                         , col = 11
                         }
                     }
-                ) "p" Head
+                ) NotOptional "p" Head
             ]
         )
         ( Boolean
@@ -185,7 +185,7 @@ Array
                             , col = 10
                             }
                         }
-                    ) "p" Head
+                    ) NotOptional "p" Head
                 ]
             )
             ( Path
@@ -211,7 +211,7 @@ Array
                             , col = 15
                             }
                         }
-                    ) "q" Head
+                    ) NotOptional "q" Head
                 ]
             )
         )
@@ -288,7 +288,7 @@ Array
                             , col = 11
                             }
                         }
-                    ) "p" Head
+                    ) NotOptional "p" Head
                 ]
             )
             ( Path
@@ -314,7 +314,7 @@ Array
                             , col = 16
                             }
                         }
-                    ) "q" Head
+                    ) NotOptional "q" Head
                 ]
             )
         )
@@ -403,7 +403,7 @@ Array
                                 , col = 11
                                 }
                             }
-                        ) "p" Head
+                        ) NotOptional "p" Head
                     ]
                 )
                 ( Path
@@ -429,7 +429,7 @@ Array
                                 , col = 16
                                 }
                             }
-                        ) "q" Head
+                        ) NotOptional "q" Head
                     ]
                 )
             )
@@ -456,7 +456,7 @@ Array
                             , col = 22
                             }
                         }
-                    ) "q" Head
+                    ) NotOptional "q" Head
                 ]
             )
         )
@@ -637,7 +637,7 @@ Array
                         , col = 31
                         }
                     }
-                ) "$path" Head
+                ) NotOptional "$path" Head
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -649,7 +649,7 @@ Array
                         , col = 41
                         }
                     }
-                ) "lookup" BracketAccess
+                ) NotOptional "lookup" BracketAccess
             ]
         )
         ( Boolean
@@ -712,7 +712,7 @@ Array
                             , col = 10
                             }
                         }
-                    ) "$" Head
+                    ) NotOptional "$" Head
                 , Arr
                     ( Span
                         { start = AlexSourcePos
@@ -724,7 +724,7 @@ Array
                             , col = 13
                             }
                         }
-                    ) 0
+                    ) NotOptional 0
                 , Obj
                     ( Span
                         { start = AlexSourcePos
@@ -736,7 +736,7 @@ Array
                             , col = 22
                             }
                         }
-                    ) "isActive" DotAccess
+                    ) NotOptional "isActive" DotAccess
                 ]
             )
             ( Boolean
@@ -814,7 +814,7 @@ Array
                         , col = 10
                         }
                     }
-                ) "$" Head
+                ) NotOptional "$" Head
             , Arr
                 ( Span
                     { start = AlexSourcePos
@@ -826,7 +826,7 @@ Array
                         , col = 13
                         }
                     }
-                ) 0
+                ) NotOptional 0
             , Obj
                 ( Span
                     { start = AlexSourcePos
@@ -838,7 +838,7 @@ Array
                         , col = 22
                         }
                     }
-                ) "isActive" DotAccess
+                ) NotOptional "isActive" DotAccess
             ]
         )
         ( Boolean

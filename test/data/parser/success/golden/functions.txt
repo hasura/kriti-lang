@@ -107,7 +107,7 @@ Array
                             , col = 26
                             }
                         }
-                    ) "$bar" Head
+                    ) NotOptional "$bar" Head
                 ]
             ]
         )
@@ -146,7 +146,7 @@ Array
                         , col = 21
                         }
                     }
-                ) "$path" Head
+                ) NotOptional "$path" Head
             , Arr
                 ( Span
                     { start = AlexSourcePos
@@ -158,7 +158,7 @@ Array
                         , col = 24
                         }
                     }
-                ) 0
+                ) NotOptional 0
             ]
         )
     , EscapeURI
@@ -258,7 +258,7 @@ Array
                             , col = 44
                             }
                         }
-                    ) "$params" Head
+                    ) NotOptional "$params" Head
                 ]
             )
         ]

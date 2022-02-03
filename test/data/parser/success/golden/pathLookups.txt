@@ -5,7 +5,7 @@ Array
             , col = 1
             }
         , end = AlexSourcePos
-            { line = 5
+            { line = 9
             , col = 2
             }
         }
@@ -33,7 +33,7 @@ Array
                     , col = 10
                     }
                 }
-            ) "$foo" Head
+            ) NotOptional "$foo" Head
         ]
     , Path
         ( Span
@@ -58,7 +58,7 @@ Array
                     , col = 10
                     }
                 }
-            ) "$foo" Head
+            ) NotOptional "$foo" Head
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -70,7 +70,7 @@ Array
                     , col = 14
                     }
                 }
-            ) "bar" DotAccess
+            ) NotOptional "bar" DotAccess
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -82,7 +82,7 @@ Array
                     , col = 18
                     }
                 }
-            ) "baz" DotAccess
+            ) NotOptional "baz" DotAccess
         ]
     , Path
         ( Span
@@ -107,7 +107,7 @@ Array
                     , col = 10
                     }
                 }
-            ) "$foo" Head
+            ) NotOptional "$foo" Head
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -119,7 +119,7 @@ Array
                     , col = 21
                     }
                 }
-            ) "bar baz" BracketAccess
+            ) NotOptional "bar baz" BracketAccess
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -131,7 +131,7 @@ Array
                     , col = 25
                     }
                 }
-            ) "qux" DotAccess
+            ) NotOptional "qux" DotAccess
         ]
     , Path
         ( Span
@@ -156,7 +156,7 @@ Array
                     , col = 10
                     }
                 }
-            ) "$foo" Head
+            ) NotOptional "$foo" Head
         , Arr
             ( Span
                 { start = AlexSourcePos
@@ -168,7 +168,7 @@ Array
                     , col = 13
                     }
                 }
-            ) 1
+            ) NotOptional 1
         , Arr
             ( Span
                 { start = AlexSourcePos
@@ -180,7 +180,7 @@ Array
                     , col = 16
                     }
                 }
-            ) 0
+            ) NotOptional 0
         , Arr
             ( Span
                 { start = AlexSourcePos
@@ -192,7 +192,7 @@ Array
                     , col = 19
                     }
                 }
-            ) 3
+            ) NotOptional 3
         , Obj
             ( Span
                 { start = AlexSourcePos
@@ -204,6 +204,166 @@ Array
                     , col = 22
                     }
                 }
-            ) "ok" DotAccess
+            ) NotOptional "ok" DotAccess
+        ]
+    , Path
+        ( Span
+            { start = AlexSourcePos
+                { line = 5
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 5
+                , col = 15
+                }
+            }
+        )
+        [ Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 5
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 5
+                    , col = 10
+                    }
+                }
+            ) NotOptional "$foo" Head
+        , Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 5
+                    , col = 10
+                    }
+                , end = AlexSourcePos
+                    { line = 5
+                    , col = 15
+                    }
+                }
+            ) Optional "bar" DotAccess
+        ]
+    , Path
+        ( Span
+            { start = AlexSourcePos
+                { line = 6
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 6
+                , col = 18
+                }
+            }
+        )
+        [ Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 6
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 6
+                    , col = 10
+                    }
+                }
+            ) NotOptional "$foo" Head
+        , Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 6
+                    , col = 10
+                    }
+                , end = AlexSourcePos
+                    { line = 6
+                    , col = 18
+                    }
+                }
+            ) Optional "bar" BracketAccess
+        ]
+    , Path
+        ( Span
+            { start = AlexSourcePos
+                { line = 7
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 7
+                , col = 14
+                }
+            }
+        )
+        [ Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 7
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 7
+                    , col = 10
+                    }
+                }
+            ) NotOptional "$foo" Head
+        , Arr
+            ( Span
+                { start = AlexSourcePos
+                    { line = 7
+                    , col = 10
+                    }
+                , end = AlexSourcePos
+                    { line = 7
+                    , col = 14
+                    }
+                }
+            ) Optional 1
+        ]
+    , Path
+        ( Span
+            { start = AlexSourcePos
+                { line = 8
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 8
+                , col = 19
+                }
+            }
+        )
+        [ Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 8
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 8
+                    , col = 10
+                    }
+                }
+            ) NotOptional "$foo" Head
+        , Arr
+            ( Span
+                { start = AlexSourcePos
+                    { line = 8
+                    , col = 10
+                    }
+                , end = AlexSourcePos
+                    { line = 8
+                    , col = 14
+                    }
+                }
+            ) Optional 1
+        , Obj
+            ( Span
+                { start = AlexSourcePos
+                    { line = 8
+                    , col = 14
+                    }
+                , end = AlexSourcePos
+                    { line = 8
+                    , col = 19
+                    }
+                }
+            ) Optional "baz" DotAccess
         ]
     ]
