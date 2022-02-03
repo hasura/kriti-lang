@@ -115,13 +115,14 @@ data Accessor = Obj Span Optionality T.Text ObjAccType | Arr Span Optionality In
 
 instance Pretty Accessor where
   pretty = \case
-    Obj _ NotOptional txt DotAccess -> dot <> pretty txt
-    Obj _ NotOptional txt BracketAccess -> brackets (squotes $ pretty txt)
+    Obj _ optional txt DotAccess -> q optional <> dot <> pretty txt
+    Obj _ optional txt BracketAccess -> q optional <> dot <> brackets (squotes $ pretty txt)
     Obj _ _ txt Head -> pretty txt
-    Arr _ NotOptional i -> brackets (pretty i)
-    Obj _ Optional txt DotAccess -> "?." <> pretty txt
-    Obj _ Optional txt BracketAccess -> "?." <> brackets (squotes $ pretty txt)
-    Arr _ Optional i -> "?." <> brackets (pretty i)
+    Arr _ optional i -> q optional <> brackets (pretty i)
+    where
+      q :: Optionality -> Doc ann
+      q Optional = ""
+      q NotOptional = "?"
 
 -- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
 -- terms which are then evaluated and converted into Aeson `Value`

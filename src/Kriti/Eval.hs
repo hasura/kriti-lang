@@ -58,11 +58,11 @@ getSourcePos (RangeError _ pos) = locate pos
 evalPath :: Span -> J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath sp ctx path = do
   src <- asks fst
-  let step :: J.Value -> Accessor -> ExceptT (Either EvalError ()) (Reader Ctxt) J.Value
-      step (J.Object o) (Obj _ NotOptional k _) = maybe (throwError $ Left $ InvalidPath src sp path) pure $ Compat.lookup k o
-      step (J.Object o) (Obj _ Optional k _) = maybe (throwError $ Right ()) pure $ Compat.lookup k o
-      step (J.Array xs) (Arr _ NotOptional i) = maybe (throwError $ Left $ InvalidPath src sp path) pure $ xs V.!? i
-      step (J.Array xs) (Arr _ Optional i) = maybe (throwError $ Right ()) pure $ xs V.!? i
+  let maybeThrow NotOptional = maybe (throwError $ Left $ InvalidPath src sp path) pure
+      maybeThrow Optional = maybe (throwError $ Right ()) pure
+      step :: J.Value -> Accessor -> ExceptT (Either EvalError ()) (Reader Ctxt) J.Value
+      step (J.Object o) (Obj _ optional k _) = maybeThrow optional $ Compat.lookup k o
+      step (J.Array xs) (Arr _ optional i) = maybeThrow optional $ xs V.!? i
       step _ (Obj _ _ _ _) = throwError $ Left $ TypeError src sp "Expected object"
       step _ (Arr _ _ _) = throwError $ Left $ TypeError src sp "Expected array"
    in mapExceptT (fmap $ either (either throwError (pure . const J.Null)) pure) $ foldlM step ctx path

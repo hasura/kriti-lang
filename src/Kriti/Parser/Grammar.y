@@ -211,9 +211,9 @@ path_element
   : '.' ident { Obj (locate $1 <> locate $2) NotOptional (unLoc $2) DotAccess }
   | '?' '.' ident { Obj (locate $1 <> locate $3) Optional (unLoc $3) DotAccess }
   | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) NotOptional (unLoc $3) BracketAccess }
-  | '?' '.' '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $7) Optional (unLoc $5) BracketAccess }
+  | '?' '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $6) Optional (unLoc $4) BracketAccess }
   | '[' int ']' { Arr (locate $1 <> locate $3) NotOptional (unLoc $2) }
-  | '?' '.' '[' int ']' { Arr (locate $1 <> locate $5) Optional (unLoc $4) }
+  | '?' '[' int ']' { Arr (locate $1 <> locate $4) Optional (unLoc $3) }
 
 value :: { ValueExt }
 value

@@ -251,7 +251,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 6
-                , col = 19
+                , col = 18
                 }
             }
         )
@@ -275,7 +275,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 6
-                    , col = 19
+                    , col = 18
                     }
                 }
             ) Optional "bar" BracketAccess
@@ -288,7 +288,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 7
-                , col = 15
+                , col = 14
                 }
             }
         )
@@ -312,7 +312,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 7
-                    , col = 15
+                    , col = 14
                     }
                 }
             ) Optional 1
@@ -325,7 +325,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 8
-                , col = 20
+                , col = 19
                 }
             }
         )
@@ -349,7 +349,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 8
-                    , col = 15
+                    , col = 14
                     }
                 }
             ) Optional 1
@@ -357,11 +357,11 @@ Array
             ( Span
                 { start = AlexSourcePos
                     { line = 8
-                    , col = 15
+                    , col = 14
                     }
                 , end = AlexSourcePos
                     { line = 8
-                    , col = 20
+                    , col = 19
                     }
                 }
             ) Optional "baz" DotAccess
