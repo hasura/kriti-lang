@@ -1,6 +1,7 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
+  - Adds optional lookup operator.
   - Fixes unicode support.
   - Adds a Pretty Printer.
   - Adds `!=`, `>=`, `<=`, `in` operators and `not` function.
