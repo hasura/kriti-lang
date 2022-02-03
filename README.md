@@ -14,12 +14,26 @@ Kriti expressions are wrapped in double curly brackets such as `"http://wwww.goo
 
 Values can be looked up in bound json expressions using the standard path lookup syntax:
 ```
-{{ $.foo.bar[0]['my key'] }}
+{{ $body.foo.bar[0]['my key'] }}
 ```
 
 * `.` is used to look up object fields
 * `[x]` is used to lookup array indices
 * `['a b c']` is used to lookup string literal object fields
+
+If a variable is unbound, the kriti template fail and throw an exception. To prevent such failures, we provide an "optional" lookup operator:
+
+```
+{{ $body?.foo }}
+```
+This example will return a `null` if `foo` is not bound in `$body`. Optional lookups will immediately shortcircuit with `null` so that the following will not attempt any lookups past the unbound `foo`:
+```
+{{ $body?.foo.bar.baz }}
+```
+
+* `?.` is used to optionally look up object fields
+* `?[x]` is used to optionally lookup array indices
+* `?['a b c']` is used to optionally lookup string literal object fields
 
 #### Loops
 
