@@ -51,6 +51,7 @@ ident       { TokIdentifier $$ }
 '.'         { TokSymbol (Loc $$ SymDot) }
 ','         { TokSymbol (Loc $$ SymComma) }
 '?'         { TokSymbol (Loc $$ SymQuestionMark) }
+'??'        { TokSymbol (Loc $$ SymDoubleQuestionMark) }
 '=='        { TokSymbol (Loc $$ SymEq) }
 '!='        { TokSymbol (Loc $$ SymNotEq) }
 '>'         { TokSymbol (Loc $$ SymGt) }
@@ -70,7 +71,9 @@ ident       { TokIdentifier $$ }
 '('         { TokSymbol (Loc $$ SymParenOpen) }
 ')'         { TokSymbol (Loc $$ SymParenClose) }
 
-%left '<' '>' '==' '||' '&&' functions
+%right 'in' 
+%nonassoc '>' '<' '<=' '>=' '==' '!='
+%left '??' '&&' '||' 
 
 %%
 
@@ -79,7 +82,6 @@ string_lit
   : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
   | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
   
-
 string_template :: { V.Vector ValueExt }
 string_template
   -- Template to the right
@@ -111,10 +113,6 @@ boolean
 null :: { ValueExt }
 null
   : 'null'  { Null (locate $1) }
-
-not :: { ValueExt }
-not
-  : 'not' value { Not (locate $1 <> locate $2) $2 }
 
 array :: { ValueExt }
 array
@@ -157,6 +155,7 @@ operator
   | value '&&' value { And (locate $1 <> locate $3) $1 $3 }
   | value '||' value { Or (locate $1 <> locate $3) $1 $3 }
   | value 'in' value { In (locate $1 <> locate $3) $1 $3 }
+  | value '??' value { Defaulting (locate $1 <> locate $3) $1 $3 }
 
 iff :: { ValueExt }
 iff
@@ -174,12 +173,14 @@ functions
 function_params :: { ValueExt }
 function_params
   : null { $1 }
-  | boolean { $1 }
-  | string_lit { $1 }
   | num_lit { $1 }
-  | path_vector { uncurry Path $1 }
+  | string_lit { $1 }
+  | boolean { $1 }
   | array { $1 }
   | object { $1 }
+  | path_vector { uncurry Path $1 }
+  | iff	{ $1 }
+  | range { $1 }
   | functions function_params { $1 $2 }
   | '(' function_params ')' { $2 }
 
@@ -217,35 +218,33 @@ path_element
 
 value :: { ValueExt }
 value
-  : num_lit	  { $1 }
+  : null	  { $1 }
+  | num_lit	  { $1 }
   | string_lit	  { $1 }
   | boolean	  { $1 }
-  | null	  { $1 }
   | array	  { $1 }
   | object	  { $1 }
   | path_vector	  { uncurry Path $1 }
   | iff		  { $1 }
   | operator	  { $1 }
-  | not		  { $1 }
   | range         { $1 }
   | functions function_params { $1 $2 }
   | '(' value ')' { $2 }
 
 term :: { ValueExt }
 term
-  : num_lit       { $1 }
-  | string_lit    { $1 }
-  | boolean       { $1 }
-  | null          { $1 }
-  | array         { $1 }
-  | object        { $1 }
-  | path          { $1 }
-  | iff           { $1 }
-  | operator      { $1 }
-  | not           { $1 }
-  | function_call { $1 }
-  | range         { $1 }
-  | '(' term ')'  { $2 }
+  : num_lit            { $1 }
+  | string_lit         { $1 }
+  | boolean            { $1 }
+  | null               { $1 }
+  | array              { $1 }
+  | object             { $1 }
+  | path               { $1 }
+  | iff                { $1 }
+  | function_call      { $1 }
+  | range              { $1 }
+  | '{{' operator '}}' { $2 }
+  | '(' term ')'       { $2 }
 
 {
 failure :: [Token] -> Parser a

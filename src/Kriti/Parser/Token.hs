@@ -23,6 +23,7 @@ data Symbol
   | SymDot
   | SymComma
   | SymQuestionMark
+  | SymDoubleQuestionMark
   | SymEq
   | SymNotEq
   | SymGt
@@ -79,6 +80,7 @@ serializeToken = \case
   TokSymbol (Loc _ SymDot) -> "."
   TokSymbol (Loc _ SymComma) -> ","
   TokSymbol (Loc _ SymQuestionMark) -> "?"
+  TokSymbol (Loc _ SymDoubleQuestionMark) -> "??"
   TokSymbol (Loc _ SymSingleQuote) -> "'"
   TokSymbol (Loc _ SymDoubleCurlyOpen) -> "{{"
   TokSymbol (Loc _ SymDoubleCurlyClose) -> "}}"
@@ -149,6 +151,7 @@ data ValueExt
   | Or Span ValueExt ValueExt
   | In Span ValueExt ValueExt
   | Not Span ValueExt
+  | Defaulting Span ValueExt ValueExt
   | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
   | EscapeURI Span ValueExt
   deriving (Show, Eq, Read, Generic)
@@ -174,6 +177,7 @@ instance Located ValueExt where
     Or s _ _ -> s
     In s _ _ -> s
     Not s _ -> s
+    Defaulting s _ _ -> s
     Range s _ _ _ _ -> s
     EscapeURI s _ -> s
 
@@ -217,6 +221,7 @@ instance Pretty ValueExt where
     Or _ t1 t2 -> pretty t1 <+> "||" <+> pretty t2
     In _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
     Not _ t1 -> "not" <+> pretty t1
+    Defaulting _ t1 t2 -> pretty t1 <+> "??" <+> pretty t2
     Range _ i bndr xs t1 ->
       vsep
         [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> foldMap pretty xs <+> "}}",
