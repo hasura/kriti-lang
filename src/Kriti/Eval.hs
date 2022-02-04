@@ -182,7 +182,7 @@ eval = \case
         let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
          in pure $ J.String escapedUri
       _ -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1' <> "' is not a string."
-  Defaulting sp t1 t2 -> do
+  Defaulting _ t1 t2 -> do
     v1 <- eval t1
     case v1 of
       J.Null -> eval t2

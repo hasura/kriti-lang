@@ -8,5 +8,7 @@
   {{ $foo || (not true) }},
   {{ $foo && (not true) }},
   {{ $foo in {"foo": 1} }},
-  {{ $foo in {"foo": {{ $bar }} } }}
+  {{ $foo in {"foo": {{ $bar }} } }},
+  {{ not true && false }},
+  {{ not true ?? false }}
 ]

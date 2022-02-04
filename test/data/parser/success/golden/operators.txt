@@ -5,7 +5,7 @@ Array
             , col = 1
             }
         , end = AlexSourcePos
-            { line = 11
+            { line = 13
             , col = 2
             }
         }
@@ -658,5 +658,107 @@ Array
                     )
                 ]
             )
+        )
+    , And
+        ( Span
+            { start = AlexSourcePos
+                { line = 11
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 11
+                , col = 23
+                }
+            }
+        )
+        ( Not
+            ( Span
+                { start = AlexSourcePos
+                    { line = 11
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 11
+                    , col = 14
+                    }
+                }
+            )
+            ( Boolean
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 11
+                        , col = 10
+                        }
+                    , end = AlexSourcePos
+                        { line = 11
+                        , col = 14
+                        }
+                    }
+                ) True
+            )
+        )
+        ( Boolean
+            ( Span
+                { start = AlexSourcePos
+                    { line = 11
+                    , col = 18
+                    }
+                , end = AlexSourcePos
+                    { line = 11
+                    , col = 23
+                    }
+                }
+            ) False
+        )
+    , Defaulting
+        ( Span
+            { start = AlexSourcePos
+                { line = 12
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 12
+                , col = 23
+                }
+            }
+        )
+        ( Not
+            ( Span
+                { start = AlexSourcePos
+                    { line = 12
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 12
+                    , col = 14
+                    }
+                }
+            )
+            ( Boolean
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 12
+                        , col = 10
+                        }
+                    , end = AlexSourcePos
+                        { line = 12
+                        , col = 14
+                        }
+                    }
+                ) True
+            )
+        )
+        ( Boolean
+            ( Span
+                { start = AlexSourcePos
+                    { line = 12
+                    , col = 18
+                    }
+                , end = AlexSourcePos
+                    { line = 12
+                    , col = 23
+                    }
+                }
+            ) False
         )
     ]
