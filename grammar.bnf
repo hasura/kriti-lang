@@ -1,0 +1,41 @@
+; NOTE: This is a draft attempt at a more consistent syntax
+<EXPR> ::= <JSON> | <KRITI> ; 
+
+<JSON>    ::= <object> | <array> | <boolean> | <string> | <number> | <null> ;
+<array>   ::= "[" [<EXPR>] {"," <EXPR>}* "]" ;
+<object>  ::= "{" [<field>] {"," <field>}* "}" ;
+<field>   ::= <string> ":" <EXPR> ;
+<string>  ::= "\"" {<any_unicode_char>}* "\"" ;
+<boolean> ::= "true" | "false" ;
+<number>  ::= -?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)? ;
+<null>    ::= "null" ;
+
+<KRITI> ::= "{{" <kritiValue> "}}" ;
+
+<kritiValue>  ::= <path> | <operator> | <function> | <JSON> | <range> | <iff> | "(" kritiValue ")" ; 
+
+<identifier> ::= [a-zA-Z][a-zA-Z0-9]* ;
+<path> ::= identifier { <path_element> }* ;
+<digit>   ::= [0-9] ;
+<path_element> ::=
+    "." <identifier>
+ | "?." <identifier>
+  | "[" <digit> "]"
+  | "?[" <digit> "]"
+  | "[" "'" <identifier> "'" "]"
+  | "?[" "'" <identifier> "'" "]"
+<operator> ::=
+    <kritiValue> ">"  <kritiValue>
+  | <kritiValue> ">=" <kritiValue>
+  | <kritiValue> "<"  <kritiValue>
+  | <kritiValue> "<=" <kritiValue>
+  | <kritiValue> "==" <kritiValue>
+  | <kritiValue> "!=" <kritiValue>
+  | <kritiValue> "&&" <kritiValue>
+  | <kritiValue> "||" <kritiValue>
+  | <kritiValue> "??" <kritiValue>
+  | <kritiValue> "in" <kritiValue> ;
+<function> ::= identifier { <kritiValue> }* ;
+
+<range> ::= "range [identifier ","] <identifier> ":=" <path> ":" <EXPR> "end" ;
+<iff> ::= "if" <EXPR> "then" <EXPR> "else" <EXPR> "end" ;
