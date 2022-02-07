@@ -1,6 +1,9 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
+
+## 0.3.0 -- 2022-02-07
+
   - adds defaulting operator `??`
   - Adds optional path lookup operator.
   - Fixes unicode support.
