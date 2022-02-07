@@ -35,6 +35,14 @@ This example will return a `null` if `foo` is not bound in `$body`. Optional loo
 * `?[x]` is used to optionally lookup array indices
 * `?['a b c']` is used to optionally lookup string literal object fields
 
+#### Defaulting Operator
+
+The defaulting operator `??` can be used to replace a `null` value with any other value. The expression `null ?? true` will evaluate to `true`. This is especially useful when used with path lookups:
+
+```
+$foo?.bar ?? true
+```
+
 #### Loops
 
 The `range` identifier is used to declare for loops:
