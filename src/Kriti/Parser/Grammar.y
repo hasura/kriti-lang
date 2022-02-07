@@ -21,7 +21,7 @@ import Kriti.Parser.Spans
 
 }
 
-%name parser term
+%name parser expr
 %tokentype { Token }
 %monad { Parser }
 %error { failure }
@@ -51,6 +51,7 @@ ident       { TokIdentifier $$ }
 '.'         { TokSymbol (Loc $$ SymDot) }
 ','         { TokSymbol (Loc $$ SymComma) }
 '?'         { TokSymbol (Loc $$ SymQuestionMark) }
+'??'        { TokSymbol (Loc $$ SymDoubleQuestionMark) }
 '=='        { TokSymbol (Loc $$ SymEq) }
 '!='        { TokSymbol (Loc $$ SymNotEq) }
 '>'         { TokSymbol (Loc $$ SymGt) }
@@ -70,131 +71,42 @@ ident       { TokIdentifier $$ }
 '('         { TokSymbol (Loc $$ SymParenOpen) }
 ')'         { TokSymbol (Loc $$ SymParenClose) }
 
-%left '<' '>' '==' '||' '&&' functions
+%right 'in' 
+%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
+%left '??' 
+%left 'not' 'escapeUri'
 
 %%
 
-string_lit :: { ValueExt }
-string_lit
-  : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
-  | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
-  
+expr :: { ValueExt }
+expr
+  : json { $1 } 
+  | kriti { $1 }
 
-string_template :: { V.Vector ValueExt }
-string_template
-  -- Template to the right
-  : string_template '{{' template '}}' { V.snoc $1 $3 }
-  -- String Lit to the right
-  | string_template string { V.snoc $1 (String (locate $2) (unLoc $2)) }
-  -- Template Base Case
-  | '{{' template '}}' { V.singleton $2 }
-  -- String Base Case
-  | string { V.singleton (String (locate $1) (unLoc $1))}
+------------------------------------------------------------------------
+-- KRITI
 
-template :: { ValueExt }
-template
-  : path_vector { uncurry Path $1 }
-  | functions function_params { $1 $2 }
-  | boolean { $1 }
-  | num_lit { $1 }
+kriti :: { ValueExt }
+kriti
+  : '{{' path '}}' { $2 }
+  | '{{' operator '}}' { $2 }
+  | '{{' function '}}' { $2 }
+  | '(' kriti ')' { $2 }
+  | range { $1 }
+  | iff { $1 }
 
-num_lit :: { ValueExt }
-num_lit
-  : number { Number (locate $1) (unLoc $1)  }
-  | int { Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0) }
-
-boolean :: { ValueExt }
-boolean
-  : 'true'  { Boolean (locate $1) (unLoc $1) }
-  | 'false' { Boolean (locate $1) (unLoc $1) }
-
-null :: { ValueExt }
-null
-  : 'null'  { Null (locate $1) }
-
-not :: { ValueExt }
-not
-  : 'not' value { Not (locate $1 <> locate $2) $2 }
-
-array :: { ValueExt }
-array
-  : '[' list_elements ']' { Array (locate $1 <> locate $3) $2 }
-  | '[' ']'               { Array (locate $1 <> locate $2) V.empty }
-
-list_elements :: { V.Vector ValueExt }
-list_elements
-  : term { V.singleton $1 }
-  | list_elements ',' term { V.snoc $1 $3 }
-
-object :: { ValueExt }
-object
-  : '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
-  | '{' '}'               { Object (locate $1 <> locate $2) mempty }
-
-object_fields :: { [(T.Text, ValueExt)] }
-object_fields
-  : object_field { [$1] }
-  | object_fields ',' object_field { $3 : $1 }
-
-object_field :: { (T.Text, ValueExt) }
-object_field
-  : 's"' object_key '"e' ':' term { (unLoc $2, $5) }
-  | 's"' '"e' ':' term { ("", $4) }
-
-object_key :: { Loc T.Text }
-object_key
-  : object_key string { $1 <> $2 }
-  | string { $1 }
-
-operator :: { ValueExt }
-operator
-  : value '>' value  { Gt (locate $1 <> locate $3) $1 $3 }
-  | value '<' value  { Lt (locate $1 <> locate $3) $1 $3 }
-  | value '>=' value { Gte (locate $1 <> locate $3) $1 $3 }
-  | value '<=' value { Lte (locate $1 <> locate $3) $1 $3 }
-  | value '!=' value { NotEq (locate $1 <> locate $3) $1 $3 }
-  | value '==' value { Eq (locate $1 <> locate $3) $1 $3 }
-  | value '&&' value { And (locate $1 <> locate $3) $1 $3 }
-  | value '||' value { Or (locate $1 <> locate $3) $1 $3 }
-  | value 'in' value { In (locate $1 <> locate $3) $1 $3 }
-
-iff :: { ValueExt }
-iff
-  : '{{' 'if' value '}}' term '{{' 'else' '}}' term '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
-
-function_call :: { ValueExt }
-function_call
-  : '{{' functions function_params '}}' { $2 $3 }
-
-functions :: { ValueExt -> ValueExt }
-functions
-  : 'escapeUri' { buildFunc EscapeURI (locate $1) }
-  | 'not' { buildFunc Not (locate $1) }
-
-function_params :: { ValueExt }
-function_params
-  : null { $1 }
-  | boolean { $1 }
-  | string_lit { $1 }
-  | num_lit { $1 }
-  | path_vector { uncurry Path $1 }
-  | array { $1 }
-  | object { $1 }
-  | functions function_params { $1 $2 }
-  | '(' function_params ')' { $2 }
-
-range :: { ValueExt }
-range
-  : range_decl term '{{' 'end' '}}' { $1 (locate $5) $2 }
-
-range_decl :: { Span -> ValueExt -> ValueExt }
-range_decl
-  : '{{' 'range' ident ',' ident ':=' path_vector '}}' { \s b -> Range (locate $1 <> s) (Just (unLoc $3)) (unLoc $5) (snd $7) b }
-  | '{{' 'range' '_' ',' ident ':=' path_vector '}}' { \s b -> Range (locate $1 <> s) Nothing (unLoc $5) (snd $7) b }
+kritiValue :: { ValueExt }
+  : path { $1 }
+  | operator { $1 } 
+  | function { $1 }
+  | range { $1 }
+  | iff { $1 }
+  | json { $1 }
+  | '(' kritiValue ')' { $2 }
 
 path :: { ValueExt }
 path
-  : '{{' path_vector '}}' { Path (fst $2) (snd $2) }
+  : path_vector { Path (fst $1) (snd $1) }
 
 path_vector :: { (Span, V.Vector Accessor) }
 path_vector
@@ -215,37 +127,115 @@ path_element
   | '[' int ']' { Arr (locate $1 <> locate $3) NotOptional (unLoc $2) }
   | '?' '[' int ']' { Arr (locate $1 <> locate $4) Optional (unLoc $3) }
 
-value :: { ValueExt }
-value
-  : num_lit	  { $1 }
-  | string_lit	  { $1 }
-  | boolean	  { $1 }
-  | null	  { $1 }
-  | array	  { $1 }
-  | object	  { $1 }
-  | path_vector	  { uncurry Path $1 }
-  | iff		  { $1 }
-  | operator	  { $1 }
-  | not		  { $1 }
-  | range         { $1 }
-  | functions function_params { $1 $2 }
-  | '(' value ')' { $2 }
+operator :: { ValueExt }
+operator
+  : kritiValue '>'  kritiValue { Gt (locate $1 <> locate $3) $1 $3 }
+  | kritiValue '<'  kritiValue { Lt (locate $1 <> locate $3) $1 $3 }
+  | kritiValue '>=' kritiValue { Gte (locate $1 <> locate $3) $1 $3 }
+  | kritiValue '<=' kritiValue { Lte (locate $1 <> locate $3) $1 $3 }
+  | kritiValue '!=' kritiValue { NotEq (locate $1 <> locate $3) $1 $3 }
+  | kritiValue '==' kritiValue { Eq (locate $1 <> locate $3) $1 $3 }
+  | kritiValue '&&' kritiValue { And (locate $1 <> locate $3) $1 $3 }
+  | kritiValue '||' kritiValue { Or (locate $1 <> locate $3) $1 $3 }
+  | kritiValue 'in' kritiValue { In (locate $1 <> locate $3) $1 $3 }
+  | kritiValue '??' kritiValue { Defaulting (locate $1 <> locate $3) $1 $3 }
 
-term :: { ValueExt }
-term
-  : num_lit       { $1 }
-  | string_lit    { $1 }
-  | boolean       { $1 }
-  | null          { $1 }
-  | array         { $1 }
-  | object        { $1 }
-  | path          { $1 }
-  | iff           { $1 }
-  | operator      { $1 }
-  | not           { $1 }
-  | function_call { $1 }
-  | range         { $1 }
-  | '(' term ')'  { $2 }
+function :: { ValueExt }
+function
+  : 'escapeUri' kritiValue { buildFunc EscapeURI (locate $1) $2 }
+  | 'not' kritiValue { buildFunc Not (locate $1) $2 }
+
+range :: { ValueExt }
+range
+  : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}' { Range (locate $1 <> locate $12) (fmap unLoc $3) (unLoc $5) (snd $7) $9 }
+
+mident :: { Maybe (Loc T.Text) }
+mident
+  : '_' { Nothing }
+  | ident { Just $1 }
+
+iff :: { ValueExt }
+iff
+  : '{{' 'if' kritiValue '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
+
+------------------------------------------------------------------------
+-- JSON
+
+json :: { ValueExt }
+json
+  : string_lit { $1 }
+  | num_lit { $1 }
+  | boolean { $1 }
+  | null { $1 }
+  | array { $1 }
+  | object { $1 }
+
+string_lit :: { ValueExt }
+string_lit
+  : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
+  | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
+  
+string_template :: { V.Vector ValueExt }
+string_template
+  -- Template to the right
+  : string_template '{{' template '}}' { V.snoc $1 $3 }
+  -- String Lit to the right
+  | string_template string { V.snoc $1 (String (locate $2) (unLoc $2)) }
+  -- Template Base Case
+  | '{{' template '}}' { V.singleton $2 }
+  -- String Base Case
+  | string { V.singleton (String (locate $1) (unLoc $1))}
+
+template :: { ValueExt }
+template
+  : path { $1 }
+  | function { $1 }
+  | boolean { $1 }
+  | num_lit { $1 }
+
+num_lit :: { ValueExt }
+num_lit
+  : number { Number (locate $1) (unLoc $1)  }
+  | int { Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0) }
+
+boolean :: { ValueExt }
+boolean
+  : 'true'  { Boolean (locate $1) (unLoc $1) }
+  | 'false' { Boolean (locate $1) (unLoc $1) }
+
+null :: { ValueExt }
+null
+  : 'null'  { Null (locate $1) }
+
+array :: { ValueExt }
+array
+  : '[' list_elements ']' { Array (locate $1 <> locate $3) $2 }
+  | '[' ']'               { Array (locate $1 <> locate $2) V.empty }
+
+list_elements :: { V.Vector ValueExt }
+list_elements
+  : expr { V.singleton $1 }
+  | list_elements ',' expr { V.snoc $1 $3 }
+
+object :: { ValueExt }
+object
+  : '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
+  | '{' '}'               { Object (locate $1 <> locate $2) mempty }
+
+object_fields :: { [(T.Text, ValueExt)] }
+object_fields
+  : object_field { [$1] }
+  | object_fields ',' object_field { $3 : $1 }
+
+object_field :: { (T.Text, ValueExt) }
+object_field
+  : 's"' object_key '"e' ':' expr { (unLoc $2, $5) }
+  | 's"' '"e' ':' expr { ("", $4) }
+
+object_key :: { Loc T.Text }
+object_key
+  : object_key string { $1 <> $2 }
+  | string { $1 }
 
 {
 failure :: [Token] -> Parser a
