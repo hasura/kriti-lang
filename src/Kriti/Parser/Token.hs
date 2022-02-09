@@ -123,8 +123,8 @@ instance Pretty Accessor where
     Arr _ optional i -> q optional <> brackets (pretty i)
     where
       q :: Optionality -> Doc ann
-      q Optional = ""
-      q NotOptional = "?"
+      q Optional = "?"
+      q NotOptional = ""
 
 -- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
 -- terms which are then evaluated and converted into Aeson `Value`
