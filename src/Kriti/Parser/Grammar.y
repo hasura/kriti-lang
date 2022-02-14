@@ -44,6 +44,7 @@ string      { TokStringLit $$ }
 'escapeUri' { TokIdentifier (Loc $$ "escapeUri") }
 'not'       { TokIdentifier (Loc $$ "not") }
 'in'        { TokIdentifier (Loc $$ "in") }
+'customFunc'{ TokIdentifier (Loc $$ "customFunc") }
 ident       { TokIdentifier $$ }
 
 '\''        { TokSymbol (Loc $$ SymSingleQuote) }
@@ -74,7 +75,7 @@ ident       { TokIdentifier $$ }
 %right 'in' 
 %nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
 %left '??' 
-%left 'not' 'escapeUri'
+%left 'not' 'escapeUri' 'customFunc'
 
 %%
 
@@ -144,6 +145,7 @@ function :: { ValueExt }
 function
   : 'escapeUri' kritiValue { buildFunc EscapeURI (locate $1) $2 }
   | 'not' kritiValue { buildFunc Not (locate $1) $2 }
+  | 'customFunc' kritiValue { buildFunc CustomFunc (locate $1) $2 }
 
 range :: { ValueExt }
 range

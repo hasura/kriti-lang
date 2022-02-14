@@ -6,6 +6,7 @@ module Kriti
     renderPretty,
     runKriti,
     runKritiBS,
+    runKritiWith,
   )
 where
 
@@ -37,6 +38,12 @@ runKriti templateSrc source = do
   let templateSrc' = T.encodeUtf8 templateSrc
   template' <- first KritiParseError $ parser templateSrc'
   first KritiEvalError $ runEval templateSrc' template' source
+
+runKritiWith :: T.Text -> [(T.Text, J.Value)] -> (T.Text, J.Value  -> J.Value) -> Either KritiError J.Value
+runKritiWith templateSrc source func = do
+  let templateSrc' = T.encodeUtf8 templateSrc
+  template' <- first KritiParseError $ parser templateSrc'
+  first KritiEvalError $ runEvalWith templateSrc' template' source func
 
 -- | Entry point for Kriti when given a template as
 -- 'ByteString'. Caller must ensure that the input is valid UTF8

@@ -74,7 +74,12 @@ isString _ = False
 runEval :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> Either EvalError J.Value
 runEval src template source =
   let ctx = Compat.fromList source
-   in runReader (runExceptT (eval template)) (src, ctx)
+   in runReader (runExceptT (evalWith id template)) (src, ctx)
+
+runEvalWith :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> (T.Text, J.Value -> J.Value) -> Either EvalError J.Value
+runEvalWith src template source (fname, func) =
+  let ctx = Compat.fromList source
+   in runReader (runExceptT (evalWith func template)) (src, ctx)
 
 typoOfJSON :: J.Value -> T.Text
 typoOfJSON J.Object {} = "Object"
@@ -84,8 +89,8 @@ typoOfJSON J.Number {} = "Number"
 typoOfJSON J.Bool {} = "Boolean"
 typoOfJSON J.Null = "Null"
 
-eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
-eval = \case
+evalWith :: (J.Value -> J.Value) -> ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
+evalWith func = \case
   String _ str -> pure $ J.String str
   Number _ i -> pure $ J.Number i
   Boolean _ p -> pure $ J.Bool p
@@ -182,8 +187,13 @@ eval = \case
         let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
          in pure $ J.String escapedUri
       _ -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1' <> "' is not a string."
+  CustomFunc _sp t1 -> do
+    _src <- asks fst
+    v1 <- eval t1
+    pure (func v1)
   Defaulting _ t1 t2 -> do
     v1 <- eval t1
     case v1 of
       J.Null -> eval t2
       json -> pure json
+  where eval = evalWith func

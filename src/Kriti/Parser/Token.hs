@@ -154,6 +154,7 @@ data ValueExt
   | Defaulting Span ValueExt ValueExt
   | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
   | EscapeURI Span ValueExt
+  | CustomFunc Span ValueExt
   deriving (Show, Eq, Read, Generic)
 
 instance Located ValueExt where
@@ -180,6 +181,7 @@ instance Located ValueExt where
     Defaulting s _ _ -> s
     Range s _ _ _ _ -> s
     EscapeURI s _ -> s
+    CustomFunc s _ -> s
 
 instance Located Accessor where
   locate = \case
@@ -229,6 +231,7 @@ instance Pretty ValueExt where
           "{{" <+> "end" <+> "}}"
         ]
     EscapeURI _ t1 -> "{{" <+> "escapeUri" <+> pretty t1 <+> "}}"
+    CustomFunc _ t1 -> "{{" <+> "customFunc" <+> pretty t1 <+> "}}"
 
 renderDoc :: Doc ann -> T.Text
 renderDoc = renderStrict . layoutPretty defaultLayoutOptions
