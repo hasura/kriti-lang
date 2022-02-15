@@ -30,12 +30,12 @@ possible. If we start adding functions particular to the needs of the
 we will violate this design principle.
 
 `Kriti` is an embedded interpreter. We import the interpreter as a
-librar into other Haskell applications where it is used to transform
+library into other Haskell applications where it is used to transform
 JSON values. Because we compile `Kriti` into our application, we have an
 interesting opportunity to thread transformations in the meta language
 (Haskell) into our `Kriti` interpreter. This would allow users to create
 their own ad-hoc library of functions to extend `Kriti` in whatever ways
-their applicationr requires.
+their application requires.
 
 ## How
 
@@ -127,6 +127,6 @@ This will add additional complexity to the parser but this is a one time cost.
 
 ### Unresolved Questions
 
-How do we handle a failed lookup in the parser? 
+How do we handle a failed lookup in the parser?
 
 Will this new production rule introduce ambiguity in the grammar?
