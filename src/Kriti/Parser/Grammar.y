@@ -145,7 +145,7 @@ function :: { ValueExt }
 function
   : 'escapeUri' kritiValue { buildFunc EscapeURI (locate $1) $2 }
   | 'not' kritiValue { buildFunc Not (locate $1) $2 }
-  | 'customFunc' kritiValue { buildFunc CustomFunc (locate $1) $2 }
+  | ident kritiValue { Function (locate $1) (unLoc $1) $2 }
 
 range :: { ValueExt }
 range

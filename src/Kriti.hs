@@ -39,11 +39,11 @@ runKriti templateSrc source = do
   template' <- first KritiParseError $ parser templateSrc'
   first KritiEvalError $ runEval templateSrc' template' source
 
-runKritiWith :: T.Text -> [(T.Text, J.Value)] -> (T.Text, J.Value  -> J.Value) -> Either KritiError J.Value
-runKritiWith templateSrc source func = do
+runKritiWith :: T.Text -> [(T.Text, J.Value)] -> [(T.Text, J.Value  -> Either EvalError J.Value)] -> Either KritiError J.Value
+runKritiWith templateSrc source funcLst = do
   let templateSrc' = T.encodeUtf8 templateSrc
   template' <- first KritiParseError $ parser templateSrc'
-  first KritiEvalError $ runEvalWith templateSrc' template' source func
+  first KritiEvalError $ runEvalWith templateSrc' template' source funcLst
 
 -- | Entry point for Kriti when given a template as
 -- 'ByteString'. Caller must ensure that the input is valid UTF8

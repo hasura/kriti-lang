@@ -12,6 +12,7 @@ data ErrorCode
   | RangeErrorCode
   | ParseErrorCode
   | LexErrorCode
+  | CustomErrorCode
   deriving (Show)
 
 instance Pretty ErrorCode where
@@ -21,6 +22,7 @@ instance Pretty ErrorCode where
     RangeErrorCode -> "Out of Range Error"
     ParseErrorCode -> "Parse Error"
     LexErrorCode -> "Lex Error"
+    CustomErrorCode -> "Custom Error"
 
 data SerializedError = SerializedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
   deriving (Show)
