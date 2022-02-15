@@ -44,7 +44,6 @@ string      { TokStringLit $$ }
 'escapeUri' { TokIdentifier (Loc $$ "escapeUri") }
 'not'       { TokIdentifier (Loc $$ "not") }
 'in'        { TokIdentifier (Loc $$ "in") }
-'customFunc'{ TokIdentifier (Loc $$ "customFunc") }
 ident       { TokIdentifier $$ }
 
 '\''        { TokSymbol (Loc $$ SymSingleQuote) }
@@ -75,7 +74,7 @@ ident       { TokIdentifier $$ }
 %right 'in' 
 %nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
 %left '??' 
-%left 'not' 'escapeUri' 'customFunc'
+%left 'not' 'escapeUri'
 
 %%
 
