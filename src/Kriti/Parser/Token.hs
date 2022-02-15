@@ -231,7 +231,7 @@ instance Pretty ValueExt where
           "{{" <+> "end" <+> "}}"
         ]
     EscapeURI _ t1 -> "{{" <+> "escapeUri" <+> pretty t1 <+> "}}"
-    Function _ n t1 -> "{{" <+> pretty n <+> " {{"<+> pretty t1 <+> "}} }}"
+    Function _ n t1 -> "{{" <+> pretty n <+> " {{" <+> pretty t1 <+> "}} }}"
 
 renderDoc :: Doc ann -> T.Text
 renderDoc = renderStrict . layoutPretty defaultLayoutOptions

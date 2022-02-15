@@ -53,12 +53,12 @@ instance SerializeError EvalError where
   serialize (TypeError _ term msg) = SerializedError {_code = TypeErrorCode, _message = msg, _span = locate term}
   serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
   serialize (FuncNotFound _ term msg) = SerializedError {_code = TypeErrorCode, _message = msg, _span = locate term}
-  serialize (CustomError  msg) = SerializedError {_code = CustomErrorCode , _message = msg, _span = dummySpan}
+  serialize (CustomError msg) = SerializedError {_code = CustomErrorCode, _message = msg, _span = dummySpan}
 
 dummySpan :: Span
 dummySpan = Span dummyPos dummyPos
-  where dummyPos = AlexSourcePos 0 0
-
+  where
+    dummyPos = AlexSourcePos 0 0
 
 type Ctxt = (B.ByteString, Compat.Object J.Value)
 
@@ -67,7 +67,7 @@ getSourcePos (InvalidPath _ pos _) = locate pos
 getSourcePos (TypeError _ term _) = locate term
 getSourcePos (RangeError _ pos) = locate pos
 getSourcePos (FuncNotFound _ term _) = locate term
-getSourcePos (CustomError _ ) = dummySpan
+getSourcePos (CustomError _) = dummySpan
 
 evalPath :: Span -> J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath sp ctx path = do
@@ -215,4 +215,5 @@ evalWith funcMap = \case
     case v1 of
       J.Null -> eval t2
       json -> pure json
-  where eval = evalWith funcMap
+  where
+    eval = evalWith funcMap
