@@ -206,7 +206,7 @@ evalWith funcMap = \case
     src <- asks fst
     v1 <- eval t1
     case Map.lookup fName funcMap of
-      Nothing -> throwError $ TypeError src sp $ "Function " <> fName <> " definition not found."
+      Nothing -> throwError $ FuncNotFound src sp $ "Function " <> fName <> " definition not found."
       Just f -> case f v1 of
         Left ee -> throwError ee
         Right va -> pure va
