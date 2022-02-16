@@ -23,8 +23,7 @@ data EvalError
   = InvalidPath B.ByteString Span (V.Vector Accessor)
   | TypeError B.ByteString Span T.Text
   | RangeError B.ByteString Span
-  | FuncNotFound B.ByteString Span T.Text
-  | CustomError T.Text
+  | FunctionError B.ByteString Span T.Text
   deriving (Show)
 
 instance Pretty EvalError where
@@ -32,8 +31,7 @@ instance Pretty EvalError where
     InvalidPath src term _ -> mkPretty src "Invalid path lookup" term
     TypeError src term msg -> mkPretty src msg term
     RangeError src term -> mkPretty src "Index out of range" term
-    FuncNotFound src term msg -> mkPretty src msg term
-    CustomError msg -> pretty $ "Error: " <> msg
+    FunctionError src term msg -> mkPretty src msg term
     where
       mkPretty source msg term =
         let AlexSourcePos {line = startLine, col = startCol} = start $ locate term
@@ -52,13 +50,7 @@ instance SerializeError EvalError where
   serialize (InvalidPath _ term path) = SerializedError {_code = InvalidPathCode, _message = "\"" <> renderVect path <> "\"", _span = locate term}
   serialize (TypeError _ term msg) = SerializedError {_code = TypeErrorCode, _message = msg, _span = locate term}
   serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
-  serialize (FuncNotFound _ term msg) = SerializedError {_code = TypeErrorCode, _message = msg, _span = locate term}
-  serialize (CustomError msg) = SerializedError {_code = CustomErrorCode, _message = msg, _span = dummySpan}
-
-dummySpan :: Span
-dummySpan = Span dummyPos dummyPos
-  where
-    dummyPos = AlexSourcePos 0 0
+  serialize (FunctionError _ term msg) = SerializedError {_code = FunctionErrorCode, _message = msg, _span = locate term}
 
 type Ctxt = (B.ByteString, Compat.Object J.Value)
 
@@ -66,8 +58,7 @@ getSourcePos :: EvalError -> Span
 getSourcePos (InvalidPath _ pos _) = locate pos
 getSourcePos (TypeError _ term _) = locate term
 getSourcePos (RangeError _ pos) = locate pos
-getSourcePos (FuncNotFound _ term _) = locate term
-getSourcePos (CustomError _) = dummySpan
+getSourcePos (FunctionError _ term _) = locate term
 
 evalPath :: Span -> J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath sp ctx path = do
@@ -90,7 +81,7 @@ runEval src template source =
   let ctx = Compat.fromList source
    in runReader (runExceptT (evalWith Map.empty template)) (src, ctx)
 
-runEvalWith :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> [(T.Text, J.Value -> Either EvalError J.Value)] -> Either EvalError J.Value
+runEvalWith :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> [(T.Text, J.Value -> Either CustomFunctionError J.Value)] -> Either EvalError J.Value
 runEvalWith src template source functionLst =
   let ctx = Compat.fromList source
       funcMap = Map.fromList functionLst
@@ -104,7 +95,7 @@ typoOfJSON J.Number {} = "Number"
 typoOfJSON J.Bool {} = "Boolean"
 typoOfJSON J.Null = "Null"
 
-evalWith :: Map.HashMap T.Text (J.Value -> Either EvalError J.Value) -> ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
+evalWith :: Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 evalWith funcMap = \case
   String _ str -> pure $ J.String str
   Number _ i -> pure $ J.Number i
@@ -206,9 +197,9 @@ evalWith funcMap = \case
     src <- asks fst
     v1 <- eval t1
     case Map.lookup fName funcMap of
-      Nothing -> throwError $ FuncNotFound src sp $ "Function " <> fName <> " definition not found."
+      Nothing -> throwError $ FunctionError src sp $ "Function " <> fName <> " is not defined."
       Just f -> case f v1 of
-        Left ee -> throwError ee
+        Left ee -> throwError $ FunctionError src sp $ unwrapError ee
         Right va -> pure va
   Defaulting _ t1 t2 -> do
     v1 <- eval t1

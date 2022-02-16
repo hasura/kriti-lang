@@ -13,7 +13,7 @@ import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import Kriti (renderPretty, runKritiWith)
-import Kriti.Eval (EvalError (CustomError))
+import Kriti.Error (CustomFunctionError (..))
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
 import Prettyprinter
@@ -50,20 +50,20 @@ main = do
             Just (J.String txt) -> txt
             _ -> error . T.unpack $ t <> " not found"
 
-      mkName :: J.Value -> Either EvalError J.Value
+      mkName :: J.Value -> Either CustomFunctionError J.Value
       mkName inp = case inp of
         J.Object km -> Right . J.String $ getNameUnsafe km
-        _ -> Left $ CustomError "expected an object in name"
+        _ -> Left $ CustomFunctionError "expected an object in name"
 
-      getGender :: J.Value -> Either EvalError J.Value
+      getGender :: J.Value -> Either CustomFunctionError J.Value
       getGender inp = case inp of
         J.String txt -> Right . J.String . T.singleton . T.head . T.toUpper $ txt
-        _ -> Left $ CustomError "expected gender to be a string"
+        _ -> Left $ CustomFunctionError "expected gender to be a string"
 
-      isAdmin :: J.Value -> Either EvalError J.Value
+      isAdmin :: J.Value -> Either CustomFunctionError J.Value
       isAdmin inp = case inp of
         J.String txt -> Right . J.Bool $ txt == "admin"
-        _ -> Left $ CustomError "expected usename to be a string"
+        _ -> Left $ CustomFunctionError "expected usename to be a string"
 
       functionList = [("concatName", mkName), ("getG", getGender), ("isAdmin", isAdmin)]
 
