@@ -40,9 +40,9 @@ instance Pretty EvalError where
          in vsep
               [ "Runtime Error:",
                 indent 2 $ pretty (msg :: T.Text),
-                indent (startLine + 1) "|",
-                pretty startLine <+> "|" <+> pretty (TE.decodeUtf8 sourceLine),
-                indent (startLine + 1) $ "|" <> indent (startCol) (pretty $ replicate (endCol - startCol) '^')
+                indent 4 "|",
+                indent 2 $ pretty startLine  <+> "|" <+> pretty (TE.decodeUtf8 sourceLine),
+                indent 4 $ "|" <> indent (startCol) (pretty $ replicate (endCol - startCol) '^')
               ]
 
 instance SerializeError EvalError where
@@ -199,7 +199,7 @@ evalWith funcMap = \case
     case Map.lookup fName funcMap of
       Nothing -> throwError $ FunctionError src sp $ "Function " <> fName <> " is not defined."
       Just f -> case f v1 of
-        Left ee -> throwError $ FunctionError src sp $ unwrapError ee
+        Left ee -> throwError $ FunctionError src (locate t1) $ unwrapError ee
         Right va -> pure va
   Defaulting _ t1 t2 -> do
     v1 <- eval t1

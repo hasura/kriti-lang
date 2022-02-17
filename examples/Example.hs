@@ -3,12 +3,10 @@
 
 module Main where
 
-import Control.Monad.Except
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Key as K
 import qualified Data.Aeson.KeyMap as K
 import Data.Bifunctor (first)
-import qualified Data.ByteString.Lazy as BL
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
