@@ -41,7 +41,7 @@ instance Pretty EvalError where
               [ "Runtime Error:",
                 indent 2 $ pretty (msg :: T.Text),
                 indent 4 "|",
-                indent 2 $ pretty startLine  <+> "|" <+> pretty (TE.decodeUtf8 sourceLine),
+                indent 2 $ pretty startLine <+> "|" <+> pretty (TE.decodeUtf8 sourceLine),
                 indent 4 $ "|" <> indent (startCol) (pretty $ replicate (endCol - startCol) '^')
               ]
 
