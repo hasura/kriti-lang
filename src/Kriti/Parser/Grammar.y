@@ -72,9 +72,9 @@ ident       { TokIdentifier $$ }
 ')'         { TokSymbol (Loc $$ SymParenClose) }
 
 %right 'in' 
-%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
+%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' ident 
 %left '??' 
-%left 'not' 'escapeUri'
+%left 'not' 'escapeUri' 
 
 %%
 
