@@ -27,6 +27,7 @@ import qualified Data.Vector as V
 import Data.Monoid
 import Kriti
 import qualified Kriti.Aeson.Compat as Compat
+import Kriti.CustomFunctions
 import Kriti.Error
 import Kriti.Eval
 import qualified Kriti.Parser as P
@@ -38,7 +39,6 @@ import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 import Text.Pretty.Simple (pShowNoColor)
 import Text.Read (readEither)
-import Kriti.CustomFunctions
 
 --------------------------------------------------------------------------------
 
