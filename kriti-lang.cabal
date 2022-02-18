@@ -85,6 +85,7 @@ library
     Kriti.Parser.Spans
     Kriti.Parser.Token
     Kriti.Eval
+    Kriti.CustomFunctions
   other-modules:
     Paths_kriti_lang
 

@@ -38,6 +38,7 @@ import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 import Text.Pretty.Simple (pShowNoColor)
 import Text.Read (readEither)
+import Kriti.CustomFunctions
 
 --------------------------------------------------------------------------------
 
@@ -110,12 +111,12 @@ evalJson :: J.Value -> Either T.Text J.Value
 evalJson value = do
   let enc = BL.toStrict $ J.encode value
   ast <- first renderPretty $ P.parser enc
-  first renderPretty $ runEval enc ast []
+  first renderPretty $ runEvalWith enc ast [] basicFunctions
 
 evalBS :: BS.ByteString -> Either T.Text J.Value
 evalBS input = do
   ast <- first renderPretty $ P.parser input
-  first renderPretty $ runEval "" ast []
+  first renderPretty $ runEvalWith "" ast [] basicFunctions
 
 -- | Encode a JSON value as 'T.Text'.
 encodeText :: J.Value -> T.Text
@@ -218,7 +219,7 @@ evalGoldenSpec = describe "Golden" do
 evalSuccess :: J.Value -> FilePath -> IO J.Value
 evalSuccess source path = do
   (src, tmpl) <- parseTemplateSuccess path
-  either throwString pure $ either (Left . show) Right $ runEval src tmpl [("$", source)]
+  either throwString pure $ either (Left . show) Right $ runEvalWith src tmpl [("$", source)] basicFunctions
 
 --------------------------------------------------------------------------------
 -- Golden test construction functions.
