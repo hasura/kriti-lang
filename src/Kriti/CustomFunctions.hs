@@ -53,10 +53,10 @@ headF :: KritiFunc
 headF inp = case inp of
   J.Array vec -> case V.uncons vec of
     Nothing -> Left . CustomFunctionError $ "Empty array"
-    Just (x,_) -> Right x
+    Just (x, _) -> Right x
   J.String txt -> case T.uncons txt of
     Nothing -> Left . CustomFunctionError $ "Empty string"
-    Just (x,_) -> Right . J.String . T.singleton $ x
+    Just (x, _) -> Right . J.String . T.singleton $ x
   _ -> Left . CustomFunctionError $ "Expected an array or string"
 
 tailF :: KritiFunc
