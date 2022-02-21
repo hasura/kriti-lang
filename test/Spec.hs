@@ -111,12 +111,12 @@ evalJson :: J.Value -> Either T.Text J.Value
 evalJson value = do
   let enc = BL.toStrict $ J.encode value
   ast <- first renderPretty $ P.parser enc
-  first renderPretty $ runEvalWith enc ast [] basicFunctions
+  first renderPretty $ runEvalWith enc ast [] basicFuncMap
 
 evalBS :: BS.ByteString -> Either T.Text J.Value
 evalBS input = do
   ast <- first renderPretty $ P.parser input
-  first renderPretty $ runEvalWith "" ast [] basicFunctions
+  first renderPretty $ runEvalWith "" ast [] basicFuncMap
 
 -- | Encode a JSON value as 'T.Text'.
 encodeText :: J.Value -> T.Text
@@ -219,7 +219,7 @@ evalGoldenSpec = describe "Golden" do
 evalSuccess :: J.Value -> FilePath -> IO J.Value
 evalSuccess source path = do
   (src, tmpl) <- parseTemplateSuccess path
-  either throwString pure $ either (Left . show) Right $ runEvalWith src tmpl [("$", source)] basicFunctions
+  either throwString pure $ either (Left . show) Right $ runEvalWith src tmpl [("$", source)] basicFuncMap
 
 --------------------------------------------------------------------------------
 -- Golden test construction functions.

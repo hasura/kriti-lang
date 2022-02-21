@@ -81,10 +81,9 @@ runEval src template source =
   let ctx = Compat.fromList source
    in runReader (runExceptT (evalWith Map.empty template)) (src, ctx)
 
-runEvalWith :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> [(T.Text, J.Value -> Either CustomFunctionError J.Value)] -> Either EvalError J.Value
-runEvalWith src template source functionLst =
+runEvalWith :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> Either EvalError J.Value
+runEvalWith src template source funcMap =
   let ctx = Compat.fromList source
-      funcMap = Map.fromList functionLst
    in runReader (runExceptT (evalWith funcMap template)) (src, ctx)
 
 typoOfJSON :: J.Value -> T.Text

@@ -13,6 +13,7 @@ where
 import qualified Data.Aeson as J
 import Data.Bifunctor (first)
 import qualified Data.ByteString as B
+import qualified Data.HashMap.Internal as Map
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Kriti.Error
@@ -39,11 +40,11 @@ runKriti templateSrc source = do
   template' <- first KritiParseError $ parser templateSrc'
   first KritiEvalError $ runEval templateSrc' template' source
 
-runKritiWith :: T.Text -> [(T.Text, J.Value)] -> [(T.Text, J.Value -> Either CustomFunctionError J.Value)] -> Either KritiError J.Value
-runKritiWith templateSrc source funcLst = do
+runKritiWith :: T.Text -> [(T.Text, J.Value)] -> Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> Either KritiError J.Value
+runKritiWith templateSrc source funcMap = do
   let templateSrc' = T.encodeUtf8 templateSrc
   template' <- first KritiParseError $ parser templateSrc'
-  first KritiEvalError $ runEvalWith templateSrc' template' source funcLst
+  first KritiEvalError $ runEvalWith templateSrc' template' source funcMap
 
 -- | Entry point for Kriti when given a template as
 -- 'ByteString'. Caller must ensure that the input is valid UTF8

@@ -1,6 +1,19 @@
-module Kriti.CustomFunctions (basicFunctions) where
+module Kriti.CustomFunctions
+  ( basicFuncMap,
+    emptyF,
+    lengthF,
+    inverseF,
+    headF,
+    tailF,
+    toCaseFoldF,
+    toLowerF,
+    toUpperF,
+    toTitleF,
+  )
+where
 
 import qualified Data.Aeson as J
+import qualified Data.HashMap.Internal as Map
 import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
@@ -9,18 +22,19 @@ import Kriti.Error (CustomFunctionError (..))
 type KritiFunc = J.Value -> Either CustomFunctionError J.Value
 
 -- | Basic custom function for Kriti.
-basicFunctions :: [(T.Text, KritiFunc)]
-basicFunctions =
-  [ ("empty", emptyF),
-    ("size", lengthF),
-    ("inverse", inverseF),
-    ("head", headF),
-    ("tail", tailF),
-    ("toCaseFold", toCaseFoldF),
-    ("toLower", toLowerF),
-    ("toUpper", toUpperF),
-    ("toTitle", toTitleF)
-  ]
+basicFuncMap :: Map.HashMap T.Text KritiFunc
+basicFuncMap =
+  Map.fromList
+    [ ("empty", emptyF),
+      ("size", lengthF),
+      ("inverse", inverseF),
+      ("head", headF),
+      ("tail", tailF),
+      ("toCaseFold", toCaseFoldF),
+      ("toLower", toLowerF),
+      ("toUpper", toUpperF),
+      ("toTitle", toTitleF)
+    ]
 
 emptyF :: KritiFunc
 emptyF inp = case inp of

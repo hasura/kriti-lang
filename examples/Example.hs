@@ -7,13 +7,13 @@ import qualified Data.Aeson as J
 import qualified Data.Aeson.Key as K
 import qualified Data.Aeson.KeyMap as K
 import Data.Bifunctor (first)
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.HashMap.Internal as Map
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import Kriti (renderPretty, runKritiWith)
 import Kriti.Error (CustomFunctionError (..))
-import Network.HTTP.Client
-import Network.HTTP.Client.TLS
 import Prettyprinter
 import Text.RawString.QQ
 
@@ -31,17 +31,12 @@ exampleTemplate =
     }
   }
 {{ end }}
-
 |]
 
 main :: IO ()
 main = do
-  manager <- newManager tlsManagerSettings
-  request <- parseRequest "https://randomuser.me/api/?results=10"
-  response <- httpLbs request manager
-  let parseResp = fromJust . J.decode $ responseBody response
-
-      getNameUnsafe :: J.Object -> Text
+  parseResp <- fromJust . J.decode <$> LBS.readFile "examples/source.json"
+  let getNameUnsafe :: J.Object -> Text
       getNameUnsafe obj = T.intercalate " " $ map (`lk` obj) ["title", "first", "last"]
         where
           lk t ob = case K.lookup (K.fromText t) ob of
@@ -63,10 +58,8 @@ main = do
         J.String txt -> Right . J.Bool $ txt == "admin"
         _ -> Left $ CustomFunctionError "expected usename to be a string"
 
-      functionList = [("concatName", mkName), ("getG", getGender), ("isAdmin", isAdmin)]
+      functionMap = Map.fromList [("concatName", mkName), ("getG", getGender), ("isAdmin", isAdmin)]
 
-  either
-    (print . pretty)
-    (print . J.encode)
-    $ first renderPretty $
-      runKritiWith exampleTemplate [("$", parseResp)] functionList
+  either (print . pretty) (print . J.encode) $
+    first renderPretty $
+      runKritiWith exampleTemplate [("$", parseResp)] functionMap
