@@ -7,6 +7,7 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.UTF8 as B
 import Data.Foldable (foldlM)
 import Data.Function
+import Data.HashMap.Internal as Map
 import Data.Maybe (maybeToList)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -22,6 +23,7 @@ data EvalError
   = InvalidPath B.ByteString Span (V.Vector Accessor)
   | TypeError B.ByteString Span T.Text
   | RangeError B.ByteString Span
+  | FunctionError B.ByteString Span T.Text
   deriving (Show)
 
 instance Pretty EvalError where
@@ -29,6 +31,7 @@ instance Pretty EvalError where
     InvalidPath src term _ -> mkPretty src "Invalid path lookup" term
     TypeError src term msg -> mkPretty src msg term
     RangeError src term -> mkPretty src "Index out of range" term
+    FunctionError src term msg -> mkPretty src msg term
     where
       mkPretty source msg term =
         let AlexSourcePos {line = startLine, col = startCol} = start $ locate term
@@ -37,9 +40,9 @@ instance Pretty EvalError where
          in vsep
               [ "Runtime Error:",
                 indent 2 $ pretty (msg :: T.Text),
-                indent (startLine + 1) "|",
-                pretty startLine <+> "|" <+> pretty (TE.decodeUtf8 sourceLine),
-                indent (startLine + 1) $ "|" <> indent (startCol) (pretty $ replicate (endCol - startCol) '^')
+                indent 4 "|",
+                indent 2 $ pretty startLine <+> "|" <+> pretty (TE.decodeUtf8 sourceLine),
+                indent 4 $ "|" <> indent (startCol) (pretty $ replicate (endCol - startCol) '^')
               ]
 
 instance SerializeError EvalError where
@@ -47,6 +50,7 @@ instance SerializeError EvalError where
   serialize (InvalidPath _ term path) = SerializedError {_code = InvalidPathCode, _message = "\"" <> renderVect path <> "\"", _span = locate term}
   serialize (TypeError _ term msg) = SerializedError {_code = TypeErrorCode, _message = msg, _span = locate term}
   serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
+  serialize (FunctionError _ term msg) = SerializedError {_code = FunctionErrorCode, _message = msg, _span = locate term}
 
 type Ctxt = (B.ByteString, Compat.Object J.Value)
 
@@ -54,6 +58,7 @@ getSourcePos :: EvalError -> Span
 getSourcePos (InvalidPath _ pos _) = locate pos
 getSourcePos (TypeError _ term _) = locate term
 getSourcePos (RangeError _ pos) = locate pos
+getSourcePos (FunctionError _ term _) = locate term
 
 evalPath :: Span -> J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath sp ctx path = do
@@ -74,7 +79,12 @@ isString _ = False
 runEval :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> Either EvalError J.Value
 runEval src template source =
   let ctx = Compat.fromList source
-   in runReader (runExceptT (eval template)) (src, ctx)
+   in runReader (runExceptT (evalWith Map.empty template)) (src, ctx)
+
+runEvalWith :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> Either EvalError J.Value
+runEvalWith src template source funcMap =
+  let ctx = Compat.fromList source
+   in runReader (runExceptT (evalWith funcMap template)) (src, ctx)
 
 typoOfJSON :: J.Value -> T.Text
 typoOfJSON J.Object {} = "Object"
@@ -84,8 +94,8 @@ typoOfJSON J.Number {} = "Number"
 typoOfJSON J.Bool {} = "Boolean"
 typoOfJSON J.Null = "Null"
 
-eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
-eval = \case
+evalWith :: Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
+evalWith funcMap = \case
   String _ str -> pure $ J.String str
   Number _ i -> pure $ J.Number i
   Boolean _ p -> pure $ J.Bool p
@@ -182,8 +192,18 @@ eval = \case
         let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
          in pure $ J.String escapedUri
       _ -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1' <> "' is not a string."
+  Function sp fName t1 -> do
+    src <- asks fst
+    v1 <- eval t1
+    case Map.lookup fName funcMap of
+      Nothing -> throwError $ FunctionError src sp $ "Function " <> fName <> " is not defined."
+      Just f -> case f v1 of
+        Left ee -> throwError $ FunctionError src (locate t1) $ unwrapError ee
+        Right va -> pure va
   Defaulting _ t1 t2 -> do
     v1 <- eval t1
     case v1 of
       J.Null -> eval t2
       json -> pure json
+  where
+    eval = evalWith funcMap

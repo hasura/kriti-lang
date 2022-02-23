@@ -27,6 +27,7 @@ import qualified Data.Vector as V
 import Data.Monoid
 import Kriti
 import qualified Kriti.Aeson.Compat as Compat
+import Kriti.CustomFunctions
 import Kriti.Error
 import Kriti.Eval
 import qualified Kriti.Parser as P
@@ -110,12 +111,12 @@ evalJson :: J.Value -> Either T.Text J.Value
 evalJson value = do
   let enc = BL.toStrict $ J.encode value
   ast <- first renderPretty $ P.parser enc
-  first renderPretty $ runEval enc ast []
+  first renderPretty $ runEvalWith enc ast [] basicFuncMap
 
 evalBS :: BS.ByteString -> Either T.Text J.Value
 evalBS input = do
   ast <- first renderPretty $ P.parser input
-  first renderPretty $ runEval "" ast []
+  first renderPretty $ runEvalWith "" ast [] basicFuncMap
 
 -- | Encode a JSON value as 'T.Text'.
 encodeText :: J.Value -> T.Text
@@ -218,7 +219,7 @@ evalGoldenSpec = describe "Golden" do
 evalSuccess :: J.Value -> FilePath -> IO J.Value
 evalSuccess source path = do
   (src, tmpl) <- parseTemplateSuccess path
-  either throwString pure $ either (Left . show) Right $ runEval src tmpl [("$", source)]
+  either throwString pure $ either (Left . show) Right $ runEvalWith src tmpl [("$", source)] basicFuncMap
 
 --------------------------------------------------------------------------------
 -- Golden test construction functions.

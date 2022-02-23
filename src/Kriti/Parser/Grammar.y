@@ -72,9 +72,9 @@ ident       { TokIdentifier $$ }
 ')'         { TokSymbol (Loc $$ SymParenClose) }
 
 %right 'in' 
-%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
+%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' ident 
 %left '??' 
-%left 'not' 'escapeUri'
+%left 'not' 'escapeUri' 
 
 %%
 
@@ -144,6 +144,7 @@ function :: { ValueExt }
 function
   : 'escapeUri' kritiValue { buildFunc EscapeURI (locate $1) $2 }
   | 'not' kritiValue { buildFunc Not (locate $1) $2 }
+  | ident kritiValue { Function (locate $1) (unLoc $1) $2 }
 
 range :: { ValueExt }
 range

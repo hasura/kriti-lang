@@ -12,7 +12,10 @@ data ErrorCode
   | RangeErrorCode
   | ParseErrorCode
   | LexErrorCode
+  | FunctionErrorCode
   deriving (Show)
+
+newtype CustomFunctionError = CustomFunctionError {unwrapError :: T.Text}
 
 instance Pretty ErrorCode where
   pretty = \case
@@ -21,6 +24,7 @@ instance Pretty ErrorCode where
     RangeErrorCode -> "Out of Range Error"
     ParseErrorCode -> "Parse Error"
     LexErrorCode -> "Lex Error"
+    FunctionErrorCode -> "Function Error"
 
 data SerializedError = SerializedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
   deriving (Show)

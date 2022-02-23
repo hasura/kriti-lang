@@ -3,3 +3,4 @@
 /dist-newstyle/
 /.envrc
 cabal.project.local
+.vscode/
