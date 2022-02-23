@@ -2,6 +2,9 @@
 
 ## Upcoming
 
+## 0.3.1 -- 2022-02-23
+  - adds support for custom functions.
+
 ## 0.3.0 -- 2022-02-07
 
   - adds defaulting operator `??`

@@ -73,7 +73,7 @@ String Interpolation is currently limited to path lookups:
 ```
 
 ### Library
-The library exposes the function `runKriti`, the type definition of the function is:
+The library exposes two function `runKriti` and `runKritiWith`, the type definitions of the function are:
 ``` haskell
 runKriti :: Text -> [(Text, Value)] -> Either KritiErr Value
 ```
@@ -87,6 +87,11 @@ myTemplate =
     \   'hp': {{$.base.HP}}\
     \}"
 ```
+
+``` haskell
+runKritiWith :: T.Text -> [(T.Text, J.Value)] -> Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> Either KritiError J.Value
+```
+`runKritiWith` has an additional argument, which takes a hashmap from name of the custon function to it's haskell definition
 
 #### Library Usage Sample Program
 To run the example, first clone this repository using the following command:
