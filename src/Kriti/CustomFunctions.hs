@@ -12,7 +12,8 @@ module Kriti.CustomFunctions
     toTitleF,
     objectToArray,
     arrayToObject,
-    parserToFunc
+    parserToFunc,
+    concatArrays
   )
 where
 
@@ -43,7 +44,8 @@ basicFuncMap =
       ("toTitle", toTitleF),
       ("arrayToObject", arrayToObject),
       ("objectToArray", objectToArray),
-      ("removeNulls", removeNulls)
+      ("removeNulls", removeNulls),
+      ("concatArrays", concatArrays)
     ]
 
 emptyF :: KritiFunc
@@ -111,30 +113,23 @@ toTitleF inp = case inp of
 
 -- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
 objectToArray :: KritiFunc
-objectToArray = \case
-  J.Object o ->
-    let km :: KM.KeyMap J.Value = o
-        l :: [(J.Key, J.Value)] = KM.toList km
-      in Right . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.String $ K.toText a,b]) l
-  _ -> Left . CustomFunctionError $ "Expected object"
+objectToArray = parserToFunc $ J.withObject "Object" \o -> do
+  let km :: KM.KeyMap J.Value = o
+      l :: [(J.Key, J.Value)] = KM.toList km
+    in pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.String $ K.toText a,b]) l
 
 -- | Convert an Array like `[ [a,b], [c,d] ... ]` to an Object like `{ a:b, c:d ... }`.
 arrayToObject :: KritiFunc
-arrayToObject = \case
-  J.Array vec -> J.Object . KM.fromList . V.toList <$> traverse mkPair vec
-  _ -> Left . CustomFunctionError $ "Expected an array of shape [ [a,b], [c,d] ... ]"
+arrayToObject = parserToFunc $ J.withArray "Nested Arrays" \vec -> do
+  J.Object . KM.fromList . V.toList <$> traverse mkPair vec
 
   where
-  shapeErr = Left . CustomFunctionError $ "Expected an array of shape [ [k1,v1], [k2,v2] ... ] - With String keys."
+  shapeErr = "Expected an array of shape [ [k1,v1], [k2,v2] ... ] - With String keys."
 
-  mkPair :: J.Value -> Either CustomFunctionError (K.Key, J.Value)
-  mkPair = \case
-    J.Array vec -> case V.toList vec of
-      [k,v] -> case k of
-        J.String t -> Right (K.fromText t, v)
-        _ -> shapeErr
-      _ -> shapeErr
-    _ -> shapeErr
+  mkPair = J.withArray "Array of Pair" \vec -> do
+    case V.toList vec of
+      [k,v] -> flip (J.withText "String") k \t -> pure (K.fromText t, v)
+      _ -> fail shapeErr
 
 removeNulls :: KritiFunc
 removeNulls = parserToFunc $ J.withArray "Array" \a -> do
@@ -142,6 +137,11 @@ removeNulls = parserToFunc $ J.withArray "Array" \a -> do
   where
   notNull J.Null = False
   notNull _ = True
+
+concatArrays :: KritiFunc
+concatArrays = parserToFunc $ J.withArray "Array" \as -> do
+  as' <- traverse (J.withArray "Nested Array" pure) (V.toList as)
+  pure $ J.Array $ V.concat as'
 
 -- | Converts an Aeson Parser into a KritiFunc
 --   The value-to-parser argument's type matches the `parseJson` type from FromJSON

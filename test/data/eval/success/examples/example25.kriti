@@ -1,0 +1,8 @@
+{
+    "arrays":
+        {{ concatArrays
+            {{ range i, x := $ }}
+                [ {{ i }}, {{ i }} ]
+            {{ end }}
+        }}
+}
