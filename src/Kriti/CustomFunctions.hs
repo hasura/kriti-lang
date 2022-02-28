@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Kriti.CustomFunctions
   ( basicFuncMap,
     emptyF,
@@ -9,10 +10,15 @@ module Kriti.CustomFunctions
     toLowerF,
     toUpperF,
     toTitleF,
-  )
+    objToArray,
+    arrayToObj
+  ,parserToFunc)
 where
 
 import qualified Data.Aeson as J
+import qualified Data.Aeson.Types as J
+import qualified Data.Aeson.Key as K
+import qualified Data.Aeson.KeyMap as KM
 import qualified Data.HashMap.Internal as Map
 import qualified Data.Scientific as S
 import qualified Data.Text as T
@@ -98,3 +104,36 @@ toTitleF :: KritiFunc
 toTitleF inp = case inp of
   J.String txt -> Right . J.String $ T.toTitle txt
   _ -> Left . CustomFunctionError $ "Expected string"
+
+-- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
+objToArray :: KritiFunc
+objToArray = \case
+  J.Object o ->
+    let km :: KM.KeyMap J.Value = o
+        l :: [(J.Key, J.Value)] = KM.toList km
+      in Right . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.String $ K.toText a,b]) l
+  _ -> Left . CustomFunctionError $ "Expected object"
+
+-- | Convert an Array like `[ [a,b], [c,d] ... ]` to an Object like `{ a:b, c:d ... }`.
+arrayToObj :: KritiFunc
+arrayToObj = \case
+  J.Array vec -> J.Object . KM.fromList . V.toList <$> traverse mkPair vec
+  _ -> Left . CustomFunctionError $ "Expected an array of shape [ [a,b], [c,d] ... ]"
+
+  where
+  shapeErr = Left . CustomFunctionError $ "Expected an array of shape [ [k1,v1], [k2,v2] ... ] - With String keys."
+
+  mkPair :: J.Value -> Either CustomFunctionError (K.Key, J.Value)
+  mkPair = \case
+    J.Array vec -> case V.toList vec of
+      [k,v] -> case k of
+        J.String t -> Right (K.fromText t, v)
+        _ -> shapeErr
+      _ -> shapeErr
+    _ -> shapeErr
+
+-- | Converts an Aeson Parser into a KritiFunc
+parserToFunc :: (J.Value -> J.Parser J.Value) -> KritiFunc
+parserToFunc p v = case J.parse p v of
+  J.Error e -> Left (CustomFunctionError (T.pack e))
+  J.Success r -> Right r
