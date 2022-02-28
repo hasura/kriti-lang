@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+
 module Kriti.CustomFunctions
   ( basicFuncMap,
     emptyF,
@@ -13,14 +14,14 @@ module Kriti.CustomFunctions
     objectToArray,
     arrayToObject,
     parserToFunc,
-    concatArrays
+    concatArrays,
   )
 where
 
 import qualified Data.Aeson as J
-import qualified Data.Aeson.Types as J
 import qualified Data.Aeson.Key as K
 import qualified Data.Aeson.KeyMap as KM
+import qualified Data.Aeson.Types as J
 import qualified Data.HashMap.Internal as Map
 import qualified Data.Scientific as S
 import qualified Data.Text as T
@@ -108,27 +109,26 @@ objectToArray :: KritiFunc
 objectToArray = parserToFunc $ J.withObject "Object" \o -> do
   let km :: KM.KeyMap J.Value = o
       l :: [(J.Key, J.Value)] = KM.toList km
-    in pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.String $ K.toText a,b]) l
+   in pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.String $ K.toText a, b]) l
 
 -- | Convert an Array like `[ [a,b], [c,d] ... ]` to an Object like `{ a:b, c:d ... }`.
 arrayToObject :: KritiFunc
 arrayToObject = parserToFunc $ J.withArray "Nested Arrays" \vec -> do
   J.Object . KM.fromList . V.toList <$> traverse mkPair vec
-
   where
-  shapeErr = "Expected an array of shape [ [k1,v1], [k2,v2] ... ] - With String keys."
+    shapeErr = "Expected an array of shape [ [k1,v1], [k2,v2] ... ] - With String keys."
 
-  mkPair = J.withArray "Array of Pair" \vec -> do
-    case V.toList vec of
-      [k,v] -> flip (J.withText "String") k \t -> pure (K.fromText t, v)
-      _ -> fail shapeErr
+    mkPair = J.withArray "Array of Pair" \vec -> do
+      case V.toList vec of
+        [k, v] -> flip (J.withText "String") k \t -> pure (K.fromText t, v)
+        _ -> fail shapeErr
 
 removeNulls :: KritiFunc
 removeNulls = parserToFunc $ J.withArray "Array" \a -> do
   pure $ J.Array $ V.filter notNull a
   where
-  notNull J.Null = False
-  notNull _ = True
+    notNull J.Null = False
+    notNull _ = True
 
 concatArrays :: KritiFunc
 concatArrays = parserToFunc $ J.withArray "Array" \as -> do
