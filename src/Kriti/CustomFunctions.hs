@@ -11,8 +11,9 @@ module Kriti.CustomFunctions
     toUpperF,
     toTitleF,
     objToArray,
-    arrayToObj
-  ,parserToFunc,buildURL)
+    arrayToObj,
+    parserToFunc
+  )
 where
 
 import qualified Data.Aeson as J
