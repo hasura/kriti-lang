@@ -10,8 +10,8 @@ module Kriti.CustomFunctions
     toLowerF,
     toUpperF,
     toTitleF,
-    objToArray,
-    arrayToObj,
+    objectToArray,
+    arrayToObject,
     parserToFunc
   )
 where
@@ -40,7 +40,10 @@ basicFuncMap =
       ("toCaseFold", toCaseFoldF),
       ("toLower", toLowerF),
       ("toUpper", toUpperF),
-      ("toTitle", toTitleF)
+      ("toTitle", toTitleF),
+      ("arrayToObject", arrayToObject),
+      ("objectToArray", objectToArray),
+      ("removeNulls", removeNulls)
     ]
 
 emptyF :: KritiFunc
@@ -107,8 +110,8 @@ toTitleF inp = case inp of
   _ -> Left . CustomFunctionError $ "Expected string"
 
 -- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
-objToArray :: KritiFunc
-objToArray = \case
+objectToArray :: KritiFunc
+objectToArray = \case
   J.Object o ->
     let km :: KM.KeyMap J.Value = o
         l :: [(J.Key, J.Value)] = KM.toList km
@@ -116,8 +119,8 @@ objToArray = \case
   _ -> Left . CustomFunctionError $ "Expected object"
 
 -- | Convert an Array like `[ [a,b], [c,d] ... ]` to an Object like `{ a:b, c:d ... }`.
-arrayToObj :: KritiFunc
-arrayToObj = \case
+arrayToObject :: KritiFunc
+arrayToObject = \case
   J.Array vec -> J.Object . KM.fromList . V.toList <$> traverse mkPair vec
   _ -> Left . CustomFunctionError $ "Expected an array of shape [ [a,b], [c,d] ... ]"
 
@@ -132,6 +135,13 @@ arrayToObj = \case
         _ -> shapeErr
       _ -> shapeErr
     _ -> shapeErr
+
+removeNulls :: KritiFunc
+removeNulls = parserToFunc $ J.withArray "Array" \a -> do
+  pure $ J.Array $ V.filter notNull a
+  where
+  notNull J.Null = False
+  notNull _ = True
 
 -- | Converts an Aeson Parser into a KritiFunc
 --   The value-to-parser argument's type matches the `parseJson` type from FromJSON
