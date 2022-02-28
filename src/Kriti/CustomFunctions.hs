@@ -12,7 +12,7 @@ module Kriti.CustomFunctions
     toTitleF,
     objToArray,
     arrayToObj
-  ,parserToFunc)
+  ,parserToFunc,buildURL)
 where
 
 import qualified Data.Aeson as J
@@ -133,6 +133,8 @@ arrayToObj = \case
     _ -> shapeErr
 
 -- | Converts an Aeson Parser into a KritiFunc
+--   The value-to-parser argument's type matches the `parseJson` type from FromJSON
+--   allowing Aeson's instances to be reused as KritiFuncs if they return values.
 parserToFunc :: (J.Value -> J.Parser J.Value) -> KritiFunc
 parserToFunc p v = case J.parse p v of
   J.Error e -> Left (CustomFunctionError (T.pack e))
