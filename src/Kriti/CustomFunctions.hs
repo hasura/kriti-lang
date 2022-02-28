@@ -92,24 +92,16 @@ tailF inp = case inp of
   _ -> Left . CustomFunctionError $ "Expected an array or string"
 
 toCaseFoldF :: KritiFunc
-toCaseFoldF inp = case inp of
-  J.String txt -> Right . J.String $ T.toCaseFold txt
-  _ -> Left . CustomFunctionError $ "Expected string"
+toCaseFoldF = parserToFunc $ J.withText "String" $ pure . J.String . T.toCaseFold
 
 toLowerF :: KritiFunc
-toLowerF inp = case inp of
-  J.String txt -> Right . J.String $ T.toLower txt
-  _ -> Left . CustomFunctionError $ "Expected string"
+toLowerF = parserToFunc $ J.withText "String" $ pure . J.String . T.toLower
 
 toUpperF :: KritiFunc
-toUpperF inp = case inp of
-  J.String txt -> Right . J.String $ T.toUpper txt
-  _ -> Left . CustomFunctionError $ "Expected string"
+toUpperF = parserToFunc $ J.withText "String" $ pure . J.String . T.toUpper
 
 toTitleF :: KritiFunc
-toTitleF inp = case inp of
-  J.String txt -> Right . J.String $ T.toTitle txt
-  _ -> Left . CustomFunctionError $ "Expected string"
+toTitleF = parserToFunc $ J.withText "String" $ pure . J.String . T.toTitle
 
 -- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
 objectToArray :: KritiFunc
