@@ -1,7 +1,7 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
-  - Adds new functions: objectToArray, arrayToObject, removeNulls, concatArrays, parserToFunc
+  - Adds new functions: `objectToArray`, `arrayToObject`, `removeNulls`, `concatArrays`, `parserToFunc`
 
 ## 0.3.1 -- 2022-02-23
   - adds support for custom functions.
