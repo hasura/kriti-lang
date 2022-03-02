@@ -18,7 +18,6 @@ module Kriti.CustomFunctions
   )
 where
 
-import Control.Lens (itoList)
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Types as J
 import qualified Data.HashMap.Internal as Map
@@ -26,6 +25,7 @@ import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Kriti.Error (CustomFunctionError (..))
+import Control.Lens (itoList)
 
 type KritiFunc = J.Value -> Either CustomFunctionError J.Value
 
@@ -106,8 +106,7 @@ toTitleF = parserToFunc $ J.withText "String" $ pure . J.String . T.toTitle
 -- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
 objectToArray :: KritiFunc
 objectToArray = parserToFunc $ J.withObject "Object" \o -> do
-  let l :: [(J.Key, J.Value)] = itoList o
-   in pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.toJSON a, b]) l
+  pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.toJSON a, b]) $ itoList o
 
 -- | Convert an Array like `[ [a,b], [c,d] ... ]` to an Object like `{ a:b, c:d ... }`.
 arrayToObject :: KritiFunc
