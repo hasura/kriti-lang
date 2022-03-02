@@ -18,6 +18,7 @@ module Kriti.CustomFunctions
   )
 where
 
+import Control.Lens (itoList)
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Types as J
 import qualified Data.HashMap.Internal as Map
@@ -25,7 +26,6 @@ import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Kriti.Error (CustomFunctionError (..))
-import Control.Lens (itoList)
 
 type KritiFunc = J.Value -> Either CustomFunctionError J.Value
 
