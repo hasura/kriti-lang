@@ -1,0 +1,8 @@
+{
+    "array":
+        {{ objectToArray
+            { "a" : "b",
+              "c" : "d"
+            }
+        }}
+}

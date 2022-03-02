@@ -19,14 +19,13 @@ module Kriti.CustomFunctions
 where
 
 import qualified Data.Aeson as J
-import qualified Data.Aeson.Key as K
-import qualified Data.Aeson.KeyMap as KM
 import qualified Data.Aeson.Types as J
 import qualified Data.HashMap.Internal as Map
 import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Kriti.Error (CustomFunctionError (..))
+import Control.Lens (itoList)
 
 type KritiFunc = J.Value -> Either CustomFunctionError J.Value
 
@@ -107,20 +106,19 @@ toTitleF = parserToFunc $ J.withText "String" $ pure . J.String . T.toTitle
 -- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
 objectToArray :: KritiFunc
 objectToArray = parserToFunc $ J.withObject "Object" \o -> do
-  let km :: KM.KeyMap J.Value = o
-      l :: [(J.Key, J.Value)] = KM.toList km
-   in pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.String $ K.toText a, b]) l
+  let l :: [(J.Key, J.Value)] = itoList o
+   in pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.toJSON a, b]) l
 
 -- | Convert an Array like `[ [a,b], [c,d] ... ]` to an Object like `{ a:b, c:d ... }`.
 arrayToObject :: KritiFunc
 arrayToObject = parserToFunc $ J.withArray "Nested Arrays" \vec -> do
-  J.Object . KM.fromList . V.toList <$> traverse mkPair vec
+  J.object . V.toList <$> traverse mkPair vec
   where
     shapeErr = "Expected an array of shape [ [k1,v1], [k2,v2] ... ] - With String keys."
 
     mkPair = J.withArray "Array of Pair" \vec -> do
       case V.toList vec of
-        [k, v] -> flip (J.withText "String") k \t -> pure (K.fromText t, v)
+        [k, v] -> (,v) <$> J.parseJSON k -- Uses the Key FromJSON instance to create a Key
         _ -> fail shapeErr
 
 removeNulls :: KritiFunc
