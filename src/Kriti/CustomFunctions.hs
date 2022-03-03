@@ -11,10 +11,10 @@ module Kriti.CustomFunctions
     toLowerF,
     toUpperF,
     toTitleF,
-    toPairs,
-    fromPairs,
+    toPairsF,
+    fromPairsF,
     parserToFunc,
-    concat,
+    concatF,
   )
 where
 
@@ -43,10 +43,10 @@ basicFuncMap =
       ("toLower", toLowerF),
       ("toUpper", toUpperF),
       ("toTitle", toTitleF),
-      ("fromPairs", fromPairs),
-      ("toPairs", toPairs),
-      ("removeNulls", removeNulls),
-      ("concat", concatArray)
+      ("fromPairs", fromPairsF),
+      ("toPairs", toPairsF),
+      ("removeNulls", removeNullsF),
+      ("concat", concatF)
     ]
 
 emptyF :: KritiFunc
@@ -105,13 +105,13 @@ toTitleF :: KritiFunc
 toTitleF = parserToFunc $ J.withText "String" $ pure . J.String . T.toTitle
 
 -- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
-toPairs :: KritiFunc
-toPairs = parserToFunc $ J.withObject "Object" \o -> do
+toPairsF :: KritiFunc
+toPairsF = parserToFunc $ J.withObject "Object" \o -> do
   pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.toJSON a, b]) $ itoList o
 
 -- | Convert an Array like `[ [a,b], [c,d] ... ]` to an Object like `{ a:b, c:d ... }`.
-fromPairs :: KritiFunc
-fromPairs = parserToFunc $ J.withArray "Nested Arrays" \vec -> do
+fromPairsF :: KritiFunc
+fromPairsF = parserToFunc $ J.withArray "Nested Arrays" \vec -> do
   J.object . V.toList <$> traverse mkPair vec
   where
     shapeErr = "Expected an array of shape [ [k1,v1], [k2,v2] ... ] - With String keys."
@@ -121,8 +121,8 @@ fromPairs = parserToFunc $ J.withArray "Nested Arrays" \vec -> do
         [k, v] -> (,v) <$> J.parseJSON k -- Uses the Key FromJSON instance to create a Key
         _ -> fail shapeErr
 
-removeNulls :: KritiFunc
-removeNulls = parserToFunc $ J.withArray "Array" \a -> do
+removeNullsF :: KritiFunc
+removeNullsF = parserToFunc $ J.withArray "Array" \a -> do
   pure $ J.Array $ V.filter notNull a
   where
     notNull J.Null = False
@@ -134,8 +134,8 @@ removeNulls = parserToFunc $ J.withArray "Array" \a -> do
 --
 -- `[[1,2],[3,4]]` -> `[1,2,3,4]`
 -- `["hello", " ", "world"]` -> `["hello world"]`
-concatArray :: KritiFunc
-concatArray = parserToFunc $ J.withArray "Array" \as -> do
+concatF :: KritiFunc
+concatF = parserToFunc $ J.withArray "Array" \as -> do
   let l = V.toList as
       a = J.Array . V.concat <$> traverse (J.withArray "Nested Array" pure) l
       s = J.String . T.concat <$> traverse (J.withText "Nested String" pure) l
