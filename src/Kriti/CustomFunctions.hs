@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Kriti.CustomFunctions
   ( basicFuncMap,
     emptyF,
@@ -9,10 +11,17 @@ module Kriti.CustomFunctions
     toLowerF,
     toUpperF,
     toTitleF,
+    toPairsF,
+    fromPairsF,
+    parserToFunc,
+    concatF,
   )
 where
 
+import Control.Applicative ((<|>))
+import Control.Lens (itoList)
 import qualified Data.Aeson as J
+import qualified Data.Aeson.Types as J
 import qualified Data.HashMap.Internal as Map
 import qualified Data.Scientific as S
 import qualified Data.Text as T
@@ -33,7 +42,11 @@ basicFuncMap =
       ("toCaseFold", toCaseFoldF),
       ("toLower", toLowerF),
       ("toUpper", toUpperF),
-      ("toTitle", toTitleF)
+      ("toTitle", toTitleF),
+      ("fromPairs", fromPairsF),
+      ("toPairs", toPairsF),
+      ("removeNulls", removeNullsF),
+      ("concat", concatF)
     ]
 
 emptyF :: KritiFunc
@@ -80,21 +93,58 @@ tailF inp = case inp of
   _ -> Left . CustomFunctionError $ "Expected an array or string"
 
 toCaseFoldF :: KritiFunc
-toCaseFoldF inp = case inp of
-  J.String txt -> Right . J.String $ T.toCaseFold txt
-  _ -> Left . CustomFunctionError $ "Expected string"
+toCaseFoldF = parserToFunc $ J.withText "String" $ pure . J.String . T.toCaseFold
 
 toLowerF :: KritiFunc
-toLowerF inp = case inp of
-  J.String txt -> Right . J.String $ T.toLower txt
-  _ -> Left . CustomFunctionError $ "Expected string"
+toLowerF = parserToFunc $ J.withText "String" $ pure . J.String . T.toLower
 
 toUpperF :: KritiFunc
-toUpperF inp = case inp of
-  J.String txt -> Right . J.String $ T.toUpper txt
-  _ -> Left . CustomFunctionError $ "Expected string"
+toUpperF = parserToFunc $ J.withText "String" $ pure . J.String . T.toUpper
 
 toTitleF :: KritiFunc
-toTitleF inp = case inp of
-  J.String txt -> Right . J.String $ T.toTitle txt
-  _ -> Left . CustomFunctionError $ "Expected string"
+toTitleF = parserToFunc $ J.withText "String" $ pure . J.String . T.toTitle
+
+-- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
+toPairsF :: KritiFunc
+toPairsF = parserToFunc $ J.withObject "Object" \o -> do
+  pure . J.Array $ V.fromList $ map (\(a, b) -> J.Array $ V.fromList [J.toJSON a, b]) $ itoList o
+
+-- | Convert an Array like `[ [a,b], [c,d] ... ]` to an Object like `{ a:b, c:d ... }`.
+fromPairsF :: KritiFunc
+fromPairsF = parserToFunc $ J.withArray "Nested Arrays" \vec -> do
+  J.object . V.toList <$> traverse mkPair vec
+  where
+    shapeErr = "Expected an array of shape [ [k1,v1], [k2,v2] ... ] - With String keys."
+
+    mkPair = J.withArray "Array of Pair" \vec -> do
+      case V.toList vec of
+        [k, v] -> (,v) <$> J.parseJSON k -- Uses the Key FromJSON instance to create a Key
+        _ -> fail shapeErr
+
+removeNullsF :: KritiFunc
+removeNullsF = parserToFunc $ J.withArray "Array" \a -> do
+  pure $ J.Array $ V.filter notNull a
+  where
+    notNull J.Null = False
+    notNull _ = True
+
+-- | Concat nested arrays or strings.
+--
+-- For Example:
+--
+-- `[[1,2],[3,4]]` -> `[1,2,3,4]`
+-- `["hello", " ", "world"]` -> `["hello world"]`
+concatF :: KritiFunc
+concatF = parserToFunc $ J.withArray "Array" \as -> do
+  let l = V.toList as
+      a = J.Array . V.concat <$> traverse (J.withArray "Nested Array" pure) l
+      s = J.String . T.concat <$> traverse (J.withText "Nested String" pure) l
+  a <|> s
+
+-- | Converts an Aeson Parser into a KritiFunc
+--   The value-to-parser argument's type matches the `parseJson` type from FromJSON
+--   allowing Aeson's instances to be reused as KritiFuncs if they return values.
+parserToFunc :: (J.Value -> J.Parser J.Value) -> KritiFunc
+parserToFunc p v = case J.parse p v of
+  J.Error e -> Left (CustomFunctionError (T.pack e))
+  J.Success r -> Right r
