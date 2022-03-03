@@ -3,7 +3,7 @@
     {{ removeNulls
         {{ range i, x := $ }}
             {{ if i > 2 }}
-                {{ arrayToObject [
+                {{ fromPairs [
                         ["agent_id", {{ toLower x.guid }}],
                         ["friends", {{ size x.friends }}],
                         ["gender", {{toUpper (head x.gender)}}],
