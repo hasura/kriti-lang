@@ -4,7 +4,7 @@
 
 A minimal json templating language inspired by Go's template language.
 
-Kriti templates are a superset of JSON with path lookups, if/the/else expressions, loops, and some basic predicate and conditional operators.
+Kriti templates are a superset of JSON with path lookups, if/then/else expressions, loops, and some basic predicate and conditional operators.
 
 Kriti expressions are wrapped in double curly brackets such as `"http://wwww.google.com/{{$body.path}}"`. The `Kriti` evaluator takes `Kriti` template and a set of source json expressions paired with binders then uses them to construct a new json expression.
 
