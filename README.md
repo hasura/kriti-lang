@@ -4,7 +4,7 @@
 
 A minimal json templating language inspired by Go's template language.
 
-Kriti templates are a superset if JSON with path lookups, if/the/else expressions, loops, and some basic predicate and conditional operators.
+Kriti templates are a superset of JSON with path lookups, if/the/else expressions, loops, and some basic predicate and conditional operators.
 
 Kriti expressions are wrapped in double curly brackets such as `"http://wwww.google.com/{{$body.path}}"`. The `Kriti` evaluator takes `Kriti` template and a set of source json expressions paired with binders then uses them to construct a new json expression.
 
@@ -109,7 +109,7 @@ The second argument is a `list` of `tuple` of `(Text, Value)`. The first element
 The function `runKriti` will return `Either KritiErr Value`. If the parser is successful, then it will return `Right Value`, else it will return `Left KritiErr` which can be used for debugging.
 
 ### CLI Tool
-The executable is a CLI tool which applices a transformation to a single json file:
+The executable is a CLI tool which applies a transformation to a single json file:
 ``` bash
 ➜ cabal run kriti -- --json test/data/eval/success/source.json --template test/data/eval/success/examples/example1.kriti
 {"guid":"43a922da-9665-4099-8dfc-f9af369695a4"}
