@@ -1,6 +1,5 @@
-/nix/
-/shell.nix
 /dist-newstyle/
-/.envrc
 cabal.project.local
 .vscode/
+/result
+/.envrc.local
