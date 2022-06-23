@@ -72,7 +72,11 @@ ident       { TokIdentifier $$ }
 ')'         { TokSymbol (Loc $$ SymParenClose) }
 
 %right 'in' 
-%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' ident 
+%right LOW
+%right ']'
+
+%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' ident
+
 %left '??' 
 %left 'not' 'escapeUri' 
 
@@ -197,7 +201,7 @@ template
 num_lit :: { ValueExt }
 num_lit
   : number { Number (locate $1) (unLoc $1)  }
-  | int { Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0) }
+  | int %prec LOW { Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0) }
 
 boolean :: { ValueExt }
 boolean

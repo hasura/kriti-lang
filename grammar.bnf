@@ -1,42 +1,132 @@
-; NOTE: This file is a simplification of Grammar.y for documentation
-; purposes.
-<EXPR> ::= <JSON> | <KRITI> ; 
+%right 'in'
+%right LOW
+%right ']'
+%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' ident
+%left '??'
+%left 'not' 'escapeUri'
 
-<JSON>    ::= <object> | <array> | <boolean> | <string> | <number> | <null> ;
-<array>   ::= "[" [<EXPR>] {"," <EXPR>}* "]" ;
-<object>  ::= "{" [<field>] {"," <field>}* "}" ;
-<field>   ::= <string> ":" <EXPR> ;
-<string>  ::= "\"" {<any_unicode_char>}* "\"" ;
-<boolean> ::= "true" | "false" ;
-<number>  ::= -?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)? ;
-<null>    ::= "null" ;
+expr
+  : json
+  | kriti
 
-<KRITI>  ::= "{{" <path> "}}" | "{{" <operator> "}}" | "{{"<function> "}}" | "(" <KRITI> ")" | <range> | <iff> ;
+kriti
+  : '{{' path '}}'
+  | '{{' operator '}}'
+  | '{{' function '}}'
+  | '(' kriti ')'
+  | range
+  | iff
 
-<kritiValue>  ::= <path> | <operator> | <function> | <range> | <iff> | <JSON> | "(" <kritiValue> ")";
+kritiValue
+  : path
+  | operator
+  | function
+  | range
+  | iff
+  | json
+  | '(' kritiValue ')'
 
-<identifier> ::= [a-zA-Z][a-zA-Z0-9]* ;
-<path> ::= identifier { <path_element> }* ;
-<digit>   ::= [0-9] ;
-<path_element> ::=
-    "." <identifier>
- | "?." <identifier>
-  | "[" <digit> "]"
-  | "?[" <digit> "]"
-  | "[" "'" <identifier> "'" "]"
-  | "?[" "'" <identifier> "'" "]"
-<operator> ::=
-    <kritiValue> ">"  <kritiValue>
-  | <kritiValue> ">=" <kritiValue>
-  | <kritiValue> "<"  <kritiValue>
-  | <kritiValue> "<=" <kritiValue>
-  | <kritiValue> "==" <kritiValue>
-  | <kritiValue> "!=" <kritiValue>
-  | <kritiValue> "&&" <kritiValue>
-  | <kritiValue> "||" <kritiValue>
-  | <kritiValue> "??" <kritiValue>
-  | <kritiValue> "in" <kritiValue> ;
-<function> ::= identifier { <kritiValue> }* ;
+path
+  : path_vector
 
-<range> ::= "{{" range [identifier ","] <identifier> ":=" <path> "}}" <EXPR> "{{ end }}" ;
-<iff> ::= "{{ if <EXPR> }} <EXPR> "{{ else }}" <EXPR> "{{ end }}" ;
+path_vector
+  : ident path_tail
+  | ident
+
+path_tail
+  : path_element
+  | path_tail path_element
+
+path_element
+  : '.' ident
+  | '?' '.' ident
+  | '[' '\'' string '\'' ']'
+  | '?' '[' '\'' string '\'' ']'
+  | '[' int ']'
+  | '?' '[' int ']'
+
+operator
+  : kritiValue '>' kritiValue
+  | kritiValue '<' kritiValue
+  | kritiValue '>=' kritiValue
+  | kritiValue '<=' kritiValue
+  | kritiValue '!=' kritiValue
+  | kritiValue '==' kritiValue
+  | kritiValue '&&' kritiValue
+  | kritiValue '||' kritiValue
+  | kritiValue 'in' kritiValue
+  | kritiValue '??' kritiValue
+
+function
+  : 'escapeUri' kritiValue
+  | 'not' kritiValue
+  | ident kritiValue
+
+range
+  : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}'
+
+mident
+  : '_'
+  | ident
+
+iff
+  : '{{' 'if' kritiValue '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}'
+
+json
+  : string_lit
+  | num_lit
+  | boolean
+  | null
+  | array
+  | object
+
+string_lit
+  : 's"' string_template '"e'
+  | 's"' '"e'
+
+string_template
+  : string_template '{{' template '}}'
+  | string_template string
+  | '{{' template '}}'
+  | string
+
+template
+  : path
+  | function
+  | boolean
+  | num_lit
+
+num_lit
+  : number
+  | int %prec LOW
+
+boolean
+  : 'true'
+  | 'false'
+
+null
+  : 'null'
+
+array
+  : '[' list_elements ']'
+  | '[' ']'
+
+list_elements
+  : expr
+  | list_elements ',' expr
+
+object
+  : '{' object_fields '}'
+  | '{' '}'
+
+object_fields
+  : object_field
+  | object_fields ',' object_field
+
+object_field
+  : 's"' object_key '"e' ':' expr
+  | 's"' '"e' ':' expr
+
+object_key
+  : object_key string
+  | string
