@@ -31,6 +31,7 @@ This example will return a `null` if `foo` is not bound in `$body`. Optional loo
 {{ $body?.foo.bar.baz }}
 ```
 
+* `foo?` is used to optionally look up a variable.
 * `?.` is used to optionally look up object fields
 * `?[x]` is used to optionally lookup array indices
 * `?['a b c']` is used to optionally lookup string literal object fields

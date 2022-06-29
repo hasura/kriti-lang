@@ -116,6 +116,7 @@ path_vector :: { (Span, V.Vector Accessor) }
 path_vector
   : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) NotOptional (unLoc $1) Head) (snd $2))  }
   | ident { (locate $1, V.singleton (Obj (locate $1) NotOptional (unLoc $1) Head)) }
+  | ident '?' { (locate $1 <> locate $2, V.singleton (Obj (locate $1) Optional (unLoc $1) Head)) }
 
 path_tail :: { (Span, V.Vector Accessor) }
 path_tail
@@ -197,6 +198,7 @@ template
   | function { $1 }
   | boolean { $1 }
   | num_lit { $1 }
+  | operator { $1 }
 
 num_lit :: { ValueExt }
 num_lit
