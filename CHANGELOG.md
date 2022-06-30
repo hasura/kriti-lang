@@ -1,7 +1,11 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
+  
+## 0.3.2 -- 2022-06-30
+
   - Adds new functions: `toPairs`, `fromPairs`, `removeNulls`, `concat`, `parserToFunc`
+  - Supports optional variable lookup and operators in string interpolation
 
 ## 0.3.1 -- 2022-02-23
   - adds support for custom functions.
