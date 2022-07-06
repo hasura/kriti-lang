@@ -27,6 +27,7 @@ import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Kriti.Error (CustomFunctionError (..))
+import Data.Foldable (fold)
 
 type KritiFunc = J.Value -> Either CustomFunctionError J.Value
 
@@ -134,12 +135,14 @@ removeNullsF = parserToFunc $ J.withArray "Array" \a -> do
 --
 -- `[[1,2],[3,4]]` -> `[1,2,3,4]`
 -- `["hello", " ", "world"]` -> `["hello world"]`
+-- `[{"a":1, "b":2}, {"b":3, "c":4}]` -> `{"a":1, "b":3, "c":4}`
 concatF :: KritiFunc
 concatF = parserToFunc $ J.withArray "Array" \as -> do
   let l = V.toList as
-      a = J.Array . V.concat <$> traverse (J.withArray "Nested Array" pure) l
-      s = J.String . T.concat <$> traverse (J.withText "Nested String" pure) l
-  a <|> s
+      a = J.Array  . fold <$> traverse (J.withArray "Nested Array" pure) l
+      s = J.String . fold <$> traverse (J.withText "Nested String" pure) l
+      o = J.Object . fold <$> traverse (J.withObject "Nested Object" pure) l
+  a <|> s <|> o
 
 -- | Converts an Aeson Parser into a KritiFunc
 --   The value-to-parser argument's type matches the `parseJson` type from FromJSON
