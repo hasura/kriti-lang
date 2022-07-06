@@ -141,7 +141,7 @@ concatF = parserToFunc $ J.withArray "Array" \as -> do
   let l = V.toList as
       a = J.Array  . fold <$> traverse (J.withArray "Nested Array" pure) l
       s = J.String . fold <$> traverse (J.withText "Nested String" pure) l
-      o = J.Object . fold <$> traverse (J.withObject "Nested Object" pure) l
+      o = J.Object . fold . reverse <$> traverse (J.withObject "Nested Object" pure) l
   a <|> s <|> o
 
 -- | Converts an Aeson Parser into a KritiFunc
