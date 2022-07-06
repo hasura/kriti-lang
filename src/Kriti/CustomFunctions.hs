@@ -22,12 +22,12 @@ import Control.Applicative ((<|>))
 import Control.Lens (itoList)
 import qualified Data.Aeson as J
 import qualified Data.Aeson.Types as J
+import Data.Foldable (fold)
 import qualified Data.HashMap.Internal as Map
 import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Kriti.Error (CustomFunctionError (..))
-import Data.Foldable (fold)
 
 type KritiFunc = J.Value -> Either CustomFunctionError J.Value
 
@@ -139,7 +139,7 @@ removeNullsF = parserToFunc $ J.withArray "Array" \a -> do
 concatF :: KritiFunc
 concatF = parserToFunc $ J.withArray "Array" \as -> do
   let l = V.toList as
-      a = J.Array  . fold <$> traverse (J.withArray "Nested Array" pure) l
+      a = J.Array . fold <$> traverse (J.withArray "Nested Array" pure) l
       s = J.String . fold <$> traverse (J.withText "Nested String" pure) l
       o = J.Object . fold . reverse <$> traverse (J.withObject "Nested Object" pure) l
   a <|> s <|> o
