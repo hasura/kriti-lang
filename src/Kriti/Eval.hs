@@ -1,5 +1,7 @@
 module Kriti.Eval where
 
+--------------------------------------------------------------------------------
+
 import Control.Lens (view, _1, _2, _3)
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -18,6 +20,8 @@ import Kriti.Error
 import Kriti.Parser.Spans
 import Kriti.Parser.Token
 import Prettyprinter as P
+
+--------------------------------------------------------------------------------
 
 data EvalError
   = InvalidPath B.ByteString Span (V.Vector Accessor)
@@ -52,6 +56,14 @@ instance SerializeError EvalError where
   serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
   serialize (FunctionError _ term msg) = SerializedError {_code = FunctionErrorCode, _message = msg, _span = locate term}
 
+getSourcePos :: EvalError -> Span
+getSourcePos (InvalidPath _ pos _) = locate pos
+getSourcePos (TypeError _ term _) = locate term
+getSourcePos (RangeError _ pos) = locate pos
+getSourcePos (FunctionError _ term _) = locate term
+
+--------------------------------------------------------------------------------
+
 type BindingContext = Compat.Object J.Value
 
 type FunctionContext = Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value)
@@ -67,11 +79,7 @@ getBindings = view _2
 getFunctions :: ExceptT EvalError (Reader Ctxt) FunctionContext
 getFunctions = view _3
 
-getSourcePos :: EvalError -> Span
-getSourcePos (InvalidPath _ pos _) = locate pos
-getSourcePos (TypeError _ term _) = locate term
-getSourcePos (RangeError _ pos) = locate pos
-getSourcePos (FunctionError _ term _) = locate term
+--------------------------------------------------------------------------------
 
 evalPath :: Span -> J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath sp ctx path = do
@@ -89,6 +97,8 @@ isString :: J.Value -> Bool
 isString J.String {} = True
 isString _ = False
 
+--------------------------------------------------------------------------------
+
 runEval :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> Either EvalError J.Value
 runEval src template source =
   let ctx = Compat.fromList source
@@ -99,6 +109,8 @@ runEvalWith src template source funcMap =
   let ctx = Compat.fromList source
    in runReader (runExceptT (eval template)) (src, ctx, funcMap)
 
+--------------------------------------------------------------------------------
+
 typoOfJSON :: J.Value -> T.Text
 typoOfJSON J.Object {} = "Object"
 typoOfJSON J.Array {} = "Array"
@@ -106,6 +118,8 @@ typoOfJSON J.String {} = "String"
 typoOfJSON J.Number {} = "Number"
 typoOfJSON J.Bool {} = "Boolean"
 typoOfJSON J.Null = "Null"
+
+--------------------------------------------------------------------------------
 
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
