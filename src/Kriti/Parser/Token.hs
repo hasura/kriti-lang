@@ -3,17 +3,21 @@
 
 module Kriti.Parser.Token where
 
-import qualified Data.ByteString.Lazy as BL
+--------------------------------------------------------------------------------
+
+import Data.ByteString.Lazy qualified as BL
 import Data.Function ((&))
 import Data.Scientific (Scientific)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
-import qualified Data.Vector as V
-import GHC.Generics
-import qualified Kriti.Aeson.Compat as Compat
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
+import Data.Vector qualified as V
+import GHC.Generics (Generic)
+import Kriti.Aeson.Compat qualified as Compat
 import Kriti.Parser.Spans
 import Prettyprinter
 import Prettyprinter.Render.Text (renderStrict)
+
+--------------------------------------------------------------------------------
 
 -- | The type of non literal/identifer symbols extracted from
 -- source. This type is factored out of `Token` for clarity.
@@ -104,6 +108,8 @@ serializeToken = \case
   TokSymbol (Loc _ SymStringEnd) -> "\""
   EOF -> ""
 
+--------------------------------------------------------------------------------
+
 -- | Annotates whether the object lookup used '.' or brace syntax for pretty printing.
 data ObjAccType = Head | DotAccess | BracketAccess
   deriving (Show, Eq, Read)
@@ -125,6 +131,8 @@ instance Pretty Accessor where
       q :: Optionality -> Doc ann
       q Optional = "?"
       q NotOptional = ""
+
+--------------------------------------------------------------------------------
 
 -- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
 -- terms which are then evaluated and converted into Aeson `Value`
@@ -226,6 +234,8 @@ instance Pretty ValueExt where
           "{{" <+> "end" <+> "}}"
         ]
     Function _ n t1 -> "{{" <+> pretty n <+> " {{" <+> pretty t1 <+> "}} }}"
+
+--------------------------------------------------------------------------------
 
 renderDoc :: Doc ann -> T.Text
 renderDoc = renderStrict . layoutPretty defaultLayoutOptions

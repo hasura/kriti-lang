@@ -1,21 +1,25 @@
 module Kriti.Parser.Monad where
 
-import qualified Codec.Binary.UTF8.String as UTF8
+--------------------------------------------------------------------------------
+
+import Codec.Binary.UTF8.String qualified as UTF8
 import Control.Monad.Except
 import Control.Monad.State
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Internal as B
-import qualified Data.ByteString.UTF8 as UTFBS
-import qualified Data.List.NonEmpty as NE
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
+import Data.ByteString qualified as B
+import Data.ByteString.Internal qualified as B
+import Data.ByteString.UTF8 qualified as UTFBS
+import Data.List.NonEmpty qualified as NE
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
 import GHC.Char (chr)
 import GHC.Word
-import qualified Kriti.Error as E
+import Kriti.Error qualified as E
 import Kriti.Parser.Spans
 import Kriti.Parser.Token
 import Numeric (readHex)
 import Prettyprinter hiding (line)
+
+--------------------------------------------------------------------------------
 
 data ParserState = ParserState
   { parseSource :: B.ByteString,
@@ -39,9 +43,8 @@ newtype Parser a = Parser {unParser :: StateT ParserState (Except ParseError) a}
 runParser :: [Int] -> B.ByteString -> Parser a -> Either ParseError a
 runParser codes bs p = runExcept $ evalStateT (unParser p) (initState codes bs)
 
-------------------------
---- State Management ---
-------------------------
+--------------------------------------------------------------------------------
+-- State Management
 
 {-# INLINE advance #-}
 advance :: AlexInput -> Parser ()
@@ -74,9 +77,8 @@ located a = do
   sp <- location
   pure $ Loc sp a
 
--------------------
---- Start Codes ---
--------------------
+--------------------------------------------------------------------------------
+-- Start Codes
 
 -- | Get the current start code.
 startCode :: Parser Int
@@ -97,9 +99,8 @@ popStartCode = modify' $ \st ->
           _ NE.:| (x : xs) -> x NE.:| xs
     }
 
-----------------------
---- Error Handling ---
-----------------------
+--------------------------------------------------------------------------------
+-- Error Handling
 
 data ParseError
   = EmptyTokenStream Span B.ByteString
@@ -154,9 +155,8 @@ instance Pretty ParseError where
 parseError :: ParseError -> Parser a
 parseError err = throwError err
 
---------------
---- Tokens ---
---------------
+--------------------------------------------------------------------------------
+-- Tokens
 
 {-# INLINE textToken #-}
 textToken :: (Loc T.Text -> Token) -> T.Text -> B.ByteString -> Parser Token
@@ -189,9 +189,8 @@ symbol sym _ = do
 function :: (Span -> ValueExt -> ValueExt) -> Span -> ValueExt -> ValueExt
 function f sp param = f (sp <> locate param) param
 
------------------------
---- Alex Primitives ---
------------------------
+--------------------------------------------------------------------------------
+-- Alex Primitives
 
 data AlexInput = AlexInput
   { lexPos :: AlexSourcePos,

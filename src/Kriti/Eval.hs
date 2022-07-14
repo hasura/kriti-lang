@@ -3,19 +3,19 @@ module Kriti.Eval where
 --------------------------------------------------------------------------------
 
 import Control.Lens (view, _1, _2, _3)
-import Control.Monad.Except
-import Control.Monad.Reader
-import qualified Data.Aeson as J
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.UTF8 as B
+import Control.Monad.Except (ExceptT, MonadError (..), mapExceptT, runExceptT)
+import Control.Monad.Reader (MonadReader (..), Reader, runReader)
+import Data.Aeson qualified as J
+import Data.ByteString.Lazy qualified as BL
+import Data.ByteString.UTF8 qualified as B
 import Data.Foldable (foldlM)
-import Data.Function
-import Data.HashMap.Internal as Map
+import Data.Function ((&))
+import Data.HashMap.Strict qualified as Map
 import Data.Maybe (maybeToList)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
-import qualified Data.Vector as V
-import qualified Kriti.Aeson.Compat as Compat
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
+import Data.Vector qualified as V
+import Kriti.Aeson.Compat qualified as Compat
 import Kriti.Error
 import Kriti.Parser.Spans
 import Kriti.Parser.Token

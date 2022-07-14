@@ -2,11 +2,12 @@
 
 module Kriti.Parser.Spans where
 
-import GHC.Generics
+--------------------------------------------------------------------------------
 
-------------------------
---- Source Positions ---
-------------------------
+import GHC.Generics (Generic)
+
+--------------------------------------------------------------------------------
+-- Source Positions
 
 data AlexSourcePos = AlexSourcePos {line :: !Int, col :: !Int}
   deriving (Show, Read, Eq, Ord, Generic)
@@ -20,9 +21,8 @@ overLine f (AlexSourcePos line col) = AlexSourcePos (f line) col
 alexStartPos :: AlexSourcePos
 alexStartPos = AlexSourcePos 1 1
 
--------------
---- Spans ---
--------------
+--------------------------------------------------------------------------------
+-- Spans
 
 data Span = Span {start :: AlexSourcePos, end :: AlexSourcePos}
   deriving (Show, Read, Eq, Ord, Generic)
@@ -42,9 +42,8 @@ setStart sp (Span _ end) = Span sp end
 setEnd :: AlexSourcePos -> Span -> Span
 setEnd sp (Span start _) = Span start sp
 
------------------
---- Locations ---
------------------
+--------------------------------------------------------------------------------
+-- Locations
 
 -- | The product of `a` and a `Span` representing `a`'s source position.
 data Loc a = Loc {getSpan :: Span, unLoc :: a}
