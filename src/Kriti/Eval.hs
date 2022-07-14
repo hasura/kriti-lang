@@ -1,5 +1,6 @@
 module Kriti.Eval where
 
+import Control.Lens (view, _1, _2, _3)
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Aeson as J
@@ -51,7 +52,20 @@ instance SerializeError EvalError where
   serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
   serialize (FunctionError _ term msg) = SerializedError {_code = FunctionErrorCode, _message = msg, _span = locate term}
 
-type Ctxt = (B.ByteString, Compat.Object J.Value)
+type BindingContext = Compat.Object J.Value
+
+type FunctionContext = Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value)
+
+type Ctxt = (B.ByteString, BindingContext, FunctionContext)
+
+getSource :: ExceptT EvalError (Reader Ctxt) B.ByteString
+getSource = view _1
+
+getBindings :: ExceptT EvalError (Reader Ctxt) BindingContext
+getBindings = view _2
+
+getFunctions :: ExceptT EvalError (Reader Ctxt) FunctionContext
+getFunctions = view _3
 
 getSourcePos :: EvalError -> Span
 getSourcePos (InvalidPath _ pos _) = locate pos
@@ -61,7 +75,7 @@ getSourcePos (FunctionError _ term _) = locate term
 
 evalPath :: Span -> J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
 evalPath sp ctx path = do
-  src <- asks fst
+  src <- view _1
   let maybeThrow NotOptional = maybe (throwError $ Left $ InvalidPath src sp path) pure
       maybeThrow Optional = maybe (throwError $ Right ()) pure
       step :: J.Value -> Accessor -> ExceptT (Either EvalError ()) (Reader Ctxt) J.Value
@@ -78,12 +92,12 @@ isString _ = False
 runEval :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> Either EvalError J.Value
 runEval src template source =
   let ctx = Compat.fromList source
-   in runReader (runExceptT (evalWith Map.empty template)) (src, ctx)
+   in runReader (runExceptT (eval template)) (src, ctx, mempty)
 
 runEvalWith :: B.ByteString -> ValueExt -> [(T.Text, J.Value)] -> Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> Either EvalError J.Value
 runEvalWith src template source funcMap =
   let ctx = Compat.fromList source
-   in runReader (runExceptT (evalWith funcMap template)) (src, ctx)
+   in runReader (runExceptT (eval template)) (src, ctx, funcMap)
 
 typoOfJSON :: J.Value -> T.Text
 typoOfJSON J.Object {} = "Object"
@@ -93,8 +107,8 @@ typoOfJSON J.Number {} = "Number"
 typoOfJSON J.Bool {} = "Boolean"
 typoOfJSON J.Null = "Null"
 
-evalWith :: Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
-evalWith funcMap = \case
+eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
+eval = \case
   String _ str -> pure $ J.String str
   Number _ i -> pure $ J.Number i
   Boolean _ p -> pure $ J.Bool p
@@ -109,10 +123,10 @@ evalWith funcMap = \case
     pure $ J.String str
   Array _ xs -> J.Array <$> traverse eval xs
   Path sp path -> do
-    ctx <- asks snd
+    ctx <- getBindings
     evalPath sp (J.Object ctx) path
   Iff sp p t1 t2 -> do
-    src <- asks fst
+    src <- getSource
     eval p >>= \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
@@ -140,7 +154,7 @@ evalWith funcMap = \case
     t2' <- eval t2
     pure $ J.Bool $ t1' >= t2'
   And sp t1 t2 -> do
-    src <- asks fst
+    src <- getSource
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
@@ -148,7 +162,7 @@ evalWith funcMap = \case
       (t1'', J.Bool _) -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1'' <> "' is not a boolean."
       (_, t2'') -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t2'' <> "' is not a boolean."
   Or sp t1 t2 -> do
-    src <- asks fst
+    src <- getSource
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
@@ -156,7 +170,7 @@ evalWith funcMap = \case
       (t1'', J.Bool _) -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1'' <> "' is not a boolean."
       (_, t2'') -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t2'' <> "' is not a boolean."
   In sp t1 t2 -> do
-    src <- asks fst
+    src <- getSource
     v1 <- eval t1
     v2 <- eval t2
     case (v1, v2) of
@@ -167,15 +181,17 @@ evalWith funcMap = \case
       (_, J.Array vals) -> pure $ J.Bool $ v1 `V.elem` vals
       (_, json) -> throwError $ TypeError src sp $ T.pack $ show json <> " is not an Object or Array."
   Range sp idx binder path body -> do
-    (src, ctx) <- ask
+    src <- getSource
+    ctx <- getBindings
     pathResult <- evalPath sp (J.Object ctx) path
     case pathResult of
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
-         in local (\(_, bndrs) -> (src, Compat.fromList newScope <> bndrs)) (eval body)
+         in local (\(_, bndrs, funcs) -> (src, Compat.fromList newScope <> bndrs, funcs)) (eval body)
       _ -> throwError $ RangeError src sp
   Function sp fName t1 -> do
-    src <- asks fst
+    src <- getSource
+    funcMap <- getFunctions
     v1 <- eval t1
     case Map.lookup fName funcMap of
       Nothing -> throwError $ FunctionError src sp $ "Function " <> fName <> " is not defined."
@@ -187,5 +203,3 @@ evalWith funcMap = \case
     case v1 of
       J.Null -> eval t2
       json -> pure json
-  where
-    eval = evalWith funcMap
