@@ -18,16 +18,20 @@ module Kriti.CustomFunctions
   )
 where
 
+--------------------------------------------------------------------------------
+
 import Control.Applicative ((<|>))
 import Control.Lens (itoList)
-import qualified Data.Aeson as J
-import qualified Data.Aeson.Types as J
+import Data.Aeson qualified as J
+import Data.Aeson.Types qualified as J
 import Data.Foldable (fold)
-import qualified Data.HashMap.Internal as Map
-import qualified Data.Scientific as S
-import qualified Data.Text as T
-import qualified Data.Vector as V
+import Data.HashMap.Internal qualified as Map
+import Data.Scientific qualified as S
+import Data.Text qualified as T
+import Data.Vector qualified as V
 import Kriti.Error (CustomFunctionError (..))
+
+--------------------------------------------------------------------------------
 
 type KritiFunc = J.Value -> Either CustomFunctionError J.Value
 
@@ -49,6 +53,8 @@ basicFuncMap =
       ("removeNulls", removeNullsF),
       ("concat", concatF)
     ]
+
+--------------------------------------------------------------------------------
 
 emptyF :: KritiFunc
 emptyF inp = case inp of
