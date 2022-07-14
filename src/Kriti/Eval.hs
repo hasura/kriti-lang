@@ -56,11 +56,12 @@ instance SerializeError EvalError where
   serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
   serialize (FunctionError _ term msg) = SerializedError {_code = FunctionErrorCode, _message = msg, _span = locate term}
 
-getSourcePos :: EvalError -> Span
-getSourcePos (InvalidPath _ pos _) = locate pos
-getSourcePos (TypeError _ term _) = locate term
-getSourcePos (RangeError _ pos) = locate pos
-getSourcePos (FunctionError _ term _) = locate term
+instance Located EvalError where
+  locate = \case
+    InvalidPath _ pos _ -> locate pos
+    TypeError _ term _ -> locate term
+    RangeError _ pos -> locate pos
+    FunctionError _ term _ -> locate term
 
 --------------------------------------------------------------------------------
 
