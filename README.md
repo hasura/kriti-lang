@@ -68,9 +68,13 @@ Kriti supports if statements and `>` `<` `==` `||` and `&&` operators.
 ```
 
 #### String Interpolation
-String Interpolation is currently limited to path lookups:
+Bound variables, booleans, integers, object/array lookups, and functions can be interpolated:
 ```
 "http://www.{{$.domain}}.com/{{$.path}}"
+```
+
+```
+"http://www.{{$.domain}}.com/{{ $?[1000] }}"
 ```
 
 ### Library
