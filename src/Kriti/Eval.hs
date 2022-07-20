@@ -101,15 +101,12 @@ evalWith funcMap = \case
   Boolean _ p -> pure $ J.Bool p
   Null _ -> pure J.Null
   Object _ fields -> J.Object <$> traverse eval fields
-  StringTem sp ts -> do
-    src <- asks fst
+  StringTem _sp ts -> do
     vals <- traverse eval ts
     str <-
       vals & flip foldlM mempty \acc -> \case
         J.String val' -> pure $ acc <> val'
-        J.Number i -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode i)
-        J.Bool p -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode p)
-        t -> throwError $ TypeError src sp $ "Cannot interpolate type: '" <> typoOfJSON t <> "'."
+        json -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode json)
     pure $ J.String str
   Array _ xs -> J.Array <$> traverse eval xs
   Path sp path -> do

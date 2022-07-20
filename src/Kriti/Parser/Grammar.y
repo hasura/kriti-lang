@@ -239,6 +239,9 @@ object_field
   : 's"' object_key '"e' ':' expr { (unLoc $2, $5) }
   | 's"' '"e' ':' expr { ("", $4) }
 
+-- | NOTE: String Literals can be fragmented coming out of the lexer.
+-- 'object_key' has a recursive production rule to smoosh those
+-- fragments together.
 object_key :: { Loc T.Text }
 object_key
   : object_key string { $1 <> $2 }
