@@ -3,7 +3,7 @@ module Kriti
     ErrorCode (..),
     AlexSourcePos (..),
     ValueExt (..),
-    KritiError(),
+    KritiError(..),
     renderPretty,
     runKriti,
     runKritiBS,
