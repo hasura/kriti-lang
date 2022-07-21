@@ -121,21 +121,21 @@ There is also a collection of all these functions defined as `basicFuncMap` that
 
 For reference, these functions are listed here:
 
-| Function Name | Description | Example |
-| --- | --- | --- |
-| empty | Returns `true` if an `object`, `array`, or `string` is empty, if a number is `0`, and true for `null`. Raises an error for `boolean`s. | |
-| size | Returns the length of an `array` or `string`, the number of keys of an `object`, the value of a `number`, `1` for `true` and `0` for `false`, and `0` for `null`. | |
-| inverse | Reverses an `array` or `string`, leaves an `object` or `null` as-is, takes the reciprical of a number, and negates a `bool`. | |
-| head | Takes the first element or character of an `array` or `string`. Throws an error if they are empty, and throws an error for all other types. | |
-| tail | Drops the first element of an `array` or `string`. Throws an error for all other types. |
-| toCaseFold | Converts a `string` to a normalized casing (useful for case-insensitive string comparison). Throws an error for non-strings. | |
-| toLower | Converts a `string` to lower-case. Throws an error for non-strings. | |
-| toUpper | Converts a `string` to upper-case. Throws an error for non-strings. | |
-| toTitle | Converts a `string` to title-case. Throws an error for non-strings. | |
-| fromPairs | Convert an `array` like `[ [a,b], [c,d] ... ]` to an `object` like `{ a:b, c:d ... }` | |
-| toPairs | Convert an `object` like `{ a:b, c:d ... }` to an `array` like `[ [a,b], [c,d] ... ]`. | |
-| removeNulls | Removes `null` items from an array. | |
-| concat | Concatenates a `string`, `array`, or `object` - for objects keys from right-most objects are preferred in a collision. | |
+| Function Name | Description | Example Template | Output |
+| --- | --- | --- | --- |
+| empty | Returns `true` if an `object`, `array`, or `string` is empty, if a number is `0`, and true for `null`. Raises an error for `boolean`s. | `{"object": {{ empty({"a": 1}) }}, "string": {{ empty("") }}, "array": {{ empty([1]) }} }` | `{"array":false,"object":false,"string":true}` |
+| size | Returns the length of an `array` or `string`, the number of keys of an `object`, the value of a `number`, `1` for `true` and `0` for `false`, and `0` for `null`. | `{"object": {{ size({"a": 1}) }}, "string": {{ size("asdf") }}, "array": {{ size([1]) }} }` | `{"array":1,"object":1,"string":4}`|
+| inverse | Reverses an `array` or `string`, leaves an `object` or `null` as-is, takes the reciprical of a number, and negates a `bool`. | `{"string": {{ inverse("asdf") }}, "array": {{ inverse([1,2,3]) }}, "number": {{ inverse(4) }} }` | `{"array":[3,2,1],"number":0.25,"string":"fdsa"}` |
+| head | Takes the first element or character of an `array` or `string`. Throws an error if they are empty, and throws an error for all other types. | `{"string": {{ head("asdf") }}, "array": {{ head([1,2,3]) }} }` | `{"array":1,"string":"a"}` |
+| tail | Drops the first element of an `array` or `string`. Throws an error for all other types. | `{"string": {{ tail("asdf") }}, "array": {{ tail([1,2,3]) }} }` | `{"array":[2,3],"string":"sdf"}` |
+| toCaseFold | Converts a `string` to a normalized casing (useful for case-insensitive string comparison). Throws an error for non-strings. | `{"string": {{toCaseFold("AbCd")}} }` | `{"string":"abcd"}` |
+| toLower | Converts a `string` to lower-case. Throws an error for non-strings. | `{"string": {{toLower("AbCd")}} }` | `{"string":"abcd"}` |
+| toUpper | Converts a `string` to upper-case. Throws an error for non-strings. | `{"string": {{toUpper("AbCd")}} }` | `{"string":"ABCD"}` |
+| toTitle | Converts a `string` to title-case. Throws an error for non-strings. | `{"string": {{toTitle("AbCd")}} }` | `{"string":"Abcd"}` |
+| fromPairs | Convert an `array` like `[ [a,b], [c,d] ... ]` to an `object` like `{ a:b, c:d ... }` | `{"array": {{ fromPairs([["a",1],["b",2]]) }} }` | `{"array":{"a":1,"b":2}}` |
+| toPairs | Convert an `object` like `{ a:b, c:d ... }` to an `array` like `[ [a,b], [c,d] ... ]`. | `{"object": {{ toPairs({"a": 1, "b": 2}) }} }` | `{"object":[["a",1],["b",2]]}` |
+| removeNulls | Removes `null` items from an array. | `{"array": {{ removeNulls([1,null,3,null,5]) }} }` | `{"array":[1,3,5]}` |
+| concat | Concatenates a `string`, `array`, or `object` - for objects keys from right-most objects are preferred in a collision. | `{"arrays": {{ concat([[1,2],[3,4]]) }}, "strings": {{ concat(["abc", "def", "g"]) }}, "objects": {{ concat([{"a":1, "b":2},{"b":3, "c":4} ] ) }} }` | `{"arrays":[1,2,3,4],"objects":{"a":1,"b":3,"c":4},"strings":"abcdefg"}` |
 
 ### CLI Tool
 The executable is a CLI tool which applies a transformation to a single json file:

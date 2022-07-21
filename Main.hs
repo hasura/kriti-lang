@@ -6,6 +6,7 @@ import Data.Bifunctor (first)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
+import qualified Data.ByteString.Lazy.Char8 as C8
 import Kriti (renderPretty, runKritiBSWith)
 import Kriti.CustomFunctions (basicFuncMap)
 import Options.Applicative
@@ -47,7 +48,7 @@ main = do
             <> header "kriti - a minimal JSON templating language based on Go's template language."
   kritiOptions <- execParser parserOptions
   result <- runExceptT $ runKriti kritiOptions
-  either (print . pretty) (print . J.encode) result
+  either (print . pretty) (C8.putStrLn . J.encode) result
 
 runKriti :: KritiOptions -> ExceptT T.Text IO J.Value
 runKriti (KritiOptions jsonFile templateFile rootSymbol) = do
