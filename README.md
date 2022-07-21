@@ -121,7 +121,7 @@ There is also a collection of all these functions defined as `basicFuncMap` that
 
 For reference, these functions are listed here:
 
-| Function Name | Description | Example Template | Output |
+| Function Name | Description&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Example Template | Output |
 | --- | --- | --- | --- |
 | empty | Returns `true` if an `object`, `array`, or `string` is empty, if a number is `0`, and true for `null`. Raises an error for `boolean`s. | `{"object": {{ empty({"a": 1}) }}, "string": {{ empty("") }}, "array": {{ empty([1]) }} }` | `{"array":false,"object":false,"string":true}` |
 | size | Returns the length of an `array` or `string`, the number of keys of an `object`, the value of a `number`, `1` for `true` and `0` for `false`, and `0` for `null`. | `{"object": {{ size({"a": 1}) }}, "string": {{ size("asdf") }}, "array": {{ size([1]) }} }` | `{"array":1,"object":1,"string":4}`|
