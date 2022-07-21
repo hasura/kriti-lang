@@ -7,6 +7,7 @@ module Kriti
     runKriti,
     runKritiBS,
     runKritiWith,
+    runKritiBSWith,
   )
 where
 
@@ -53,3 +54,11 @@ runKritiBS :: B.ByteString -> [(T.Text, J.Value)] -> Either KritiError J.Value
 runKritiBS templateSrc json = do
   ast <- first KritiParseError $ parser templateSrc
   first KritiEvalError $ runEval templateSrc ast json
+
+-- | Entry point for Kriti when given a template as
+-- 'ByteString'. Caller must ensure that the input is valid UTF8
+-- encoded.
+runKritiBSWith :: B.ByteString -> [(T.Text, J.Value)] -> Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> Either KritiError J.Value
+runKritiBSWith templateSrc json funcMap = do
+  ast <- first KritiParseError $ parser templateSrc
+  first KritiEvalError $ runEvalWith templateSrc ast json funcMap

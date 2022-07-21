@@ -6,7 +6,8 @@ import Data.Bifunctor (first)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
-import Kriti (renderPretty, runKritiBS)
+import Kriti (renderPretty, runKritiBSWith)
+import Kriti.CustomFunctions (basicFuncMap)
 import Options.Applicative
 import Prettyprinter
 import System.IO (IOMode (ReadMode), openFile)
@@ -54,6 +55,6 @@ runKriti (KritiOptions jsonFile templateFile rootSymbol) = do
   void $ liftIO $ checkFilePath jsonFile
   void $ liftIO $ checkFilePath templateFile
 
-  json <- ExceptT $ fmap (first T.pack . J.eitherDecode) $ LBS.readFile jsonFile
+  json <- ExceptT $ first T.pack . J.eitherDecode <$> LBS.readFile jsonFile
   template <- liftIO $ B.readFile templateFile
-  ExceptT $ pure $ first renderPretty $ runKritiBS template [(rootSymbol, json)]
+  ExceptT $ pure $ first renderPretty $ runKritiBSWith template [(rootSymbol, json)] basicFuncMap
