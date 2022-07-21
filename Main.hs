@@ -5,8 +5,8 @@ import qualified Data.Aeson as J
 import Data.Bifunctor (first)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.Text as T
 import qualified Data.ByteString.Lazy.Char8 as C8
+import qualified Data.Text as T
 import Kriti (renderPretty, runKritiBSWith)
 import Kriti.CustomFunctions (basicFuncMap)
 import Options.Applicative
