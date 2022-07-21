@@ -122,13 +122,13 @@ There is also a collection of all these functions defined as `basicFuncMap` that
 For reference, these functions are listed here:
 
 | Function Name | Description | Example |
-| --- | --- | |
-| empty | Returns `true` if an `object`, `array`, or `string` is empty, if a number is `0`, a |nd true for `null`. Raises an error for `boolean`s. |
-| size | Returns the length of an `array` or `string`, the number of keys of an `object`, t |he value of a `number`, `1` for `true` and `0` for `false`, and `0` for `null`. |
-| inverse | Reverses an `array` or `string`, leaves an `object` or `null` as-is, takes th |e reciprical of a number, and negates a `bool`. |
-| head | Takes the first element or character of an `array` or `string`. Throws an erro |r if they are empty, and throws an error for all other types. |
-| tail | Drops the first element of an `array` or `string`. Throws an error for all o |ther types. |
-| toCaseFold | Converts a `string` to a normalized casing (useful for case-insensit |ive string comparison). Throws an error for non-strings. |
+| --- | --- | --- |
+| empty | Returns `true` if an `object`, `array`, or `string` is empty, if a number is `0`, and true for `null`. Raises an error for `boolean`s. | |
+| size | Returns the length of an `array` or `string`, the number of keys of an `object`, the value of a `number`, `1` for `true` and `0` for `false`, and `0` for `null`. | |
+| inverse | Reverses an `array` or `string`, leaves an `object` or `null` as-is, takes the reciprical of a number, and negates a `bool`. | |
+| head | Takes the first element or character of an `array` or `string`. Throws an error if they are empty, and throws an error for all other types. | |
+| tail | Drops the first element of an `array` or `string`. Throws an error for all other types. |
+| toCaseFold | Converts a `string` to a normalized casing (useful for case-insensitive string comparison). Throws an error for non-strings. | |
 | toLower | Converts a `string` to lower-case. Throws an error for non-strings. | |
 | toUpper | Converts a `string` to upper-case. Throws an error for non-strings. | |
 | toTitle | Converts a `string` to title-case. Throws an error for non-strings. | |
