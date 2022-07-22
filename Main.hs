@@ -5,8 +5,10 @@ import qualified Data.Aeson as J
 import Data.Bifunctor (first)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.Char8 as C8
 import qualified Data.Text as T
-import Kriti (renderPretty, runKritiBS)
+import Kriti (renderPretty, runKritiBSWith)
+import Kriti.CustomFunctions (basicFuncMap)
 import Options.Applicative
 import Prettyprinter
 import System.IO (IOMode (ReadMode), openFile)
@@ -46,7 +48,7 @@ main = do
             <> header "kriti - a minimal JSON templating language based on Go's template language."
   kritiOptions <- execParser parserOptions
   result <- runExceptT $ runKriti kritiOptions
-  either (print . pretty) (print . J.encode) result
+  either (print . pretty) (C8.putStrLn . J.encode) result
 
 runKriti :: KritiOptions -> ExceptT T.Text IO J.Value
 runKriti (KritiOptions jsonFile templateFile rootSymbol) = do
@@ -54,6 +56,6 @@ runKriti (KritiOptions jsonFile templateFile rootSymbol) = do
   void $ liftIO $ checkFilePath jsonFile
   void $ liftIO $ checkFilePath templateFile
 
-  json <- ExceptT $ fmap (first T.pack . J.eitherDecode) $ LBS.readFile jsonFile
+  json <- ExceptT $ first T.pack . J.eitherDecode <$> LBS.readFile jsonFile
   template <- liftIO $ B.readFile templateFile
-  ExceptT $ pure $ first renderPretty $ runKritiBS template [(rootSymbol, json)]
+  ExceptT $ pure $ first renderPretty $ runKritiBSWith template [(rootSymbol, json)] basicFuncMap

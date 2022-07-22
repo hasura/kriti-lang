@@ -3,10 +3,12 @@ module Kriti
     ErrorCode (..),
     AlexSourcePos (..),
     ValueExt (..),
+    KritiError (..),
     renderPretty,
     runKriti,
     runKritiBS,
     runKritiWith,
+    runKritiBSWith,
   )
 where
 
@@ -53,3 +55,9 @@ runKritiBS :: B.ByteString -> [(T.Text, J.Value)] -> Either KritiError J.Value
 runKritiBS templateSrc json = do
   ast <- first KritiParseError $ parser templateSrc
   first KritiEvalError $ runEval templateSrc ast json
+
+-- | The same as 'runKritiBS' but allows use of a custom function map.
+runKritiBSWith :: B.ByteString -> [(T.Text, J.Value)] -> Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> Either KritiError J.Value
+runKritiBSWith templateSrc json funcMap = do
+  ast <- first KritiParseError $ parser templateSrc
+  first KritiEvalError $ runEvalWith templateSrc ast json funcMap

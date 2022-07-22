@@ -1,6 +1,9 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
+
+  - Adds `Kriti.CustomFunctions.basicFuncMap` functions to the kriti executable.
+  - Adds `KritiError` type to exports from `Kriti`.
   
 ## 0.3.2 -- 2022-06-30
 
