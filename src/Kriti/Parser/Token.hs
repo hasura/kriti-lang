@@ -117,8 +117,8 @@ data ObjAccType = Head | DotAccess | BracketAccess
 data Optionality = Optional | NotOptional
   deriving (Show, Eq, Read)
 
--- | Path lookups are represented as a stack of object and array lookups. eg., `Vector Accessor`.
-data Accessor = Obj Span Optionality T.Text ObjAccType | Arr Span Optionality Int
+-- | Path lookups are represented as a stack of object lookups. eg., `Vector Accessor`.
+data Accessor = Obj Span Optionality T.Text ObjAccType
   deriving (Show, Eq, Read)
 
 instance Pretty Accessor where
@@ -126,7 +126,6 @@ instance Pretty Accessor where
     Obj _ optional txt DotAccess -> q optional <> dot <> pretty txt
     Obj _ optional txt BracketAccess -> q optional <> dot <> brackets (squotes $ pretty txt)
     Obj _ _ txt Head -> pretty txt
-    Arr _ optional i -> q optional <> brackets (pretty i)
     where
       q :: Optionality -> Doc ann
       q Optional = "?"
@@ -145,9 +144,13 @@ data ValueExt
   | Number Span Scientific
   | Boolean Span Bool
   | Null Span
-  | -- | Extended Kriti Terms
-    StringTem Span (V.Vector ValueExt)
-  | Path Span (V.Vector Accessor)
+  | -- | Function Application
+    Ap Span ValueExt ValueExt
+  -- | Variables.
+  | Var Span T.Text
+  | StringTem Span (V.Vector ValueExt)
+  -- | Field lookup in an Object.
+  | Field Span Optionality ValueExt ValueExt 
   | Iff Span ValueExt ValueExt ValueExt
   | Eq Span ValueExt ValueExt
   | NotEq Span ValueExt ValueExt
@@ -159,8 +162,7 @@ data ValueExt
   | Or Span ValueExt ValueExt
   | In Span ValueExt ValueExt
   | Defaulting Span ValueExt ValueExt
-  | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
-  | Function Span T.Text ValueExt
+  | Range Span (Maybe T.Text) T.Text ValueExt ValueExt
   deriving (Show, Eq, Read, Generic)
 
 instance Located ValueExt where
@@ -171,8 +173,9 @@ instance Located ValueExt where
     Number s _ -> s
     Boolean s _ -> s
     Null s -> s
+    Var s _ -> s
     StringTem s _ -> s
-    Path s _ -> s
+    Field s _ _ _ -> s
     Iff s _ _ _ -> s
     Eq s _ _ -> s
     NotEq s _ _ -> s
@@ -185,12 +188,11 @@ instance Located ValueExt where
     In s _ _ -> s
     Defaulting s _ _ -> s
     Range s _ _ _ _ -> s
-    Function s _ _ -> s
+    Ap s _ _ -> s
 
 instance Located Accessor where
   locate = \case
     Obj s _ _ _ -> s
-    Arr s _ _ -> s
 
 instance Pretty ValueExt where
   pretty = \case
@@ -203,12 +205,14 @@ instance Pretty ValueExt where
     Number _ sci -> pretty $ show sci
     Boolean _ b -> pretty b
     Null _ -> "null"
+    Var _ bndr -> pretty bndr
     StringTem _ vec ->
       dquotes $
         vec & foldMap \case
           String _ txt -> pretty txt
           t1 -> "{{" <+> pretty t1 <+> "}}"
-    Path _ vec -> surround (foldMap pretty vec) "{{ " " }}"
+    Field _ NotOptional k t1 -> surround (pretty t1 <> "." <> pretty k) "{{ " " }}"
+    Field _ Optional k t1 -> surround (pretty t1 <> "?." <> pretty k) "{{ " " }}"
     Iff _ p t1 t2 ->
       vsep
         [ "{{" <+> "if" <+> pretty p <+> "}}",
@@ -229,11 +233,11 @@ instance Pretty ValueExt where
     Defaulting _ t1 t2 -> pretty t1 <+> "??" <+> pretty t2
     Range _ i bndr xs t1 ->
       vsep
-        [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> foldMap pretty xs <+> "}}",
+        [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> pretty xs <+> "}}",
           indent 2 $ pretty t1,
           "{{" <+> "end" <+> "}}"
         ]
-    Function _ n t1 -> "{{" <+> pretty n <+> " {{" <+> pretty t1 <+> "}} }}"
+    Ap _ n t1 -> "{{" <+> pretty n <+> " {{" <+> pretty t1 <+> "}} }}"
 
 --------------------------------------------------------------------------------
 

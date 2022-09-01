@@ -10,7 +10,7 @@ Array
             }
         }
     )
-    [ Function
+    [ Ap
         ( Span
             { start = AlexSourcePos
                 { line = 1
@@ -18,10 +18,23 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 1
-                , col = 15
+                , col = 24
                 }
             }
-        ) "escapeUri"
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 1
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 1
+                    , col = 15
+                    }
+                }
+            ) "escapeUri"
+        )
         ( StringTem
             ( Span
                 { start = AlexSourcePos
@@ -48,7 +61,7 @@ Array
                 ) "foo"
             ]
         )
-    , Function
+    , Ap
         ( Span
             { start = AlexSourcePos
                 { line = 2
@@ -56,10 +69,23 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 2
-                , col = 15
+                , col = 32
                 }
             }
-        ) "escapeUri"
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 2
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 2
+                    , col = 15
+                    }
+                }
+            ) "escapeUri"
+        )
         ( StringTem
             ( Span
                 { start = AlexSourcePos
@@ -84,7 +110,7 @@ Array
                         }
                     }
                 ) "foo"
-            , Path
+            , Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 2
@@ -95,23 +121,10 @@ Array
                         , col = 26
                         }
                     }
-                )
-                [ Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 2
-                            , col = 22
-                            }
-                        , end = AlexSourcePos
-                            { line = 2
-                            , col = 26
-                            }
-                        }
-                    ) NotOptional "$bar" Head
-                ]
+                ) "$bar"
             ]
         )
-    , Function
+    , Ap
         ( Span
             { start = AlexSourcePos
                 { line = 3
@@ -119,11 +132,24 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 3
-                , col = 15
+                , col = 27
                 }
             }
-        ) "escapeUri"
-        ( Path
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 3
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 3
+                    , col = 15
+                    }
+                }
+            ) "escapeUri"
+        )
+        ( Field
             ( Span
                 { start = AlexSourcePos
                     { line = 3
@@ -134,8 +160,8 @@ Array
                     , col = 24
                     }
                 }
-            )
-            [ Obj
+            ) NotOptional
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
@@ -146,22 +172,23 @@ Array
                         , col = 21
                         }
                     }
-                ) NotOptional "$path" Head
-            , Arr
+                ) "$path"
+            )
+            ( Number
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
-                        , col = 21
+                        , col = 22
                         }
                     , end = AlexSourcePos
                         { line = 3
-                        , col = 24
+                        , col = 23
                         }
                     }
-                ) NotOptional 0
-            ]
+                ) 0.0
+            )
         )
-    , Function
+    , Ap
         ( Span
             { start = AlexSourcePos
                 { line = 4
@@ -169,10 +196,23 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 4
-                , col = 15
+                , col = 33
                 }
             }
-        ) "escapeUri"
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 4
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 4
+                    , col = 15
+                    }
+                }
+            ) "escapeUri"
+        )
         ( StringTem
             ( Span
                 { start = AlexSourcePos
@@ -223,7 +263,7 @@ Array
                     }
                 }
             ) "http://www.google.com"
-        , Function
+        , Ap
             ( Span
                 { start = AlexSourcePos
                     { line = 5
@@ -231,11 +271,24 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 5
-                    , col = 36
+                    , col = 44
                     }
                 }
-            ) "escapeUri"
-            ( Path
+            )
+            ( Var
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 5
+                        , col = 27
+                        }
+                    , end = AlexSourcePos
+                        { line = 5
+                        , col = 36
+                        }
+                    }
+                ) "escapeUri"
+            )
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 5
@@ -246,20 +299,7 @@ Array
                         , col = 44
                         }
                     }
-                )
-                [ Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 5
-                            , col = 37
-                            }
-                        , end = AlexSourcePos
-                            { line = 5
-                            , col = 44
-                            }
-                        }
-                    ) NotOptional "$params" Head
-                ]
+                ) "$params"
             )
         ]
     ]

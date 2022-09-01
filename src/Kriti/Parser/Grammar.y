@@ -69,116 +69,71 @@ ident       { TokIdentifier $$ }
 '('         { TokSymbol (Loc $$ SymParenOpen) }
 ')'         { TokSymbol (Loc $$ SymParenClose) }
 
-%right 'in' 
-%right LOW
-%right ']'
+%right 'in'
+%right '||'
+%right '&&'
+%right '??' 
+%right 'if'
 
-%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
+%right LOOSE
+%right TIGHT
+%right '['
 
-%left '??' 
-%left ident 
+%nonassoc '==' '>=' '<=' '!=' '>' '<' -- 4
+%nonassoc int number 'true' 'false' ident '(' ')' '{{' '}}'
 
 %%
 
+------------------------------------------------------------------------
+-- TOP
+
 expr :: { ValueExt }
-expr
-  : json { $1 } 
-  | kriti { $1 }
+  : apps '>' apps { Gt (locate $1 <> locate $3) $1 $3 }
+  | apps '<'  apps { Lt (locate $1 <> locate $3) $1 $3 }
+  | apps '>=' apps { Gte (locate $1 <> locate $3) $1 $3 }
+  | apps '<=' apps { Lte (locate $1 <> locate $3) $1 $3 }
+  | apps '!=' apps { NotEq (locate $1 <> locate $3) $1 $3 }
+  | apps '==' apps { Eq (locate $1 <> locate $3) $1 $3 }
+  | apps '&&' apps { And (locate $1 <> locate $3) $1 $3 }
+  | apps '||' apps { Or (locate $1 <> locate $3) $1 $3 }
+  | apps 'in' apps { In (locate $1 <> locate $3) $1 $3 }
+  | apps '??' apps { Defaulting (locate $1 <> locate $3) $1 $3 }
+  | apps %shift { $1 }
 
-------------------------------------------------------------------------
--- KRITI
+apps :: { ValueExt }
+  : apps atom %prec TIGHT { Ap (locate $1 <> locate $2) $1 $2 }
+  | '{{' apps atom '}}' %prec TIGHT { Ap (locate $2 <> locate $4) $2 $3 }
+  | atom %prec LOOSE { $1 }
 
-kriti :: { ValueExt }
-kriti
-  : '{{' path '}}' { $2 }
-  | '{{' operator '}}' { $2 }
-  | '{{' function '}}' { $2 }
-  | '(' kriti ')' { $2 }
-  | range { $1 }
-  | iff { $1 }
-
-kritiValue :: { ValueExt }
-  : path { $1 }
-  | operator { $1 } 
-  | function { $1 }
-  | range { $1 }
-  | iff { $1 }
-  | json { $1 }
-  | '(' kritiValue ')' { $2 }
-
-path :: { ValueExt }
-path
-  : path_vector { Path (fst $1) (snd $1) }
-
-path_vector :: { (Span, V.Vector Accessor) }
-path_vector
-  : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) NotOptional (unLoc $1) Head) (snd $2))  }
-  | ident { (locate $1, V.singleton (Obj (locate $1) NotOptional (unLoc $1) Head)) }
-  | ident '?' { (locate $1 <> locate $2, V.singleton (Obj (locate $1) Optional (unLoc $1) Head)) }
-
-path_tail :: { (Span, V.Vector Accessor) }
-path_tail
-  : path_element { (locate $1, V.singleton $1) } 
-  | path_tail path_element { (fst $1 <> locate $2, V.snoc (snd $1) $2) }
-
-path_element :: { Accessor }
-path_element
-  : '.' ident { Obj (locate $1 <> locate $2) NotOptional (unLoc $2) DotAccess }
-  | '?' '.' ident { Obj (locate $1 <> locate $3) Optional (unLoc $3) DotAccess }
-  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) NotOptional (unLoc $3) BracketAccess }
-  | '?' '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $6) Optional (unLoc $4) BracketAccess }
-  | '[' int ']' { Arr (locate $1 <> locate $3) NotOptional (unLoc $2) }
-  | '?' '[' int ']' { Arr (locate $1 <> locate $4) Optional (unLoc $3) }
-
-operator :: { ValueExt }
-operator
-  : kritiValue '>'  kritiValue { Gt (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '<'  kritiValue { Lt (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '>=' kritiValue { Gte (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '<=' kritiValue { Lte (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '!=' kritiValue { NotEq (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '==' kritiValue { Eq (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '&&' kritiValue { And (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '||' kritiValue { Or (locate $1 <> locate $3) $1 $3 }
-  | kritiValue 'in' kritiValue { In (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '??' kritiValue { Defaulting (locate $1 <> locate $3) $1 $3 }
-
-function :: { ValueExt }
-function
-  : ident kritiValue { Function (locate $1) (unLoc $1) $2 }
-
-range :: { ValueExt }
-range
-  : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}' { Range (locate $1 <> locate $12) (fmap unLoc $3) (unLoc $5) (snd $7) $9 }
-
-mident :: { Maybe (Loc T.Text) }
-mident
-  : '_' { Nothing }
-  | ident { Just $1 }
-
-iff :: { ValueExt }
-iff
-  : '{{' 'if' kritiValue '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
-
-------------------------------------------------------------------------
--- JSON
-
-json :: { ValueExt }
-json
-  : string_lit { $1 }
+atom :: { ValueExt }
+  : var { $1 }
+  | string_lit { $1 }
   | num_lit { $1 }
   | boolean { $1 }
   | null { $1 }
   | array { $1 }
   | object { $1 }
+  | field { $1 }
+  | iff { $1 }
+  | range { $1 }
+  | '{{' var '}}' { $2 }
+  | '{{' field '}}' { $2 }
+  | '(' expr ')' { $2 }
+
+------------------------------------------------------------------------
+
+var :: { ValueExt }
+  : ident { Var (locate $1) (unLoc $1) }
+
+------------------------------------------------------------------------
 
 string_lit :: { ValueExt }
-string_lit
   : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
   | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
-  
+
+------------------------------------------------------------------------
+
 string_template :: { V.Vector ValueExt }
-string_template
   -- Template to the right
   : string_template '{{' template '}}' { V.snoc $1 $3 }
   -- String Lit to the right
@@ -189,49 +144,50 @@ string_template
   | string { V.singleton (String (locate $1) (unLoc $1))}
 
 template :: { ValueExt }
-template
-  : path { $1 }
-  | function { $1 }
-  | boolean { $1 }
+  : boolean { $1 }
   | num_lit { $1 }
-  | operator { $1 }
+  | var     { $1 }
+  | field { $1 }
+  | apps atom %prec TIGHT { Ap (locate $1 <> locate $2) $1 $2 }
+
+------------------------------------------------------------------------
 
 num_lit :: { ValueExt }
-num_lit
   : number { Number (locate $1) (unLoc $1)  }
-  | int %prec LOW { Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0) }
+  | int { Number (locate $1) (S.scientific (fromIntegral (unLoc $1)) 0) }
+
+------------------------------------------------------------------------
 
 boolean :: { ValueExt }
-boolean
   : 'true'  { Boolean (locate $1) (unLoc $1) }
   | 'false' { Boolean (locate $1) (unLoc $1) }
 
+------------------------------------------------------------------------
+
 null :: { ValueExt }
-null
   : 'null'  { Null (locate $1) }
 
+------------------------------------------------------------------------
+
 array :: { ValueExt }
-array
   : '[' list_elements ']' { Array (locate $1 <> locate $3) $2 }
   | '[' ']'               { Array (locate $1 <> locate $2) V.empty }
 
 list_elements :: { V.Vector ValueExt }
-list_elements
   : expr { V.singleton $1 }
   | list_elements ',' expr { V.snoc $1 $3 }
 
+------------------------------------------------------------------------
+
 object :: { ValueExt }
-object
   : '{' object_fields '}' { Object (locate $1 <> locate $3) (Compat.fromList $2) }
   | '{' '}'               { Object (locate $1 <> locate $2) mempty }
 
 object_fields :: { [(T.Text, ValueExt)] }
-object_fields
   : object_field { [$1] }
   | object_fields ',' object_field { $3 : $1 }
 
 object_field :: { (T.Text, ValueExt) }
-object_field
   : 's"' object_key '"e' ':' expr { (unLoc $2, $5) }
   | 's"' '"e' ':' expr { ("", $4) }
 
@@ -239,9 +195,38 @@ object_field
 -- 'object_key' has a recursive production rule to smoosh those
 -- fragments together.
 object_key :: { Loc T.Text }
-object_key
   : object_key string { $1 <> $2 }
   | string { $1 }
+
+------------------------------------------------------------------------
+
+field :: { ValueExt }
+  : atom '.' ident { Field (locate $1 <> locate $3) NotOptional $1 (String (locate $3) (unLoc $3)) }
+  | atom '?' '.' ident { Field (locate $1 <> locate $4) Optional $1 (String (locate $4) (unLoc $4)) }
+  | atom '[' '\'' string_template '\''  ']' { Field (locate $1 <> locate $6) NotOptional $1 (StringTem (locate $3 <> locate $5) $4) }
+  | atom '[' expr ']' { Field (locate $1 <> locate $4) NotOptional $1  $3 }
+  | atom '?' '[' '\'' ident '\''  ']' { Field (locate $1 <> locate $7) Optional $1 (String (locate $5) (unLoc $5)) }
+  | atom '?' '[' '\'' string_template '\''  ']' { Field (locate $1 <> locate $7) Optional $1 (StringTem (locate $4 <> locate $6) $5) }
+  | atom '?' '[' expr ']' { Field (locate $1 <> locate $5) Optional $1 $4 }
+
+------------------------------------------------------------------------
+
+iff :: { ValueExt }
+  : '{{' 'if' expr '}}' apps '{{' 'else' '}}' apps '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
+
+------------------------------------------------------------------------
+
+-- TODO: switch 'app' to 'expr'
+range :: { ValueExt }
+range
+  : '{{' 'range' mident ',' ident ':=' expr '}}' apps '{{' 'end' '}}' { Range (locate $1 <> locate $12) (fmap unLoc $3) (unLoc $5) $7 $9 }
+
+mident :: { Maybe (Loc T.Text) }
+mident
+  : '_' { Nothing }
+  | ident { Just $1 }
+
+------------------------------------------------------------------------
 
 {
 failure :: [Token] -> Parser a

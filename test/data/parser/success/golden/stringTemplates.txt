@@ -34,7 +34,7 @@ Array
                     }
                 }
             ) "hello"
-        , Path
+        , Var
             ( Span
                 { start = AlexSourcePos
                     { line = 1
@@ -45,20 +45,7 @@ Array
                     , col = 16
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 1
-                        , col = 11
-                        }
-                    , end = AlexSourcePos
-                        { line = 1
-                        , col = 16
-                        }
-                    }
-                ) NotOptional "world" Head
-            ]
+            ) "world"
         ]
     , StringTem
         ( Span
@@ -84,7 +71,7 @@ Array
                     }
                 }
             ) "hello"
-        , Path
+        , Var
             ( Span
                 { start = AlexSourcePos
                     { line = 2
@@ -95,20 +82,7 @@ Array
                     , col = 17
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 2
-                        , col = 11
-                        }
-                    , end = AlexSourcePos
-                        { line = 2
-                        , col = 17
-                        }
-                    }
-                ) NotOptional "$world" Head
-            ]
+            ) "$world"
         ]
     , StringTem
         ( Span
@@ -134,7 +108,7 @@ Array
                     }
                 }
             ) "foo"
-        , Path
+        , Field
             ( Span
                 { start = AlexSourcePos
                     { line = 3
@@ -145,8 +119,8 @@ Array
                     , col = 17
                     }
                 }
-            )
-            [ Obj
+            ) NotOptional
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
@@ -157,20 +131,21 @@ Array
                         , col = 13
                         }
                     }
-                ) NotOptional "$bar" Head
-            , Obj
+                ) "$bar"
+            )
+            ( String
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
-                        , col = 13
+                        , col = 14
                         }
                     , end = AlexSourcePos
                         { line = 3
                         , col = 17
                         }
                     }
-                ) NotOptional "baz" DotAccess
-            ]
+                ) "baz"
+            )
         , String
             ( Span
                 { start = AlexSourcePos
@@ -183,7 +158,7 @@ Array
                     }
                 }
             ) "/"
-        , Path
+        , Var
             ( Span
                 { start = AlexSourcePos
                     { line = 3
@@ -194,20 +169,7 @@ Array
                     , col = 26
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 3
-                        , col = 22
-                        }
-                    , end = AlexSourcePos
-                        { line = 3
-                        , col = 26
-                        }
-                    }
-                ) NotOptional "$qux" Head
-            ]
+            ) "$qux"
         ]
     , StringTem
         ( Span
@@ -221,7 +183,7 @@ Array
                 }
             }
         )
-        [ Path
+        [ Field
             ( Span
                 { start = AlexSourcePos
                     { line = 4
@@ -232,8 +194,8 @@ Array
                     , col = 16
                     }
                 }
-            )
-            [ Obj
+            ) NotOptional
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 4
@@ -244,20 +206,34 @@ Array
                         , col = 9
                         }
                     }
-                ) NotOptional "obj" Head
-            , Obj
+                ) "obj"
+            )
+            ( StringTem
                 ( Span
                     { start = AlexSourcePos
                         { line = 4
-                        , col = 9
+                        , col = 10
                         }
                     , end = AlexSourcePos
                         { line = 4
-                        , col = 16
+                        , col = 15
                         }
                     }
-                ) NotOptional "x-y" BracketAccess
-            ]
+                )
+                [ String
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 4
+                            , col = 11
+                            }
+                        , end = AlexSourcePos
+                            { line = 4
+                            , col = 14
+                            }
+                        }
+                    ) "x-y"
+                ]
+            )
         ]
     , StringTem
         ( Span
@@ -271,7 +247,7 @@ Array
                 }
             }
         )
-        [ Path
+        [ Field
             ( Span
                 { start = AlexSourcePos
                     { line = 5
@@ -282,8 +258,8 @@ Array
                     , col = 16
                     }
                 }
-            )
-            [ Obj
+            ) NotOptional
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 5
@@ -294,20 +270,34 @@ Array
                         , col = 9
                         }
                     }
-                ) NotOptional "obj" Head
-            , Obj
+                ) "obj"
+            )
+            ( StringTem
                 ( Span
                     { start = AlexSourcePos
                         { line = 5
-                        , col = 9
+                        , col = 10
                         }
                     , end = AlexSourcePos
                         { line = 5
-                        , col = 16
+                        , col = 15
                         }
                     }
-                ) NotOptional "x y" BracketAccess
-            ]
+                )
+                [ String
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 5
+                            , col = 11
+                            }
+                        , end = AlexSourcePos
+                            { line = 5
+                            , col = 14
+                            }
+                        }
+                    ) "x y"
+                ]
+            )
         ]
     , StringTem
         ( Span
@@ -321,7 +311,7 @@ Array
                 }
             }
         )
-        [ Path
+        [ Field
             ( Span
                 { start = AlexSourcePos
                     { line = 6
@@ -332,8 +322,8 @@ Array
                     , col = 16
                     }
                 }
-            )
-            [ Obj
+            ) NotOptional
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 6
@@ -344,20 +334,34 @@ Array
                         , col = 9
                         }
                     }
-                ) NotOptional "obj" Head
-            , Obj
+                ) "obj"
+            )
+            ( StringTem
                 ( Span
                     { start = AlexSourcePos
                         { line = 6
-                        , col = 9
+                        , col = 10
                         }
                     , end = AlexSourcePos
                         { line = 6
-                        , col = 16
+                        , col = 15
                         }
                     }
-                ) NotOptional "x y" BracketAccess
-            ]
+                )
+                [ String
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 6
+                            , col = 11
+                            }
+                        , end = AlexSourcePos
+                            { line = 6
+                            , col = 14
+                            }
+                        }
+                    ) "x y"
+                ]
+            )
         , String
             ( Span
                 { start = AlexSourcePos
@@ -481,7 +485,7 @@ Array
                     }
                 }
             ) "bar-"
-        , Path
+        , Field
             ( Span
                 { start = AlexSourcePos
                     { line = 9
@@ -492,8 +496,8 @@ Array
                     , col = 15
                     }
                 }
-            )
-            [ Obj
+            ) NotOptional
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 9
@@ -504,20 +508,21 @@ Array
                         , col = 11
                         }
                     }
-                ) NotOptional "$" Head
-            , Obj
+                ) "$"
+            )
+            ( String
                 ( Span
                     { start = AlexSourcePos
                         { line = 9
-                        , col = 11
+                        , col = 12
                         }
                     , end = AlexSourcePos
                         { line = 9
                         , col = 15
                         }
                     }
-                ) NotOptional "baz" DotAccess
-            ]
+                ) "baz"
+            )
         , String
             ( Span
                 { start = AlexSourcePos
@@ -641,7 +646,7 @@ Array
                 }
             }
         )
-        [ Path
+        [ Field
             ( Span
                 { start = AlexSourcePos
                     { line = 12
@@ -652,8 +657,8 @@ Array
                     , col = 24
                     }
                 }
-            )
-            [ Obj
+            ) NotOptional
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 12
@@ -664,19 +669,33 @@ Array
                         , col = 9
                         }
                     }
-                ) NotOptional "obj" Head
-            , Obj
+                ) "obj"
+            )
+            ( StringTem
                 ( Span
                     { start = AlexSourcePos
                         { line = 12
-                        , col = 9
+                        , col = 10
                         }
                     , end = AlexSourcePos
                         { line = 12
-                        , col = 24
+                        , col = 23
                         }
                     }
-                ) NotOptional "a b cde-fgh" BracketAccess
-            ]
+                )
+                [ String
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 12
+                            , col = 11
+                            }
+                        , end = AlexSourcePos
+                            { line = 12
+                            , col = 22
+                            }
+                        }
+                    ) "a b cde-fgh"
+                ]
+            )
         ]
     ]

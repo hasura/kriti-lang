@@ -1,85 +1,26 @@
-%right 'in'
-%right LOW
-%right ']'
 %nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' ident
 %left '??'
 %left 'not' 'escapeUri'
+%right LOW
+%right HIGH
 
 expr
-  : json
-  | kriti
+  : expr atom %prec LOW
+  | atom %prec HIGH
 
-kriti
-  : '{{' path '}}'
-  | '{{' operator '}}'
-  | '{{' function '}}'
-  | '(' kriti ')'
-  | range
-  | iff
-
-kritiValue
-  : path
-  | operator
-  | function
-  | range
-  | iff
-  | json
-  | '(' kritiValue ')'
-
-path
-  : path_vector
-
-path_vector
-  : ident path_tail
-  | ident
-  | ident '?'
-
-path_tail
-  : path_element
-  | path_tail path_element
-
-path_element
-  : '.' ident
-  | '?' '.' ident
-  | '[' '\'' string '\'' ']'
-  | '?' '[' '\'' string '\'' ']'
-  | '[' int ']'
-  | '?' '[' int ']'
-
-operator
-  : kritiValue '>' kritiValue
-  | kritiValue '<' kritiValue
-  | kritiValue '>=' kritiValue
-  | kritiValue '<=' kritiValue
-  | kritiValue '!=' kritiValue
-  | kritiValue '==' kritiValue
-  | kritiValue '&&' kritiValue
-  | kritiValue '||' kritiValue
-  | kritiValue 'in' kritiValue
-  | kritiValue '??' kritiValue
-
-function
-  : 'escapeUri' kritiValue
-  | 'not' kritiValue
-  | ident kritiValue
-
-range
-  : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}'
-
-mident
-  : '_'
-  | ident
-
-iff
-  : '{{' 'if' kritiValue '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}'
-
-json
-  : string_lit
+atom
+  : var
+  | string_lit
   | num_lit
   | boolean
   | null
   | array
   | object
+  | field
+  | arrayLookup
+
+var
+  : ident
 
 string_lit
   : 's"' string_template '"e'
@@ -92,15 +33,12 @@ string_template
   | string
 
 template
-  : path
-  | function
-  | boolean
+  : boolean
   | num_lit
-  | operator
 
 num_lit
   : number
-  | int %prec LOW
+  | int
 
 boolean
   : 'true'
@@ -132,3 +70,11 @@ object_field
 object_key
   : object_key string
   | string
+
+field
+  : expr '.' ident
+  | expr '?' '.' ident
+
+arrayLookup
+  : expr '[' int ']'
+  | expr '?' '[' int ']'
