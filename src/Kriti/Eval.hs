@@ -118,12 +118,6 @@ evalWith funcMap = \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
       p' -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode p' <> "' is not a boolean."
-  Not sp t1 -> do
-    src <- asks fst
-    v1 <- eval t1
-    case v1 of
-      J.Bool p -> pure $ J.Bool $ not p
-      _ -> throwError $ TypeError src sp $ T.pack $ show t1 <> "is not a boolean."
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res

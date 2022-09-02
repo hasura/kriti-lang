@@ -47,7 +47,8 @@ basicFuncMap =
       ("fromPairs", fromPairsF),
       ("toPairs", toPairsF),
       ("removeNulls", removeNullsF),
-      ("concat", concatF)
+      ("concat", concatF),
+      ("not", notF)
     ]
 
 emptyF :: KritiFunc
@@ -143,6 +144,11 @@ concatF = parserToFunc $ J.withArray "Array" \as -> do
       s = J.String . fold <$> traverse (J.withText "Nested String" pure) l
       o = J.Object . fold . reverse <$> traverse (J.withObject "Nested Object" pure) l
   a <|> s <|> o
+
+notF :: KritiFunc
+notF = parserToFunc $ J.withBool "Bool" \case
+   False -> pure $ J.Bool True
+   True -> pure $ J.Bool False
 
 -- | Converts an Aeson Parser into a KritiFunc
 --   The value-to-parser argument's type matches the `parseJson` type from FromJSON
