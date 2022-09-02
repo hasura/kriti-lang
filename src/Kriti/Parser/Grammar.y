@@ -41,7 +41,6 @@ string      { TokStringLit $$ }
 'end'       { TokIdentifier (Loc $$ "end") }
 'null'      { TokIdentifier (Loc $$ "null" ) }
 'range'     { TokIdentifier (Loc $$ "range") }
-'escapeUri' { TokIdentifier (Loc $$ "escapeUri") }
 'in'        { TokIdentifier (Loc $$ "in") }
 ident       { TokIdentifier $$ }
 
@@ -75,13 +74,9 @@ ident       { TokIdentifier $$ }
 %right ']'
 
 %nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
-%nonassoc ident
 
 %left '??' 
-%left 'escapeUri' 
-
-%right LOOSE
-%right TIGHT
+%left ident 
 
 %%
 
@@ -150,8 +145,7 @@ operator
 
 function :: { ValueExt }
 function
-  : 'escapeUri' kritiValue { buildFunc EscapeURI (locate $1) $2 }
-  | ident kritiValue { Function (locate $1) (unLoc $1) $2 }
+  : ident kritiValue { Function (locate $1) (unLoc $1) $2 }
 
 range :: { ValueExt }
 range

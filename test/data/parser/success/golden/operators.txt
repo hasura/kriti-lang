@@ -710,7 +710,7 @@ Array
                 }
             ) False
         )
-    , Function
+    , Defaulting
         ( Span
             { start = AlexSourcePos
                 { line = 12
@@ -718,22 +718,22 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 12
-                , col = 9
+                , col = 23
                 }
             }
-        ) "not"
-        ( Defaulting
+        )
+        ( Function
             ( Span
                 { start = AlexSourcePos
                     { line = 12
-                    , col = 10
+                    , col = 6
                     }
                 , end = AlexSourcePos
                     { line = 12
-                    , col = 23
+                    , col = 9
                     }
                 }
-            )
+            ) "not"
             ( Boolean
                 ( Span
                     { start = AlexSourcePos
@@ -747,18 +747,18 @@ Array
                     }
                 ) True
             )
-            ( Boolean
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 12
-                        , col = 18
-                        }
-                    , end = AlexSourcePos
-                        { line = 12
-                        , col = 23
-                        }
+        )
+        ( Boolean
+            ( Span
+                { start = AlexSourcePos
+                    { line = 12
+                    , col = 18
                     }
-                ) False
-            )
+                , end = AlexSourcePos
+                    { line = 12
+                    , col = 23
+                    }
+                }
+            ) False
         )
     ]

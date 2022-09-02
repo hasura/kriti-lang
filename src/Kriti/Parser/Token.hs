@@ -152,7 +152,6 @@ data ValueExt
   | In Span ValueExt ValueExt
   | Defaulting Span ValueExt ValueExt
   | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
-  | EscapeURI Span ValueExt
   | Function Span T.Text ValueExt
   deriving (Show, Eq, Read, Generic)
 
@@ -178,7 +177,6 @@ instance Located ValueExt where
     In s _ _ -> s
     Defaulting s _ _ -> s
     Range s _ _ _ _ -> s
-    EscapeURI s _ -> s
     Function s _ _ -> s
 
 instance Located Accessor where
@@ -227,7 +225,6 @@ instance Pretty ValueExt where
           indent 2 $ pretty t1,
           "{{" <+> "end" <+> "}}"
         ]
-    EscapeURI _ t1 -> "{{" <+> "escapeUri" <+> pretty t1 <+> "}}"
     Function _ n t1 -> "{{" <+> pretty n <+> " {{" <+> pretty t1 <+> "}} }}"
 
 renderDoc :: Doc ann -> T.Text

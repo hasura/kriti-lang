@@ -28,6 +28,7 @@ import qualified Data.Scientific as S
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Kriti.Error (CustomFunctionError (..))
+import qualified Network.URI as URI
 
 type KritiFunc = J.Value -> Either CustomFunctionError J.Value
 
@@ -44,6 +45,7 @@ basicFuncMap =
       ("toLower", toLowerF),
       ("toUpper", toUpperF),
       ("toTitle", toTitleF),
+      ("escapeUri", escapeUriF),
       ("fromPairs", fromPairsF),
       ("toPairs", toPairsF),
       ("removeNulls", removeNullsF),
@@ -106,6 +108,9 @@ toUpperF = parserToFunc $ J.withText "String" $ pure . J.String . T.toUpper
 toTitleF :: KritiFunc
 toTitleF = parserToFunc $ J.withText "String" $ pure . J.String . T.toTitle
 
+escapeUriF :: KritiFunc
+escapeUriF = parserToFunc $ J.withText "String" $ pure . J.String . T.pack . URI.escapeURIString URI.isUnreserved . T.unpack
+
 -- | Convert an Object like `{ a:b, c:d ... }` to an Array like `[ [a,b], [c,d] ... ]`.
 toPairsF :: KritiFunc
 toPairsF = parserToFunc $ J.withObject "Object" \o -> do
@@ -147,8 +152,8 @@ concatF = parserToFunc $ J.withArray "Array" \as -> do
 
 notF :: KritiFunc
 notF = parserToFunc $ J.withBool "Bool" \case
-   False -> pure $ J.Bool True
-   True -> pure $ J.Bool False
+  False -> pure $ J.Bool True
+  True -> pure $ J.Bool False
 
 -- | Converts an Aeson Parser into a KritiFunc
 --   The value-to-parser argument's type matches the `parseJson` type from FromJSON
