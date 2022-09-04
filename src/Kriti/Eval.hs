@@ -113,10 +113,9 @@ typeOfJSON J.Null = "Null"
 
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
-  Var sp bndr -> do
-    src <- getSource
+  Var _sp bndr -> do
     ctx <- getBindings
-    maybe (throwError (InvalidPath src sp "TODO")) pure $ Compat.lookup bndr ctx
+    maybe (pure J.Null) pure $ Compat.lookup bndr ctx
   Ap sp (Var _ fName) t1 -> do
     src <- getSource
     funcMap <- getAps
@@ -147,25 +146,27 @@ eval = \case
   Array _ xs -> J.Array <$> traverse eval xs
   Field sp opt t1 t2 -> do
     src <- getSource
-    v1 <- eval t1
-    v2 <- eval t2
-    case (v1, v2) of
-      (J.Object km, J.String bndr) -> 
-        let v1' = Compat.lookup bndr km
-        in case opt of
-          Optional -> maybe (pure J.Null) pure v1'
-          NotOptional -> maybe (throwError (InvalidPath src sp bndr)) pure v1'
-      (J.Array arr, J.Number n) -> 
-        case Scientific.toBoundedInteger @Int n of
-          Just i ->
-            let t1' = arr V.!? i
-            in case opt of
-              Optional -> maybe (pure J.Null) pure t1'
-              NotOptional -> maybe (throwError (RangeError src sp)) pure t1'
-          Nothing -> throwError $ TypeError src sp $ "Unexpected Float '" <> T.pack (show n) <> "', expected an integer."
-      (J.Object _, _) -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v2 <> "', expected a string."
-      (J.Array _, _) -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v2 <> "', expected an integer."
-      _ -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v1 <> "' expected an Object or an Array."
+    v1 <- eval t1 `catchError` \case
+       InvalidPath {} | opt == Optional -> pure J.Null
+       err -> throwError err
+    case v1 of
+      J.Object km ->
+        eval t2 >>= \case
+           J.String bndr ->
+             let v1' = Compat.lookup bndr km
+              in maybe (throwError (InvalidPath src sp bndr)) pure v1'
+           v2 -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v2 <> "', expected a string."
+      J.Array arr ->
+        eval t2 >>= \case
+          J.Number n ->
+            case Scientific.toBoundedInteger @Int n of
+              Just i ->
+                let t1' = arr V.!? i
+                 in maybe (throwError (RangeError src sp)) pure t1'
+              Nothing -> throwError $ TypeError src sp $ "Unexpected Float '" <> T.pack (show n) <> "', expected an integer."
+          v2 -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v2 <> "', expected an integer."
+      J.Null | opt == Optional -> pure J.Null
+      _ -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v1 <> "' expected an Object or an Array.!!!"
   Iff sp p t1 t2 -> do
     src <- getSource
     eval p >>= \case
