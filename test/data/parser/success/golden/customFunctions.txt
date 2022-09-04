@@ -1,0 +1,531 @@
+Array
+    ( Span
+        { start = AlexSourcePos
+            { line = 1
+            , col = 1
+            }
+        , end = AlexSourcePos
+            { line = 8
+            , col = 2
+            }
+        }
+    )
+    [ Ap
+        ( Span
+            { start = AlexSourcePos
+                { line = 1
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 1
+                , col = 17
+                }
+            }
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 1
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 1
+                    , col = 10
+                    }
+                }
+            ) "head"
+        )
+        ( StringTem
+            ( Span
+                { start = AlexSourcePos
+                    { line = 1
+                    , col = 11
+                    }
+                , end = AlexSourcePos
+                    { line = 1
+                    , col = 16
+                    }
+                }
+            )
+            [ String
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 1
+                        , col = 12
+                        }
+                    , end = AlexSourcePos
+                        { line = 1
+                        , col = 15
+                        }
+                    }
+                ) "foo"
+            ]
+        )
+    , Ap
+        ( Span
+            { start = AlexSourcePos
+                { line = 2
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 2
+                , col = 29
+                }
+            }
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 2
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 2
+                    , col = 9
+                    }
+                }
+            ) "not"
+        )
+        ( Ap
+            ( Span
+                { start = AlexSourcePos
+                    { line = 2
+                    , col = 11
+                    }
+                , end = AlexSourcePos
+                    { line = 2
+                    , col = 28
+                    }
+                }
+            )
+            ( Var
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 2
+                        , col = 11
+                        }
+                    , end = AlexSourcePos
+                        { line = 2
+                        , col = 16
+                        }
+                    }
+                ) "empty"
+            )
+            ( Ap
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 2
+                        , col = 18
+                        }
+                    , end = AlexSourcePos
+                        { line = 2
+                        , col = 27
+                        }
+                    }
+                )
+                ( Var
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 2
+                            , col = 18
+                            }
+                        , end = AlexSourcePos
+                            { line = 2
+                            , col = 22
+                            }
+                        }
+                    ) "tail"
+                )
+                ( StringTem
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 2
+                            , col = 23
+                            }
+                        , end = AlexSourcePos
+                            { line = 2
+                            , col = 26
+                            }
+                        }
+                    )
+                    [ String
+                        ( Span
+                            { start = AlexSourcePos
+                                { line = 2
+                                , col = 24
+                                }
+                            , end = AlexSourcePos
+                                { line = 2
+                                , col = 25
+                                }
+                            }
+                        ) "f"
+                    ]
+                )
+            )
+        )
+    , Ap
+        ( Span
+            { start = AlexSourcePos
+                { line = 3
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 3
+                , col = 20
+                }
+            }
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 3
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 3
+                    , col = 10
+                    }
+                }
+            ) "size"
+        )
+        ( Field
+            ( Span
+                { start = AlexSourcePos
+                    { line = 3
+                    , col = 11
+                    }
+                , end = AlexSourcePos
+                    { line = 3
+                    , col = 19
+                    }
+                }
+            ) NotOptional
+            ( Var
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 3
+                        , col = 11
+                        }
+                    , end = AlexSourcePos
+                        { line = 3
+                        , col = 16
+                        }
+                    }
+                ) "$path"
+            )
+            ( Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 3
+                        , col = 17
+                        }
+                    , end = AlexSourcePos
+                        { line = 3
+                        , col = 18
+                        }
+                    }
+                ) 0.0
+            )
+        )
+    , Ap
+        ( Span
+            { start = AlexSourcePos
+                { line = 4
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 4
+                , col = 34
+                }
+            }
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 4
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 4
+                    , col = 13
+                    }
+                }
+            ) "inverse"
+        )
+        ( Array
+            ( Span
+                { start = AlexSourcePos
+                    { line = 4
+                    , col = 14
+                    }
+                , end = AlexSourcePos
+                    { line = 4
+                    , col = 33
+                    }
+                }
+            )
+            [ Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 15
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 16
+                        }
+                    }
+                ) 1.0
+            , Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 17
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 18
+                        }
+                    }
+                ) 2.0
+            , Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 19
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 20
+                        }
+                    }
+                ) 3.0
+            , Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 21
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 22
+                        }
+                    }
+                ) 4.0
+            , Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 23
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 24
+                        }
+                    }
+                ) 5.0
+            , Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 25
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 26
+                        }
+                    }
+                ) 6.0
+            , Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 27
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 28
+                        }
+                    }
+                ) 7.0
+            , Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 29
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 30
+                        }
+                    }
+                ) 8.0
+            , Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 31
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 32
+                        }
+                    }
+                ) 9.0
+            ]
+        )
+    , Ap
+        ( Span
+            { start = AlexSourcePos
+                { line = 5
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 5
+                , col = 28
+                }
+            }
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 5
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 5
+                    , col = 13
+                    }
+                }
+            ) "toUpper"
+        )
+        ( StringTem
+            ( Span
+                { start = AlexSourcePos
+                    { line = 5
+                    , col = 14
+                    }
+                , end = AlexSourcePos
+                    { line = 5
+                    , col = 27
+                    }
+                }
+            )
+            [ String
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 5
+                        , col = 15
+                        }
+                    , end = AlexSourcePos
+                        { line = 5
+                        , col = 26
+                        }
+                    }
+                ) "hello world"
+            ]
+        )
+    , Ap
+        ( Span
+            { start = AlexSourcePos
+                { line = 6
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 6
+                , col = 28
+                }
+            }
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 6
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 6
+                    , col = 13
+                    }
+                }
+            ) "toTitle"
+        )
+        ( StringTem
+            ( Span
+                { start = AlexSourcePos
+                    { line = 6
+                    , col = 14
+                    }
+                , end = AlexSourcePos
+                    { line = 6
+                    , col = 27
+                    }
+                }
+            )
+            [ String
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 6
+                        , col = 15
+                        }
+                    , end = AlexSourcePos
+                        { line = 6
+                        , col = 26
+                        }
+                    }
+                ) "hELLO wORLD"
+            ]
+        )
+    , Ap
+        ( Span
+            { start = AlexSourcePos
+                { line = 7
+                , col = 6
+                }
+            , end = AlexSourcePos
+                { line = 7
+                , col = 28
+                }
+            }
+        )
+        ( Var
+            ( Span
+                { start = AlexSourcePos
+                    { line = 7
+                    , col = 6
+                    }
+                , end = AlexSourcePos
+                    { line = 7
+                    , col = 13
+                    }
+                }
+            ) "toLower"
+        )
+        ( StringTem
+            ( Span
+                { start = AlexSourcePos
+                    { line = 7
+                    , col = 14
+                    }
+                , end = AlexSourcePos
+                    { line = 7
+                    , col = 27
+                    }
+                }
+            )
+            [ String
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 7
+                        , col = 15
+                        }
+                    , end = AlexSourcePos
+                        { line = 7
+                        , col = 26
+                        }
+                    }
+                ) "HELLO WORLD"
+            ]
+        )
+    ]

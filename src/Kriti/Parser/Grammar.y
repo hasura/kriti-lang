@@ -88,26 +88,24 @@ ident       { TokIdentifier $$ }
 -- TOP
 
 expr :: { ValueExt }
-  : apps '>' apps { Gt (locate $1 <> locate $3) $1 $3 }
-  | apps '<'  apps { Lt (locate $1 <> locate $3) $1 $3 }
-  | apps '>=' apps { Gte (locate $1 <> locate $3) $1 $3 }
-  | apps '<=' apps { Lte (locate $1 <> locate $3) $1 $3 }
-  | apps '!=' apps { NotEq (locate $1 <> locate $3) $1 $3 }
-  | apps '==' apps { Eq (locate $1 <> locate $3) $1 $3 }
-  | apps '&&' apps { And (locate $1 <> locate $3) $1 $3 }
-  | apps '||' apps { Or (locate $1 <> locate $3) $1 $3 }
-  | apps 'in' apps { In (locate $1 <> locate $3) $1 $3 }
-  | apps '??' apps { Defaulting (locate $1 <> locate $3) $1 $3 }
-  | apps %shift { $1 }
-
-apps :: { ValueExt }
-  : apps atom %prec TIGHT { Ap (locate $1 <> locate $2) $1 $2 }
-  | '{{' apps atom '}}' %prec TIGHT { Ap (locate $2 <> locate $4) $2 $3 }
-  | atom %prec LOOSE { $1 }
+  : expr '>'  expr { Gt (locate $1 <> locate $3) $1 $3 }
+  | expr '<'  expr { Lt (locate $1 <> locate $3) $1 $3 }
+  | expr '>=' expr { Gte (locate $1 <> locate $3) $1 $3 }
+  | expr '<=' expr { Lte (locate $1 <> locate $3) $1 $3 }
+  | expr '!=' expr { NotEq (locate $1 <> locate $3) $1 $3 }
+  | expr '==' expr { Eq (locate $1 <> locate $3) $1 $3 }
+  | expr '&&' expr { And (locate $1 <> locate $3) $1 $3 }
+  | expr '||' expr { Or (locate $1 <> locate $3) $1 $3 }
+  | expr 'in' expr { In (locate $1 <> locate $3) $1 $3 }
+  | expr '??' expr { Defaulting (locate $1 <> locate $3) $1 $3 }
+  | atom { $1 }
+  | var '(' expr ')' %prec TIGHT { Ap (locate $1 <> locate $4) $1 $3 }
+  | '(' expr ')' { $2 }
+  | '{{' expr '}}' { $2 }
 
 atom :: { ValueExt }
   : var { $1 }
-  | string_lit { $1 }
+  | string_template { $1 }
   | num_lit { $1 }
   | boolean { $1 }
   | null { $1 }
@@ -118,7 +116,6 @@ atom :: { ValueExt }
   | range { $1 }
   | '{{' var '}}' { $2 }
   | '{{' field '}}' { $2 }
-  | '(' expr ')' { $2 }
 
 ------------------------------------------------------------------------
 
@@ -127,17 +124,17 @@ var :: { ValueExt }
 
 ------------------------------------------------------------------------
 
-string_lit :: { ValueExt }
-  : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
+string_template :: { ValueExt }
+  : 's"' string_template_ '"e' { StringTem (locate $1 <> $3) $2 }
   | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
 
 ------------------------------------------------------------------------
 
-string_template :: { V.Vector ValueExt }
+string_template_ :: { V.Vector ValueExt }
   -- Template to the right
-  : string_template '{{' template '}}' { V.snoc $1 $3 }
+  : string_template_ '{{' template '}}' { V.snoc $1 $3 }
   -- String Lit to the right
-  | string_template string { V.snoc $1 (String (locate $2) (unLoc $2)) }
+  | string_template_ string { V.snoc $1 (String (locate $2) (unLoc $2)) }
   -- Template Base Case
   | '{{' template '}}' { V.singleton $2 }
   -- String Base Case
@@ -148,7 +145,7 @@ template :: { ValueExt }
   | num_lit { $1 }
   | var     { $1 }
   | field { $1 }
-  | apps atom %prec TIGHT { Ap (locate $1 <> locate $2) $1 $2 }
+  | var '(' expr ')' %prec TIGHT { Ap (locate $1 <> locate $4) $1 $3 }
 
 ------------------------------------------------------------------------
 
@@ -203,23 +200,23 @@ object_key :: { Loc T.Text }
 field :: { ValueExt }
   : atom '.' ident { Field (locate $1 <> locate $3) NotOptional $1 (String (locate $3) (unLoc $3)) }
   | atom '?' '.' ident { Field (locate $1 <> locate $4) Optional $1 (String (locate $4) (unLoc $4)) }
-  | atom '[' '\'' string_template '\''  ']' { Field (locate $1 <> locate $6) NotOptional $1 (StringTem (locate $3 <> locate $5) $4) }
+  | atom '[' '\'' string_template_ '\''  ']' { Field (locate $1 <> locate $6) NotOptional $1 (StringTem (locate $3 <> locate $5) $4) }
   | atom '[' expr ']' { Field (locate $1 <> locate $4) NotOptional $1  $3 }
   | atom '?' '[' '\'' ident '\''  ']' { Field (locate $1 <> locate $7) Optional $1 (String (locate $5) (unLoc $5)) }
-  | atom '?' '[' '\'' string_template '\''  ']' { Field (locate $1 <> locate $7) Optional $1 (StringTem (locate $4 <> locate $6) $5) }
+  | atom '?' '[' '\'' string_template_ '\''  ']' { Field (locate $1 <> locate $7) Optional $1 (StringTem (locate $4 <> locate $6) $5) }
   | atom '?' '[' expr ']' { Field (locate $1 <> locate $5) Optional $1 $4 }
 
 ------------------------------------------------------------------------
 
 iff :: { ValueExt }
-  : '{{' 'if' expr '}}' apps '{{' 'else' '}}' apps '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
+  : '{{' 'if' expr '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
 
 ------------------------------------------------------------------------
 
 -- TODO: switch 'app' to 'expr'
 range :: { ValueExt }
 range
-  : '{{' 'range' mident ',' ident ':=' expr '}}' apps '{{' 'end' '}}' { Range (locate $1 <> locate $12) (fmap unLoc $3) (unLoc $5) $7 $9 }
+  : '{{' 'range' mident ',' ident ':=' expr '}}' expr '{{' 'end' '}}' { Range (locate $1 <> locate $12) (fmap unLoc $3) (unLoc $5) $7 $9 }
 
 mident :: { Maybe (Loc T.Text) }
 mident

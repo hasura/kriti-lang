@@ -18,7 +18,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 1
-                , col = 24
+                , col = 22
                 }
             }
         )
@@ -69,7 +69,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 2
-                , col = 32
+                , col = 30
                 }
             }
         )
@@ -132,7 +132,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 3
-                , col = 27
+                , col = 25
                 }
             }
         )
@@ -196,7 +196,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 4
-                , col = 33
+                , col = 31
                 }
             }
         )
@@ -247,7 +247,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 5
-                , col = 47
+                , col = 48
                 }
             }
         )
@@ -271,7 +271,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 5
-                    , col = 44
+                    , col = 45
                     }
                 }
             )
