@@ -1,9 +1,9 @@
 %right 'in'
 %right LOW
 %right ']'
-%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' ident
+%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||'
 %left '??'
-%left 'not' 'escapeUri'
+%left ident 'not'
 
 expr
   : json
@@ -59,9 +59,8 @@ operator
   | kritiValue '??' kritiValue
 
 function
-  : 'escapeUri' kritiValue
+  : ident '(' kritiValue ')'
   | 'not' kritiValue
-  | ident kritiValue
 
 range
   : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}'
