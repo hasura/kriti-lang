@@ -1,8 +1,9 @@
 {
     "array":
-        {{ toPairs
+        {{ toPairs(
             { "a" : "b",
               "c" : "d"
             }
+	    )
         }}
 }
