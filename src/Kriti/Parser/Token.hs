@@ -149,7 +149,7 @@ data ValueExt
   -- | Variables.
   | Var Span T.Text
   | StringTem Span (V.Vector ValueExt)
-  -- | Field lookup in an Object.
+  -- | Index into an Object.
   | Field Span Optionality ValueExt ValueExt 
   | Iff Span ValueExt ValueExt ValueExt
   | Eq Span ValueExt ValueExt

@@ -30,11 +30,11 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 2
-                , col = 18
+                , col = 14
                 }
             }
         ) NotOptional
-        ( Field
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 2
@@ -42,24 +42,24 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 2
-                    , col = 14
+                    , col = 10
+                    }
+                }
+            ) "$foo"
+        )
+        ( Field
+            ( Span
+                { start = AlexSourcePos
+                    { line = 2
+                    , col = 11
+                    }
+                , end = AlexSourcePos
+                    { line = 2
+                    , col = 18
                     }
                 }
             ) NotOptional
             ( Var
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 2
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 2
-                        , col = 10
-                        }
-                    }
-                ) "$foo"
-            )
-            ( String
                 ( Span
                     { start = AlexSourcePos
                         { line = 2
@@ -72,19 +72,19 @@ Array
                     }
                 ) "bar"
             )
-        )
-        ( String
-            ( Span
-                { start = AlexSourcePos
-                    { line = 2
-                    , col = 15
+            ( Var
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 2
+                        , col = 15
+                        }
+                    , end = AlexSourcePos
+                        { line = 2
+                        , col = 18
+                        }
                     }
-                , end = AlexSourcePos
-                    { line = 2
-                    , col = 18
-                    }
-                }
-            ) "baz"
+                ) "baz"
+            )
         )
     , Field
         ( Span
@@ -94,11 +94,11 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 3
-                , col = 25
+                , col = 19
                 }
             }
         ) NotOptional
-        ( Field
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 3
@@ -106,62 +106,49 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 3
-                    , col = 21
+                    , col = 10
                     }
                 }
-            ) NotOptional
-            ( Var
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 3
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 3
-                        , col = 10
-                        }
-                    }
-                ) "$foo"
-            )
-            ( StringTem
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 3
-                        , col = 11
-                        }
-                    , end = AlexSourcePos
-                        { line = 3
-                        , col = 20
-                        }
-                    }
-                )
-                [ String
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 3
-                            , col = 12
-                            }
-                        , end = AlexSourcePos
-                            { line = 3
-                            , col = 19
-                            }
-                        }
-                    ) "bar baz"
-                ]
-            )
+            ) "$foo"
         )
-        ( String
+        ( Field
             ( Span
                 { start = AlexSourcePos
                     { line = 3
-                    , col = 22
+                    , col = 12
                     }
                 , end = AlexSourcePos
                     { line = 3
                     , col = 25
                     }
                 }
-            ) "qux"
+            ) NotOptional
+            ( String
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 3
+                        , col = 12
+                        }
+                    , end = AlexSourcePos
+                        { line = 3
+                        , col = 19
+                        }
+                    }
+                ) "bar baz"
+            )
+            ( Var
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 3
+                        , col = 22
+                        }
+                    , end = AlexSourcePos
+                        { line = 3
+                        , col = 25
+                        }
+                    }
+                ) "qux"
+            )
         )
     , Field
         ( Span
@@ -171,11 +158,11 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 4
-                , col = 22
+                , col = 12
                 }
             }
         ) NotOptional
-        ( Field
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 4
@@ -183,61 +170,48 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 4
-                    , col = 19
+                    , col = 10
+                    }
+                }
+            ) "$foo"
+        )
+        ( Field
+            ( Span
+                { start = AlexSourcePos
+                    { line = 4
+                    , col = 11
+                    }
+                , end = AlexSourcePos
+                    { line = 4
+                    , col = 15
                     }
                 }
             ) NotOptional
+            ( Number
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 4
+                        , col = 11
+                        }
+                    , end = AlexSourcePos
+                        { line = 4
+                        , col = 12
+                        }
+                    }
+                ) 1.0
+            )
             ( Field
                 ( Span
                     { start = AlexSourcePos
                         { line = 4
-                        , col = 6
+                        , col = 14
                         }
                     , end = AlexSourcePos
                         { line = 4
-                        , col = 16
+                        , col = 18
                         }
                     }
                 ) NotOptional
-                ( Field
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 4
-                            , col = 6
-                            }
-                        , end = AlexSourcePos
-                            { line = 4
-                            , col = 13
-                            }
-                        }
-                    ) NotOptional
-                    ( Var
-                        ( Span
-                            { start = AlexSourcePos
-                                { line = 4
-                                , col = 6
-                                }
-                            , end = AlexSourcePos
-                                { line = 4
-                                , col = 10
-                                }
-                            }
-                        ) "$foo"
-                    )
-                    ( Number
-                        ( Span
-                            { start = AlexSourcePos
-                                { line = 4
-                                , col = 11
-                                }
-                            , end = AlexSourcePos
-                                { line = 4
-                                , col = 12
-                                }
-                            }
-                        ) 1.0
-                    )
-                )
                 ( Number
                     ( Span
                         { start = AlexSourcePos
@@ -251,33 +225,46 @@ Array
                         }
                     ) 0.0
                 )
-            )
-            ( Number
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 4
-                        , col = 17
+                ( Field
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 4
+                            , col = 17
+                            }
+                        , end = AlexSourcePos
+                            { line = 4
+                            , col = 22
+                            }
                         }
-                    , end = AlexSourcePos
-                        { line = 4
-                        , col = 18
-                        }
-                    }
-                ) 3.0
+                    ) NotOptional
+                    ( Number
+                        ( Span
+                            { start = AlexSourcePos
+                                { line = 4
+                                , col = 17
+                                }
+                            , end = AlexSourcePos
+                                { line = 4
+                                , col = 18
+                                }
+                            }
+                        ) 3.0
+                    )
+                    ( Var
+                        ( Span
+                            { start = AlexSourcePos
+                                { line = 4
+                                , col = 20
+                                }
+                            , end = AlexSourcePos
+                                { line = 4
+                                , col = 22
+                                }
+                            }
+                        ) "ok"
+                    )
+                )
             )
-        )
-        ( String
-            ( Span
-                { start = AlexSourcePos
-                    { line = 4
-                    , col = 20
-                    }
-                , end = AlexSourcePos
-                    { line = 4
-                    , col = 22
-                    }
-                }
-            ) "ok"
         )
     , Field
         ( Span
@@ -304,7 +291,7 @@ Array
                 }
             ) "$foo"
         )
-        ( String
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 5
@@ -325,7 +312,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 6
-                , col = 18
+                , col = 16
                 }
             }
         ) Optional
@@ -342,31 +329,18 @@ Array
                 }
             ) "$foo"
         )
-        ( StringTem
+        ( String
             ( Span
                 { start = AlexSourcePos
                     { line = 6
-                    , col = 12
+                    , col = 13
                     }
                 , end = AlexSourcePos
                     { line = 6
-                    , col = 17
+                    , col = 16
                     }
                 }
-            )
-            [ String
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 6
-                        , col = 13
-                        }
-                    , end = AlexSourcePos
-                        { line = 6
-                        , col = 16
-                        }
-                    }
-                ) "bar"
-            ]
+            ) "bar"
         )
     , Field
         ( Span
@@ -376,7 +350,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 7
-                , col = 14
+                , col = 13
                 }
             }
         ) Optional
@@ -414,11 +388,11 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 8
-                , col = 19
+                , col = 13
                 }
             }
         ) Optional
-        ( Field
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 8
@@ -426,23 +400,23 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 8
-                    , col = 14
+                    , col = 10
+                    }
+                }
+            ) "$foo"
+        )
+        ( Field
+            ( Span
+                { start = AlexSourcePos
+                    { line = 8
+                    , col = 12
+                    }
+                , end = AlexSourcePos
+                    { line = 8
+                    , col = 19
                     }
                 }
             ) Optional
-            ( Var
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 8
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 8
-                        , col = 10
-                        }
-                    }
-                ) "$foo"
-            )
             ( Number
                 ( Span
                     { start = AlexSourcePos
@@ -456,18 +430,18 @@ Array
                     }
                 ) 1.0
             )
-        )
-        ( String
-            ( Span
-                { start = AlexSourcePos
-                    { line = 8
-                    , col = 16
+            ( Var
+                ( Span
+                    { start = AlexSourcePos
+                        { line = 8
+                        , col = 16
+                        }
+                    , end = AlexSourcePos
+                        { line = 8
+                        , col = 19
+                        }
                     }
-                , end = AlexSourcePos
-                    { line = 8
-                    , col = 19
-                    }
-                }
-            ) "baz"
+                ) "baz"
+            )
         )
     ]

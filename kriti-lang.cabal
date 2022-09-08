@@ -53,6 +53,7 @@ common common-libraries
     , utf8-string
     , optparse-applicative
     , prettyprinter
+    , transformers
 
 -------------------------------------------------------------------------------
 

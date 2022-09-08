@@ -197,7 +197,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 3
-                    , col = 19
+                    , col = 18
                     }
                 }
             ) NotOptional

@@ -36,11 +36,11 @@ Object
                                     }
                                 , end = AlexSourcePos
                                     { line = 3
-                                    , col = 25
+                                    , col = 21
                                     }
                                 }
                             ) NotOptional
-                            ( Field
+                            ( Var
                                 ( Span
                                     { start = AlexSourcePos
                                         { line = 3
@@ -48,24 +48,24 @@ Object
                                         }
                                     , end = AlexSourcePos
                                         { line = 3
-                                        , col = 21
+                                        , col = 15
+                                        }
+                                    }
+                                ) "$"
+                            )
+                            ( Field
+                                ( Span
+                                    { start = AlexSourcePos
+                                        { line = 3
+                                        , col = 16
+                                        }
+                                    , end = AlexSourcePos
+                                        { line = 3
+                                        , col = 25
                                         }
                                     }
                                 ) NotOptional
                                 ( Var
-                                    ( Span
-                                        { start = AlexSourcePos
-                                            { line = 3
-                                            , col = 14
-                                            }
-                                        , end = AlexSourcePos
-                                            { line = 3
-                                            , col = 15
-                                            }
-                                        }
-                                    ) "$"
-                                )
-                                ( String
                                     ( Span
                                         { start = AlexSourcePos
                                             { line = 3
@@ -78,19 +78,19 @@ Object
                                         }
                                     ) "event"
                                 )
-                            )
-                            ( String
-                                ( Span
-                                    { start = AlexSourcePos
-                                        { line = 3
-                                        , col = 22
+                                ( Var
+                                    ( Span
+                                        { start = AlexSourcePos
+                                            { line = 3
+                                            , col = 22
+                                            }
+                                        , end = AlexSourcePos
+                                            { line = 3
+                                            , col = 25
+                                            }
                                         }
-                                    , end = AlexSourcePos
-                                        { line = 3
-                                        , col = 25
-                                        }
-                                    }
-                                ) "age"
+                                    ) "age"
+                                )
                             )
                         )
                     ,
@@ -152,11 +152,11 @@ Object
                                             }
                                         , end = AlexSourcePos
                                             { line = 6
-                                            , col = 41
+                                            , col = 25
                                             }
                                         }
                                     ) NotOptional
-                                    ( Field
+                                    ( Var
                                         ( Span
                                             { start = AlexSourcePos
                                                 { line = 6
@@ -164,50 +164,37 @@ Object
                                                 }
                                             , end = AlexSourcePos
                                                 { line = 6
+                                                , col = 19
+                                                }
+                                            }
+                                        ) "$"
+                                    )
+                                    ( Field
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 6
+                                                , col = 20
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 6
                                                 , col = 32
                                                 }
                                             }
                                         ) NotOptional
-                                        ( Field
+                                        ( Var
                                             ( Span
                                                 { start = AlexSourcePos
                                                     { line = 6
-                                                    , col = 18
+                                                    , col = 20
                                                     }
                                                 , end = AlexSourcePos
                                                     { line = 6
                                                     , col = 25
                                                     }
                                                 }
-                                            ) NotOptional
-                                            ( Var
-                                                ( Span
-                                                    { start = AlexSourcePos
-                                                        { line = 6
-                                                        , col = 18
-                                                        }
-                                                    , end = AlexSourcePos
-                                                        { line = 6
-                                                        , col = 19
-                                                        }
-                                                    }
-                                                ) "$"
-                                            )
-                                            ( String
-                                                ( Span
-                                                    { start = AlexSourcePos
-                                                        { line = 6
-                                                        , col = 20
-                                                        }
-                                                    , end = AlexSourcePos
-                                                        { line = 6
-                                                        , col = 25
-                                                        }
-                                                    }
-                                                ) "event"
-                                            )
+                                            ) "event"
                                         )
-                                        ( String
+                                        ( Field
                                             ( Span
                                                 { start = AlexSourcePos
                                                     { line = 6
@@ -215,24 +202,37 @@ Object
                                                     }
                                                 , end = AlexSourcePos
                                                     { line = 6
-                                                    , col = 32
+                                                    , col = 41
                                                     }
                                                 }
-                                            ) "author"
+                                            ) NotOptional
+                                            ( Var
+                                                ( Span
+                                                    { start = AlexSourcePos
+                                                        { line = 6
+                                                        , col = 26
+                                                        }
+                                                    , end = AlexSourcePos
+                                                        { line = 6
+                                                        , col = 32
+                                                        }
+                                                    }
+                                                ) "author"
+                                            )
+                                            ( Var
+                                                ( Span
+                                                    { start = AlexSourcePos
+                                                        { line = 6
+                                                        , col = 33
+                                                        }
+                                                    , end = AlexSourcePos
+                                                        { line = 6
+                                                        , col = 41
+                                                        }
+                                                    }
+                                                ) "articles"
+                                            )
                                         )
-                                    )
-                                    ( String
-                                        ( Span
-                                            { start = AlexSourcePos
-                                                { line = 6
-                                                , col = 33
-                                                }
-                                            , end = AlexSourcePos
-                                                { line = 6
-                                                , col = 41
-                                                }
-                                            }
-                                        ) "articles"
                                     )
                                 )
                                 ( Object
@@ -275,7 +275,7 @@ Object
                                                         }
                                                     ) "x"
                                                 )
-                                                ( String
+                                                ( Var
                                                     ( Span
                                                         { start = AlexSourcePos
                                                             { line = 8
@@ -316,7 +316,7 @@ Object
                                                         }
                                                     ) "x"
                                                 )
-                                                ( String
+                                                ( Var
                                                     ( Span
                                                         { start = AlexSourcePos
                                                             { line = 9
@@ -353,11 +353,11 @@ Object
                                             }
                                         , end = AlexSourcePos
                                             { line = 13
-                                            , col = 41
+                                            , col = 25
                                             }
                                         }
                                     ) NotOptional
-                                    ( Field
+                                    ( Var
                                         ( Span
                                             { start = AlexSourcePos
                                                 { line = 13
@@ -365,50 +365,37 @@ Object
                                                 }
                                             , end = AlexSourcePos
                                                 { line = 13
+                                                , col = 19
+                                                }
+                                            }
+                                        ) "$"
+                                    )
+                                    ( Field
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 13
+                                                , col = 20
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 13
                                                 , col = 32
                                                 }
                                             }
                                         ) NotOptional
-                                        ( Field
+                                        ( Var
                                             ( Span
                                                 { start = AlexSourcePos
                                                     { line = 13
-                                                    , col = 18
+                                                    , col = 20
                                                     }
                                                 , end = AlexSourcePos
                                                     { line = 13
                                                     , col = 25
                                                     }
                                                 }
-                                            ) NotOptional
-                                            ( Var
-                                                ( Span
-                                                    { start = AlexSourcePos
-                                                        { line = 13
-                                                        , col = 18
-                                                        }
-                                                    , end = AlexSourcePos
-                                                        { line = 13
-                                                        , col = 19
-                                                        }
-                                                    }
-                                                ) "$"
-                                            )
-                                            ( String
-                                                ( Span
-                                                    { start = AlexSourcePos
-                                                        { line = 13
-                                                        , col = 20
-                                                        }
-                                                    , end = AlexSourcePos
-                                                        { line = 13
-                                                        , col = 25
-                                                        }
-                                                    }
-                                                ) "event"
-                                            )
+                                            ) "event"
                                         )
-                                        ( String
+                                        ( Field
                                             ( Span
                                                 { start = AlexSourcePos
                                                     { line = 13
@@ -416,24 +403,37 @@ Object
                                                     }
                                                 , end = AlexSourcePos
                                                     { line = 13
-                                                    , col = 32
+                                                    , col = 41
                                                     }
                                                 }
-                                            ) "author"
+                                            ) NotOptional
+                                            ( Var
+                                                ( Span
+                                                    { start = AlexSourcePos
+                                                        { line = 13
+                                                        , col = 26
+                                                        }
+                                                    , end = AlexSourcePos
+                                                        { line = 13
+                                                        , col = 32
+                                                        }
+                                                    }
+                                                ) "author"
+                                            )
+                                            ( Var
+                                                ( Span
+                                                    { start = AlexSourcePos
+                                                        { line = 13
+                                                        , col = 33
+                                                        }
+                                                    , end = AlexSourcePos
+                                                        { line = 13
+                                                        , col = 41
+                                                        }
+                                                    }
+                                                ) "articles"
+                                            )
                                         )
-                                    )
-                                    ( String
-                                        ( Span
-                                            { start = AlexSourcePos
-                                                { line = 13
-                                                , col = 33
-                                                }
-                                            , end = AlexSourcePos
-                                                { line = 13
-                                                , col = 41
-                                                }
-                                            }
-                                        ) "articles"
                                     )
                                 )
                                 ( Object
@@ -476,7 +476,7 @@ Object
                                                         }
                                                     ) "x"
                                                 )
-                                                ( String
+                                                ( Var
                                                     ( Span
                                                         { start = AlexSourcePos
                                                             { line = 15
@@ -517,7 +517,7 @@ Object
                                                         }
                                                     ) "x"
                                                 )
-                                                ( String
+                                                ( Var
                                                     ( Span
                                                         { start = AlexSourcePos
                                                             { line = 16
@@ -571,11 +571,11 @@ Object
                                     }
                                 , end = AlexSourcePos
                                     { line = 2
-                                    , col = 27
+                                    , col = 22
                                     }
                                 }
                             ) NotOptional
-                            ( Field
+                            ( Var
                                 ( Span
                                     { start = AlexSourcePos
                                         { line = 2
@@ -583,24 +583,24 @@ Object
                                         }
                                     , end = AlexSourcePos
                                         { line = 2
-                                        , col = 22
+                                        , col = 16
+                                        }
+                                    }
+                                ) "$"
+                            )
+                            ( Field
+                                ( Span
+                                    { start = AlexSourcePos
+                                        { line = 2
+                                        , col = 17
+                                        }
+                                    , end = AlexSourcePos
+                                        { line = 2
+                                        , col = 27
                                         }
                                     }
                                 ) NotOptional
                                 ( Var
-                                    ( Span
-                                        { start = AlexSourcePos
-                                            { line = 2
-                                            , col = 15
-                                            }
-                                        , end = AlexSourcePos
-                                            { line = 2
-                                            , col = 16
-                                            }
-                                        }
-                                    ) "$"
-                                )
-                                ( String
                                     ( Span
                                         { start = AlexSourcePos
                                             { line = 2
@@ -613,19 +613,19 @@ Object
                                         }
                                     ) "event"
                                 )
-                            )
-                            ( String
-                                ( Span
-                                    { start = AlexSourcePos
-                                        { line = 2
-                                        , col = 23
+                                ( Var
+                                    ( Span
+                                        { start = AlexSourcePos
+                                            { line = 2
+                                            , col = 23
+                                            }
+                                        , end = AlexSourcePos
+                                            { line = 2
+                                            , col = 27
+                                            }
                                         }
-                                    , end = AlexSourcePos
-                                        { line = 2
-                                        , col = 27
-                                        }
-                                    }
-                                ) "name"
+                                    ) "name"
+                                )
                             )
                         )
                     ]

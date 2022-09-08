@@ -104,18 +104,15 @@ expr :: { ValueExt }
   | '{{' expr '}}' { $2 }
 
 atom :: { ValueExt }
-  : var { $1 }
-  | string_template { $1 }
+  : string_template { $1 }
   | num_lit { $1 }
   | boolean { $1 }
   | null { $1 }
   | array { $1 }
   | object { $1 }
-  | field { $1 }
+  | fields { $1 }
   | iff { $1 }
   | range { $1 }
-  | '{{' var '}}' { $2 }
-  | '{{' field '}}' { $2 }
 
 ------------------------------------------------------------------------
 
@@ -143,8 +140,7 @@ string_template_ :: { V.Vector ValueExt }
 template :: { ValueExt }
   : boolean { $1 }
   | num_lit { $1 }
-  | var     { $1 }
-  | field { $1 }
+  | fields { $1 }
   | var '(' expr ')' %prec TIGHT { Ap (locate $1 <> locate $4) $1 $3 }
 
 ------------------------------------------------------------------------
@@ -197,14 +193,24 @@ object_key :: { Loc T.Text }
 
 ------------------------------------------------------------------------
 
-field :: { ValueExt }
-  : atom '.' ident { Field (locate $1 <> locate $3) NotOptional $1 (String (locate $3) (unLoc $3)) }
-  | atom '?' '.' ident { Field (locate $1 <> locate $4) Optional $1 (String (locate $4) (unLoc $4)) }
-  | atom '[' '\'' string_template_ '\''  ']' { Field (locate $1 <> locate $6) NotOptional $1 (StringTem (locate $3 <> locate $5) $4) }
-  | atom '[' expr ']' { Field (locate $1 <> locate $4) NotOptional $1  $3 }
-  | atom '?' '[' '\'' ident '\''  ']' { Field (locate $1 <> locate $7) Optional $1 (String (locate $5) (unLoc $5)) }
-  | atom '?' '[' '\'' string_template_ '\''  ']' { Field (locate $1 <> locate $7) Optional $1 (StringTem (locate $4 <> locate $6) $5) }
-  | atom '?' '[' expr ']' { Field (locate $1 <> locate $5) Optional $1 $4 }
+many_rev(p)
+  : { [] }
+  | many_rev(p) p { $2 : $1 }
+
+many(p)
+  : many_rev(p) { reverse $1 }
+
+fields :: { ValueExt }
+  : var many(field) { foldFields $1 $2 }
+
+field :: { (Optionality, ValueExt) }
+field
+  : '.' ident { (NotOptional, Var (locate $2) (unLoc $2)) }
+  | '?' '.' ident { (Optional, Var (locate $3) (unLoc $3)) }
+  | '?' '[' '\'' string '\''  ']' { (Optional, Var (locate $4) (unLoc $4)) }
+  | '[' '\'' string '\'' ']' { (NotOptional, Var (locate $3) (unLoc $3)) }
+  | '[' expr ']' { (NotOptional, $2) }
+  | '?' '[' expr ']' { (Optional, $3) }
 
 ------------------------------------------------------------------------
 
@@ -239,4 +245,9 @@ failure (tok:_) = do
 
 buildFunc :: (Span -> ValueExt -> ValueExt) -> Span -> ValueExt -> ValueExt
 buildFunc f sp param = f (sp <> locate param) param
+
+foldFields :: ValueExt -> [(Optionality, ValueExt)] -> ValueExt
+foldFields rec [] = rec
+foldFields rec [(opt, field)] = Field (locate rec <> locate field) opt rec field
+foldFields rec ((opt, field):xs) = Field (locate rec <> locate field) opt rec (foldFields field xs)
 }

@@ -133,7 +133,7 @@ Array
                     }
                 ) "$bar"
             )
-            ( String
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
@@ -191,7 +191,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 4
-                    , col = 16
+                    , col = 14
                     }
                 }
             ) NotOptional
@@ -208,31 +208,18 @@ Array
                     }
                 ) "obj"
             )
-            ( StringTem
+            ( String
                 ( Span
                     { start = AlexSourcePos
                         { line = 4
-                        , col = 10
+                        , col = 11
                         }
                     , end = AlexSourcePos
                         { line = 4
-                        , col = 15
+                        , col = 14
                         }
                     }
-                )
-                [ String
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 4
-                            , col = 11
-                            }
-                        , end = AlexSourcePos
-                            { line = 4
-                            , col = 14
-                            }
-                        }
-                    ) "x-y"
-                ]
+                ) "x-y"
             )
         ]
     , StringTem
@@ -255,7 +242,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 5
-                    , col = 16
+                    , col = 14
                     }
                 }
             ) NotOptional
@@ -272,31 +259,18 @@ Array
                     }
                 ) "obj"
             )
-            ( StringTem
+            ( String
                 ( Span
                     { start = AlexSourcePos
                         { line = 5
-                        , col = 10
+                        , col = 11
                         }
                     , end = AlexSourcePos
                         { line = 5
-                        , col = 15
+                        , col = 14
                         }
                     }
-                )
-                [ String
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 5
-                            , col = 11
-                            }
-                        , end = AlexSourcePos
-                            { line = 5
-                            , col = 14
-                            }
-                        }
-                    ) "x y"
-                ]
+                ) "x y"
             )
         ]
     , StringTem
@@ -319,7 +293,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 6
-                    , col = 16
+                    , col = 14
                     }
                 }
             ) NotOptional
@@ -336,31 +310,18 @@ Array
                     }
                 ) "obj"
             )
-            ( StringTem
+            ( String
                 ( Span
                     { start = AlexSourcePos
                         { line = 6
-                        , col = 10
+                        , col = 11
                         }
                     , end = AlexSourcePos
                         { line = 6
-                        , col = 15
+                        , col = 14
                         }
                     }
-                )
-                [ String
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 6
-                            , col = 11
-                            }
-                        , end = AlexSourcePos
-                            { line = 6
-                            , col = 14
-                            }
-                        }
-                    ) "x y"
-                ]
+                ) "x y"
             )
         , String
             ( Span
@@ -510,7 +471,7 @@ Array
                     }
                 ) "$"
             )
-            ( String
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 9
@@ -654,7 +615,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 12
-                    , col = 24
+                    , col = 22
                     }
                 }
             ) NotOptional
@@ -671,31 +632,18 @@ Array
                     }
                 ) "obj"
             )
-            ( StringTem
+            ( String
                 ( Span
                     { start = AlexSourcePos
                         { line = 12
-                        , col = 10
+                        , col = 11
                         }
                     , end = AlexSourcePos
                         { line = 12
-                        , col = 23
+                        , col = 22
                         }
                     }
-                )
-                [ String
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 12
-                            , col = 11
-                            }
-                        , end = AlexSourcePos
-                            { line = 12
-                            , col = 22
-                            }
-                        }
-                    ) "a b cde-fgh"
-                ]
+                ) "a b cde-fgh"
             )
         ]
     ]

@@ -3,8 +3,8 @@ module Kriti.Eval where
 --------------------------------------------------------------------------------
 
 import Control.Lens (view, _1, _2, _3)
-import Control.Monad.Except (ExceptT, MonadError (..), runExceptT)
-import Control.Monad.Reader (MonadReader (..), Reader, runReader)
+import Control.Monad.Except (ExceptT, MonadError (..), runExceptT, MonadTrans (..))
+import Control.Monad.Reader (MonadReader (..), Reader, runReader, ReaderT)
 import Data.Aeson qualified as J
 import Data.ByteString.Lazy qualified as BL
 import Data.ByteString.UTF8 qualified as B
@@ -21,6 +21,7 @@ import Kriti.Parser.Spans
 import Kriti.Parser.Token
 import Prettyprinter as P
 import qualified Data.Scientific as Scientific
+import Control.Applicative.Lift
 
 --------------------------------------------------------------------------------
 
@@ -113,9 +114,10 @@ typeOfJSON J.Null = "Null"
 
 eval :: ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 eval = \case
-  Var _sp bndr -> do
+  Var sp bndr -> do
+    src <- getSource
     ctx <- getBindings
-    maybe (pure J.Null) pure $ Compat.lookup bndr ctx
+    maybe (throwError (InvalidPath src sp "TODO")) pure $ Compat.lookup bndr ctx
   Ap sp (Var _ fName) t1 -> do
     src <- getSource
     funcMap <- getAps
@@ -150,21 +152,21 @@ eval = \case
        InvalidPath {} | opt == Optional -> pure J.Null
        err -> throwError err
     case v1 of
-      J.Object km ->
-        eval t2 >>= \case
-           J.String bndr ->
-             let v1' = Compat.lookup bndr km
-              in maybe (throwError (InvalidPath src sp bndr)) pure v1'
-           v2 -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v2 <> "', expected a string."
+      J.Object km -> local (\(x,_,y) -> (x, km, y)) (eval t2)
       J.Array arr ->
-        eval t2 >>= \case
-          J.Number n ->
-            case Scientific.toBoundedInteger @Int n of
-              Just i ->
-                let t1' = arr V.!? i
-                 in maybe (throwError (RangeError src sp)) pure t1'
-              Nothing -> throwError $ TypeError src sp $ "Unexpected Float '" <> T.pack (show n) <> "', expected an integer."
-          v2 -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v2 <> "', expected an integer."
+        case t2 of
+          Field sp' opt' t1' t2' -> do
+              v1' <- eval t1'
+              _
+          _ ->
+            eval t2 >>= \case
+              J.Number n ->
+                case Scientific.toBoundedInteger @Int n of
+                  Just i ->
+                    let t1' = arr V.!? i
+                     in maybe (throwError (RangeError src sp)) pure t1'
+                  Nothing -> throwError $ TypeError src sp $ "Unexpected Float '" <> T.pack (show n) <> "', expected an integer."
+              v2 -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v2 <> "', expected an integer."
       J.Null | opt == Optional -> pure J.Null
       _ -> throwError $ TypeError src sp $ "Unexpected type '" <> typeOfJSON v1 <> "' expected an Object or an Array.!!!"
   Iff sp p t1 t2 -> do
