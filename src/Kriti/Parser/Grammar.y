@@ -81,6 +81,8 @@ ident       { TokIdentifier $$ }
 
 %%
 
+------------------------------------------------------------------------
+
 expr :: { ValueExt }
 expr
   : atom '>'  atom { Gt (locate $1 <> locate $3) $1 $3 }
@@ -100,7 +102,8 @@ expr
 
 ap :: { ValueExt }
 ap
-  : function { $1 }
+  : ident '(' expr ')' { Function (locate $1 <> locate $4) (unLoc $1) $3 }
+  | 'not' expr { Function (locate $1 <> locate $2) "not" $2 }
   | atom { $1 }
 
 ------------------------------------------------------------------------
@@ -111,6 +114,8 @@ atom :: { ValueExt }
   | iff { $1 }
   | json { $1 }
   | '(' expr ')' { $2 }
+
+------------------------------------------------------------------------
 
 path :: { ValueExt }
 path
@@ -135,11 +140,6 @@ path_element
   | '?' '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $6) Optional (unLoc $4) BracketAccess }
   | '[' int ']' { Arr (locate $1 <> locate $3) NotOptional (unLoc $2) }
   | '?' '[' int ']' { Arr (locate $1 <> locate $4) Optional (unLoc $3) }
-
-function :: { ValueExt }
-function
-  : ident '(' expr ')' { Function (locate $1 <> locate $4) (unLoc $1) $3 }
-  | 'not' expr { Function (locate $1 <> locate $2) "not" $2 }
 
 range :: { ValueExt }
 range
