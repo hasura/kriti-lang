@@ -6,25 +6,29 @@
 %left ident 'not'
 
 expr
-  : json
-  | kriti
+  : atom '>' atom
+  | atom '<' atom
+  | atom '>=' atom
+  | atom '<=' atom
+  | atom '!=' atom
+  | atom '==' atom
+  | atom '&&' atom
+  | atom '||' atom
+  | atom 'in' atom
+  | atom '??' atom
+  | ap
+  | '{{' expr '}}'
 
-kriti
-  : '{{' path '}}'
-  | '{{' operator '}}'
-  | '{{' function '}}'
-  | '(' kriti ')'
-  | range
-  | iff
+ap
+  : function
+  | atom
 
-kritiValue
+atom
   : path
-  | operator
-  | function
   | range
   | iff
   | json
-  | '(' kritiValue ')'
+  | '(' expr ')'
 
 path
   : path_vector
@@ -46,21 +50,9 @@ path_element
   | '[' int ']'
   | '?' '[' int ']'
 
-operator
-  : kritiValue '>' kritiValue
-  | kritiValue '<' kritiValue
-  | kritiValue '>=' kritiValue
-  | kritiValue '<=' kritiValue
-  | kritiValue '!=' kritiValue
-  | kritiValue '==' kritiValue
-  | kritiValue '&&' kritiValue
-  | kritiValue '||' kritiValue
-  | kritiValue 'in' kritiValue
-  | kritiValue '??' kritiValue
-
 function
-  : ident '(' kritiValue ')'
-  | 'not' kritiValue
+  : ident '(' expr ')'
+  | 'not' expr
 
 range
   : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}'
@@ -70,7 +62,7 @@ mident
   | ident
 
 iff
-  : '{{' 'if' kritiValue '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}'
+  : '{{' 'if' expr '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}'
 
 json
   : string_lit
@@ -85,17 +77,10 @@ string_lit
   | 's"' '"e'
 
 string_template
-  : string_template '{{' template '}}'
+  : string_template '{{' expr '}}'
   | string_template string
-  | '{{' template '}}'
+  | '{{' expr '}}'
   | string
-
-template
-  : path
-  | function
-  | boolean
-  | num_lit
-  | operator
 
 num_lit
   : number
