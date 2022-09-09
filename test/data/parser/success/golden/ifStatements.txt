@@ -22,7 +22,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 1
@@ -33,20 +33,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 1
-                        , col = 9
-                        }
-                    , end = AlexSourcePos
-                        { line = 1
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "p" Head
-            ]
+            ) "p"
         )
         ( Boolean
             ( Span
@@ -86,7 +73,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 2
@@ -97,20 +84,7 @@ Array
                     , col = 11
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 2
-                        , col = 10
-                        }
-                    , end = AlexSourcePos
-                        { line = 2
-                        , col = 11
-                        }
-                    }
-                ) NotOptional "p" Head
-            ]
+            ) "p"
         )
         ( Boolean
             ( Span
@@ -162,7 +136,7 @@ Array
                     }
                 }
             )
-            ( Path
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
@@ -173,22 +147,9 @@ Array
                         , col = 10
                         }
                     }
-                )
-                [ Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 3
-                            , col = 9
-                            }
-                        , end = AlexSourcePos
-                            { line = 3
-                            , col = 10
-                            }
-                        }
-                    ) NotOptional "p" Head
-                ]
+                ) "p"
             )
-            ( Path
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
@@ -199,20 +160,7 @@ Array
                         , col = 15
                         }
                     }
-                )
-                [ Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 3
-                            , col = 14
-                            }
-                        , end = AlexSourcePos
-                            { line = 3
-                            , col = 15
-                            }
-                        }
-                    ) NotOptional "q" Head
-                ]
+                ) "q"
             )
         )
         ( Boolean
@@ -265,7 +213,7 @@ Array
                     }
                 }
             )
-            ( Path
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 4
@@ -276,22 +224,9 @@ Array
                         , col = 11
                         }
                     }
-                )
-                [ Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 4
-                            , col = 10
-                            }
-                        , end = AlexSourcePos
-                            { line = 4
-                            , col = 11
-                            }
-                        }
-                    ) NotOptional "p" Head
-                ]
+                ) "p"
             )
-            ( Path
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 4
@@ -302,20 +237,7 @@ Array
                         , col = 16
                         }
                     }
-                )
-                [ Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 4
-                            , col = 15
-                            }
-                        , end = AlexSourcePos
-                            { line = 4
-                            , col = 16
-                            }
-                        }
-                    ) NotOptional "q" Head
-                ]
+                ) "q"
             )
         )
         ( Boolean
@@ -380,7 +302,7 @@ Array
                         }
                     }
                 )
-                ( Path
+                ( Var
                     ( Span
                         { start = AlexSourcePos
                             { line = 5
@@ -391,22 +313,9 @@ Array
                             , col = 11
                             }
                         }
-                    )
-                    [ Obj
-                        ( Span
-                            { start = AlexSourcePos
-                                { line = 5
-                                , col = 10
-                                }
-                            , end = AlexSourcePos
-                                { line = 5
-                                , col = 11
-                                }
-                            }
-                        ) NotOptional "p" Head
-                    ]
+                    ) "p"
                 )
-                ( Path
+                ( Var
                     ( Span
                         { start = AlexSourcePos
                             { line = 5
@@ -417,23 +326,10 @@ Array
                             , col = 16
                             }
                         }
-                    )
-                    [ Obj
-                        ( Span
-                            { start = AlexSourcePos
-                                { line = 5
-                                , col = 15
-                                }
-                            , end = AlexSourcePos
-                                { line = 5
-                                , col = 16
-                                }
-                            }
-                        ) NotOptional "q" Head
-                    ]
+                    ) "q"
                 )
             )
-            ( Path
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 5
@@ -444,20 +340,7 @@ Array
                         , col = 22
                         }
                     }
-                )
-                [ Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 5
-                            , col = 21
-                            }
-                        , end = AlexSourcePos
-                            { line = 5
-                            , col = 22
-                            }
-                        }
-                    ) NotOptional "q" Head
-                ]
+                ) "q"
             )
         )
         ( Boolean
@@ -614,7 +497,7 @@ Array
                 ) 3.0
             )
         )
-        ( Path
+        ( RequiredFieldAccess
             ( Span
                 { start = AlexSourcePos
                     { line = 7
@@ -626,7 +509,7 @@ Array
                     }
                 }
             )
-            [ Obj
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 7
@@ -637,20 +520,23 @@ Array
                         , col = 31
                         }
                     }
-                ) NotOptional "$path" Head
-            , Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 7
-                        , col = 31
+                ) "$path"
+            )
+            ( Right
+                ( String
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 7
+                            , col = 33
+                            }
+                        , end = AlexSourcePos
+                            { line = 7
+                            , col = 39
+                            }
                         }
-                    , end = AlexSourcePos
-                        { line = 7
-                        , col = 41
-                        }
-                    }
-                ) NotOptional "lookup" BracketAccess
-            ]
+                    ) "lookup"
+                )
+            )
         )
         ( Boolean
             ( Span
@@ -689,7 +575,7 @@ Array
                     }
                 }
             )
-            ( Path
+            ( RequiredFieldAccess
                 ( Span
                     { start = AlexSourcePos
                         { line = 8
@@ -701,7 +587,7 @@ Array
                         }
                     }
                 )
-                [ Obj
+                ( RequiredFieldAccess
                     ( Span
                         { start = AlexSourcePos
                             { line = 8
@@ -709,35 +595,40 @@ Array
                             }
                         , end = AlexSourcePos
                             { line = 8
-                            , col = 10
-                            }
-                        }
-                    ) NotOptional "$" Head
-                , Arr
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 8
-                            , col = 10
-                            }
-                        , end = AlexSourcePos
-                            { line = 8
                             , col = 13
                             }
                         }
-                    ) NotOptional 0
-                , Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 8
-                            , col = 13
+                    )
+                    ( Var
+                        ( Span
+                            { start = AlexSourcePos
+                                { line = 8
+                                , col = 9
+                                }
+                            , end = AlexSourcePos
+                                { line = 8
+                                , col = 10
+                                }
                             }
-                        , end = AlexSourcePos
-                            { line = 8
-                            , col = 22
-                            }
-                        }
-                    ) NotOptional "isActive" DotAccess
-                ]
+                        ) "$"
+                    )
+                    ( Right
+                        ( Number
+                            ( Span
+                                { start = AlexSourcePos
+                                    { line = 8
+                                    , col = 11
+                                    }
+                                , end = AlexSourcePos
+                                    { line = 8
+                                    , col = 12
+                                    }
+                                }
+                            ) 0.0
+                        )
+                    )
+                )
+                ( Left "isActive" )
             )
             ( Boolean
                 ( Span
@@ -791,7 +682,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( RequiredFieldAccess
             ( Span
                 { start = AlexSourcePos
                     { line = 9
@@ -803,7 +694,7 @@ Array
                     }
                 }
             )
-            [ Obj
+            ( RequiredFieldAccess
                 ( Span
                     { start = AlexSourcePos
                         { line = 9
@@ -811,35 +702,40 @@ Array
                         }
                     , end = AlexSourcePos
                         { line = 9
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$" Head
-            , Arr
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 9
-                        , col = 10
-                        }
-                    , end = AlexSourcePos
-                        { line = 9
                         , col = 13
                         }
                     }
-                ) NotOptional 0
-            , Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 9
-                        , col = 13
+                )
+                ( Var
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 9
+                            , col = 9
+                            }
+                        , end = AlexSourcePos
+                            { line = 9
+                            , col = 10
+                            }
                         }
-                    , end = AlexSourcePos
-                        { line = 9
-                        , col = 22
-                        }
-                    }
-                ) NotOptional "isActive" DotAccess
-            ]
+                    ) "$"
+                )
+                ( Right
+                    ( Number
+                        ( Span
+                            { start = AlexSourcePos
+                                { line = 9
+                                , col = 11
+                                }
+                            , end = AlexSourcePos
+                                { line = 9
+                                , col = 12
+                                }
+                            }
+                        ) 0.0
+                    )
+                )
+            )
+            ( Left "isActive" )
         )
         ( Boolean
             ( Span

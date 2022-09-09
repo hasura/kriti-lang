@@ -60,7 +60,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 1
@@ -71,20 +71,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 1
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 1
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Number
             ( Span
@@ -111,7 +98,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 2
@@ -122,20 +109,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 2
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 2
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Number
             ( Span
@@ -162,7 +136,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 3
@@ -173,20 +147,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 3
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 3
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Number
             ( Span
@@ -213,7 +174,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 4
@@ -224,20 +185,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 4
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 4
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Number
             ( Span
@@ -264,7 +212,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 5
@@ -275,20 +223,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 5
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 5
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Number
             ( Span
@@ -315,7 +250,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 6
@@ -326,20 +261,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 6
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 6
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Function
             ( Span
@@ -353,7 +275,7 @@ Array
                     }
                 }
             ) "not"
-            ( Path
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 6
@@ -364,20 +286,7 @@ Array
                         , col = 23
                         }
                     }
-                )
-                [ Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 6
-                            , col = 19
-                            }
-                        , end = AlexSourcePos
-                            { line = 6
-                            , col = 23
-                            }
-                        }
-                    ) NotOptional "$bar" Head
-                ]
+                ) "$bar"
             )
         )
     , Or
@@ -392,7 +301,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 7
@@ -403,20 +312,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 7
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 7
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Function
             ( Span
@@ -456,7 +352,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 8
@@ -467,20 +363,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 8
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 8
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Function
             ( Span
@@ -520,7 +403,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 9
@@ -531,20 +414,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 9
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 9
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Object
             ( Span
@@ -589,7 +459,7 @@ Array
                 }
             }
         )
-        ( Path
+        ( Var
             ( Span
                 { start = AlexSourcePos
                     { line = 10
@@ -600,20 +470,7 @@ Array
                     , col = 10
                     }
                 }
-            )
-            [ Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 10
-                        , col = 6
-                        }
-                    , end = AlexSourcePos
-                        { line = 10
-                        , col = 10
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            ]
+            ) "$foo"
         )
         ( Object
             ( Span
@@ -630,7 +487,7 @@ Array
             ( fromList
                 [
                     ( "foo"
-                    , Path
+                    , Var
                         ( Span
                             { start = AlexSourcePos
                                 { line = 10
@@ -641,20 +498,7 @@ Array
                                 , col = 29
                                 }
                             }
-                        )
-                        [ Obj
-                            ( Span
-                                { start = AlexSourcePos
-                                    { line = 10
-                                    , col = 25
-                                    }
-                                , end = AlexSourcePos
-                                    { line = 10
-                                    , col = 29
-                                    }
-                                }
-                            ) NotOptional "$bar" Head
-                        ]
+                        ) "$bar"
                     )
                 ]
             )

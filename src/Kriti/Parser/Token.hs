@@ -130,16 +130,17 @@ instance Pretty Accessor where
 -- terms which are then evaluated and converted into Aeson `Value`
 -- terms.
 data ValueExt
-  = -- | Core Aeson Terms
-    Object Span (Compat.Object ValueExt)
+  = Object Span (Compat.Object ValueExt)
   | Array Span (V.Vector ValueExt)
   | String Span T.Text
   | Number Span Scientific
   | Boolean Span Bool
   | Null Span
-  | -- | Extended Kriti Terms
-    StringTem Span (V.Vector ValueExt)
+  | StringTem Span (V.Vector ValueExt)
   | Path Span (V.Vector Accessor)
+  | Var Span T.Text
+  | RequiredFieldAccess Span ValueExt (Either T.Text ValueExt)
+  | OptionalFieldAccess Span ValueExt [Either T.Text ValueExt]
   | Iff Span ValueExt ValueExt ValueExt
   | Eq Span ValueExt ValueExt
   | NotEq Span ValueExt ValueExt
@@ -165,6 +166,9 @@ instance Located ValueExt where
     Null s -> s
     StringTem s _ -> s
     Path s _ -> s
+    Var s _ -> s
+    RequiredFieldAccess s _ _ -> s
+    OptionalFieldAccess s _ _ -> s
     Iff s _ _ _ -> s
     Eq s _ _ -> s
     NotEq s _ _ -> s
@@ -200,7 +204,10 @@ instance Pretty ValueExt where
         vec & foldMap \case
           String _ txt -> pretty txt
           t1 -> "{{" <+> pretty t1 <+> "}}"
+    Var _ t -> pretty t
     Path _ vec -> surround (foldMap pretty vec) "{{ " " }}"
+    RequiredFieldAccess _ t1 field -> pretty t1 <> "." <> either pretty pretty field
+    OptionalFieldAccess _ t1 fields -> pretty t1 <> "?." <> foldMap ((<> ".") . either pretty pretty) fields
     Iff _ p t1 t2 ->
       vsep
         [ "{{" <+> "if" <+> pretty p <+> "}}",

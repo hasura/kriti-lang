@@ -8,7 +8,8 @@ import qualified Data.ByteString.UTF8 as B
 import Data.Foldable (foldlM)
 import Data.Function
 import Data.HashMap.Internal as Map
-import Data.Maybe (maybeToList)
+import Data.Maybe (fromMaybe, maybeToList)
+import qualified Data.Scientific as Scientific
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
@@ -71,6 +72,25 @@ evalPath sp ctx path = do
       step _ (Arr _ _ _) = throwError $ Left $ TypeError src sp "Expected array"
    in mapExceptT (fmap $ either (either throwError (pure . const J.Null)) pure) $ foldlM step ctx path
 
+evalFieldChain :: (ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value) -> Span -> J.Object -> [Either T.Text ValueExt] -> ExceptT EvalError (Reader Ctxt) J.Value
+evalFieldChain eval sp ctx path = do
+  src <- asks fst
+  let step :: Maybe J.Value -> Either T.Text ValueExt -> ExceptT EvalError (Reader Ctxt) (Maybe J.Value)
+      step (Just (J.Object o)) (Left bndr) = pure $ Compat.lookup bndr o
+      step (Just (J.Object o)) (Right trm) =
+        eval trm >>= \case
+          J.String bndr -> pure $ Compat.lookup bndr o
+          _json -> pure Nothing
+      step (Just (J.Array xs)) (Right trm) =
+        eval trm >>= \case
+          J.Number n -> case Scientific.toBoundedInteger @Int n of
+            Just i -> pure $ xs V.!? i
+            Nothing -> pure Nothing
+          _json -> pure Nothing
+      step (Just json) _ = throwError $ TypeError src sp $ renderBL $ "'" <> J.encode json <> "' is not an Object."
+      step Nothing _ = pure Nothing
+  fmap (fromMaybe (J.Null)) $ foldlM step (Just $ J.Object ctx) path
+
 isString :: J.Value -> Bool
 isString J.String {} = True
 isString _ = False
@@ -85,13 +105,13 @@ runEvalWith src template source funcMap =
   let ctx = Compat.fromList source
    in runReader (runExceptT (evalWith funcMap template)) (src, ctx)
 
-typoOfJSON :: J.Value -> T.Text
-typoOfJSON J.Object {} = "Object"
-typoOfJSON J.Array {} = "Array"
-typoOfJSON J.String {} = "String"
-typoOfJSON J.Number {} = "Number"
-typoOfJSON J.Bool {} = "Boolean"
-typoOfJSON J.Null = "Null"
+typeOfJSON :: J.Value -> T.Text
+typeOfJSON J.Object {} = "Object"
+typeOfJSON J.Array {} = "Array"
+typeOfJSON J.String {} = "String"
+typeOfJSON J.Number {} = "Number"
+typeOfJSON J.Bool {} = "Boolean"
+typeOfJSON J.Null = "Null"
 
 evalWith :: Map.HashMap T.Text (J.Value -> Either CustomFunctionError J.Value) -> ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value
 evalWith funcMap = \case
@@ -111,12 +131,42 @@ evalWith funcMap = \case
   Path sp path -> do
     ctx <- asks snd
     evalPath sp (J.Object ctx) path
+  Var sp bndr -> do
+    (src, ctx) <- ask
+    maybe (throwError $ TypeError src sp "Key not found TODO IMPROVE THIS ERROR MSG") pure $ Compat.lookup bndr ctx
+  RequiredFieldAccess sp t1 (Left bndr) -> do
+    src <- asks fst
+    eval t1 >>= \case
+      J.Object km ->
+        maybe (throwError $ TypeError src sp "Key not found TODO IMPROVE THIS ERROR MSG") pure $ Compat.lookup bndr km
+      json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'Object'."
+  RequiredFieldAccess sp t1 (Right t2) -> do
+    src <- asks fst
+    eval t1 >>= \case
+      J.Object km -> do
+        eval t2 >>= \case
+          J.String bndr ->
+            maybe (throwError $ TypeError src sp "Key not found TODO IMPROVE THIS ERROR MSG") pure $ Compat.lookup bndr km
+          json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'String'."
+      J.Array xs -> do
+        eval t2 >>= \case
+          J.Number n -> case Scientific.toBoundedInteger @Int n of
+            Just i -> maybe (throwError $ RangeError src sp) pure $ xs V.!? i
+            Nothing -> throwError $ TypeError src sp $ "Unexpected Float '" <> T.pack (show n) <> "', expected an integer."
+          json -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode json <> "' is not a Number."
+      json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'Object'."
+  OptionalFieldAccess sp t1 fields -> do
+    src <- asks fst
+    eval t1 >>= \case
+      J.Object km -> evalFieldChain eval sp km fields
+      --J.Array arr -> evalFieldChain eval sp arr fields
+      json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'Object'."
   Iff sp p t1 t2 -> do
     src <- asks fst
     eval p >>= \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
-      p' -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode p' <> "' is not a boolean."
+      p' -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode p' <> "' is not a Boolean."
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
@@ -145,16 +195,16 @@ evalWith funcMap = \case
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p && q
-      (t1'', J.Bool _) -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1'' <> "' is not a boolean."
-      (_, t2'') -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t2'' <> "' is not a boolean."
+      (json, J.Bool _) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Boolean'."
+      (_, json) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Boolean'."
   Or sp t1 t2 -> do
     src <- asks fst
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p || q
-      (t1'', J.Bool _) -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1'' <> "' is not a boolean."
-      (_, t2'') -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t2'' <> "' is not a boolean."
+      (json, J.Bool _) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Boolean'."
+      (_, json) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Boolean'."
   In sp t1 t2 -> do
     src <- asks fst
     v1 <- eval t1
@@ -163,16 +213,16 @@ evalWith funcMap = \case
       (J.String key, J.Object fields) -> do
         let fields' = fmap fst $ Compat.toList fields
         pure $ J.Bool $ key `elem` fields'
-      (json, J.Object _) -> throwError $ TypeError src sp $ T.pack $ show json <> " is not a String."
+      (json, J.Object _) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'String'."
       (_, J.Array vals) -> pure $ J.Bool $ v1 `V.elem` vals
-      (_, json) -> throwError $ TypeError src sp $ T.pack $ show json <> " is not an Object or Array."
-  Range _ idx binder t1 body -> do
+      (_, json) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Array'."
+  Range sp idx binder t1 body -> do
     src <- asks fst
     eval t1 >>= \case
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
          in local (\(_, bndrs) -> (src, Compat.fromList newScope <> bndrs)) (eval body)
-      v1 -> throwError $ TypeError src (locate t1) $ "'" <> typoOfJSON v1 <> "' is not an Array."
+      json -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Array'."
   Function sp fName t1 -> do
     src <- asks fst
     v1 <- eval t1

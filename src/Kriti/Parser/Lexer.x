@@ -93,7 +93,7 @@ tokens :-
 -- String literals can be constructed with single quotes. These are
 -- only used for object lookup and are thus only available in <expr>
 -- mode.
-<expr> \'                              { \b -> pushStartCode literal *> symbol SymSingleQuote b }
+<0, expr> \'                              { \b -> pushStartCode literal *> symbol SymSingleQuote b }
 <literal> (\\ \\ | \\ \` | [^ \' \{ ])+ { token TokStringLit }
 <literal> \'                            { \b -> (popStartCode *> symbol SymSingleQuote b) }
 

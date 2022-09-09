@@ -76,6 +76,7 @@ ident       { TokIdentifier $$ }
 
 %nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
 
+%left '.'
 %left '??' 
 %left ident 'not'
 
@@ -109,7 +110,9 @@ ap
 ------------------------------------------------------------------------
 
 atom :: { ValueExt }
-  : path { $1 }
+  : var { $1 }
+  | requiredField { $1 }
+  | optionalFields { $1 }
   | range { $1 }
   | iff { $1 }
   | json { $1 }
@@ -117,29 +120,29 @@ atom :: { ValueExt }
 
 ------------------------------------------------------------------------
 
-path :: { ValueExt }
-path
-  : path_vector { Path (fst $1) (snd $1) }
+some(prod)
+  : prod            { [$1] }
+  | some(prod) prod { $2 : $1 }
 
-path_vector :: { (Span, V.Vector Accessor) }
-path_vector
-  : ident path_tail { (locate $1 <> fst $2, V.cons (Obj (locate $1) NotOptional (unLoc $1) Head) (snd $2))  }
-  | ident { (locate $1, V.singleton (Obj (locate $1) NotOptional (unLoc $1) Head)) }
-  | ident '?' { (locate $1 <> locate $2, V.singleton (Obj (locate $1) Optional (unLoc $1) Head)) }
+var :: { ValueExt }
+var
+  : ident { Var (locate $1 )(unLoc $1) }
 
-path_tail :: { (Span, V.Vector Accessor) }
-path_tail
-  : path_element { (locate $1, V.singleton $1) } 
-  | path_tail path_element { (fst $1 <> locate $2, V.snoc (snd $1) $2) }
+requiredField :: { ValueExt }
+requiredField
+  : atom '.' ident { RequiredFieldAccess (locate $1 <> locate $3) $1 (Left (unLoc $3)) }
+  | atom '[' '\'' string '\'' ']' { RequiredFieldAccess (locate $1 <> locate $6) $1 (Right (String (locate $4) (unLoc $4))) }
+  | atom '[' atom ']' { RequiredFieldAccess (locate $1 <> locate $4) $1 (Right $3) }
 
-path_element :: { Accessor }
-path_element
-  : '.' ident { Obj (locate $1 <> locate $2) NotOptional (unLoc $2) DotAccess }
-  | '?' '.' ident { Obj (locate $1 <> locate $3) Optional (unLoc $3) DotAccess }
-  | '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $5) NotOptional (unLoc $3) BracketAccess }
-  | '?' '[' '\'' string '\'' ']' { Obj (locate $1 <> locate $6) Optional (unLoc $4) BracketAccess }
-  | '[' int ']' { Arr (locate $1 <> locate $3) NotOptional (unLoc $2) }
-  | '?' '[' int ']' { Arr (locate $1 <> locate $4) Optional (unLoc $3) }
+optionalFields :: { ValueExt }
+optionalFields
+  : atom '?' some(field) %shift { OptionalFieldAccess (locate $1) $1 ($3) }
+
+field :: { Either T.Text ValueExt }
+field
+  : '.' ident { Left (unLoc $2) }
+  | '[' '\'' string '\'' ']' { Right (String (locate $3) (unLoc $3)) }
+  | '[' atom ']' { Right $2 }
 
 range :: { ValueExt }
 range
