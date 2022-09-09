@@ -151,7 +151,7 @@ data ValueExt
   | Or Span ValueExt ValueExt
   | In Span ValueExt ValueExt
   | Defaulting Span ValueExt ValueExt
-  | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
+  | Range Span (Maybe T.Text) T.Text ValueExt ValueExt
   | Function Span T.Text ValueExt
   deriving (Show, Eq, Read, Generic)
 
@@ -221,7 +221,7 @@ instance Pretty ValueExt where
     Defaulting _ t1 t2 -> pretty t1 <+> "??" <+> pretty t2
     Range _ i bndr xs t1 ->
       vsep
-        [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> foldMap pretty xs <+> "}}",
+        [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> pretty xs <+> "}}",
           indent 2 $ pretty t1,
           "{{" <+> "end" <+> "}}"
         ]

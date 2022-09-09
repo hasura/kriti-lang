@@ -143,7 +143,7 @@ path_element
 
 range :: { ValueExt }
 range
-  : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}' { Range (locate $1 <> locate $12) (fmap unLoc $3) (unLoc $5) (snd $7) $9 }
+  : '{{' 'range' mident ',' ident ':=' expr '}}' expr '{{' 'end' '}}' { Range (locate $1 <> locate $12) (fmap unLoc $3) (unLoc $5) $7 $9 }
 
 mident :: { Maybe (Loc T.Text) }
 mident
