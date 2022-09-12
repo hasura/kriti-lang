@@ -60,18 +60,6 @@ getSourcePos (TypeError _ term _) = locate term
 getSourcePos (RangeError _ pos) = locate pos
 getSourcePos (FunctionError _ term _) = locate term
 
-evalPath :: Span -> J.Value -> V.Vector (Accessor) -> ExceptT EvalError (Reader Ctxt) J.Value
-evalPath sp ctx path = do
-  src <- asks fst
-  let maybeThrow NotOptional = maybe (throwError $ Left $ InvalidPath src sp path) pure
-      maybeThrow Optional = maybe (throwError $ Right ()) pure
-      step :: J.Value -> Accessor -> ExceptT (Either EvalError ()) (Reader Ctxt) J.Value
-      step (J.Object o) (Obj _ optional k _) = maybeThrow optional $ Compat.lookup k o
-      step (J.Array xs) (Arr _ optional i) = maybeThrow optional $ xs V.!? i
-      step _ (Obj _ _ _ _) = throwError $ Left $ TypeError src sp "Expected object"
-      step _ (Arr _ _ _) = throwError $ Left $ TypeError src sp "Expected array"
-   in mapExceptT (fmap $ either (either throwError (pure . const J.Null)) pure) $ foldlM step ctx path
-
 evalFieldChain :: (ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value) -> Span -> J.Object -> [Either T.Text ValueExt] -> ExceptT EvalError (Reader Ctxt) J.Value
 evalFieldChain eval sp ctx path = do
   src <- asks fst
@@ -128,9 +116,6 @@ evalWith funcMap = \case
         json -> pure $ acc <> TE.decodeUtf8 (BL.toStrict $ J.encode json)
     pure $ J.String str
   Array _ xs -> J.Array <$> traverse eval xs
-  Path sp path -> do
-    ctx <- asks snd
-    evalPath sp (J.Object ctx) path
   Var sp bndr -> do
     (src, ctx) <- ask
     maybe (throwError $ TypeError src sp "Key not found TODO IMPROVE THIS ERROR MSG") pure $ Compat.lookup bndr ctx

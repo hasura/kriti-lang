@@ -137,7 +137,6 @@ data ValueExt
   | Boolean Span Bool
   | Null Span
   | StringTem Span (V.Vector ValueExt)
-  | Path Span (V.Vector Accessor)
   | Var Span T.Text
   | RequiredFieldAccess Span ValueExt (Either T.Text ValueExt)
   | OptionalFieldAccess Span ValueExt [Either T.Text ValueExt]
@@ -165,7 +164,6 @@ instance Located ValueExt where
     Boolean s _ -> s
     Null s -> s
     StringTem s _ -> s
-    Path s _ -> s
     Var s _ -> s
     RequiredFieldAccess s _ _ -> s
     OptionalFieldAccess s _ _ -> s
@@ -205,7 +203,6 @@ instance Pretty ValueExt where
           String _ txt -> pretty txt
           t1 -> "{{" <+> pretty t1 <+> "}}"
     Var _ t -> pretty t
-    Path _ vec -> surround (foldMap pretty vec) "{{ " " }}"
     RequiredFieldAccess _ t1 field -> pretty t1 <> "." <> either pretty pretty field
     OptionalFieldAccess _ t1 fields -> pretty t1 <> "?." <> foldMap ((<> ".") . either pretty pretty) fields
     Iff _ p t1 t2 ->
