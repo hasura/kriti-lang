@@ -150,10 +150,8 @@ data ValueExt
   | And Span ValueExt ValueExt
   | Or Span ValueExt ValueExt
   | In Span ValueExt ValueExt
-  | Not Span ValueExt
   | Defaulting Span ValueExt ValueExt
   | Range Span (Maybe T.Text) T.Text (V.Vector Accessor) ValueExt
-  | EscapeURI Span ValueExt
   | Function Span T.Text ValueExt
   deriving (Show, Eq, Read, Generic)
 
@@ -177,10 +175,8 @@ instance Located ValueExt where
     And s _ _ -> s
     Or s _ _ -> s
     In s _ _ -> s
-    Not s _ -> s
     Defaulting s _ _ -> s
     Range s _ _ _ _ -> s
-    EscapeURI s _ -> s
     Function s _ _ -> s
 
 instance Located Accessor where
@@ -222,7 +218,6 @@ instance Pretty ValueExt where
     And _ t1 t2 -> pretty t1 <+> "&&" <+> pretty t2
     Or _ t1 t2 -> pretty t1 <+> "||" <+> pretty t2
     In _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
-    Not _ t1 -> "not" <+> pretty t1
     Defaulting _ t1 t2 -> pretty t1 <+> "??" <+> pretty t2
     Range _ i bndr xs t1 ->
       vsep
@@ -230,7 +225,6 @@ instance Pretty ValueExt where
           indent 2 $ pretty t1,
           "{{" <+> "end" <+> "}}"
         ]
-    EscapeURI _ t1 -> "{{" <+> "escapeUri" <+> pretty t1 <+> "}}"
     Function _ n t1 -> "{{" <+> pretty n <+> " {{" <+> pretty t1 <+> "}} }}"
 
 renderDoc :: Doc ann -> T.Text

@@ -3,3 +3,4 @@ cabal.project.local
 .vscode/
 /result
 /.envrc.local
+/.direnv/

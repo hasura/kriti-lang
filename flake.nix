@@ -27,7 +27,6 @@
         {kriti-lang = hsPkgs.kriti-lang;};
 
       devShell = hsPkgs.shellFor {
-        inherit (self.checks.${system}.pre-commit-check) shellHook;
         withHoogle = true;
         packages = p: [
           p.kriti-lang

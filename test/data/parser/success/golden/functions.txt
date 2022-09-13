@@ -10,7 +10,7 @@ Array
             }
         }
     )
-    [ EscapeURI
+    [ Function
         ( Span
             { start = AlexSourcePos
                 { line = 1
@@ -18,10 +18,10 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 1
-                , col = 21
+                , col = 15
                 }
             }
-        )
+        ) "escapeUri"
         ( StringTem
             ( Span
                 { start = AlexSourcePos
@@ -48,7 +48,7 @@ Array
                 ) "foo"
             ]
         )
-    , EscapeURI
+    , Function
         ( Span
             { start = AlexSourcePos
                 { line = 2
@@ -56,10 +56,10 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 2
-                , col = 29
+                , col = 15
                 }
             }
-        )
+        ) "escapeUri"
         ( StringTem
             ( Span
                 { start = AlexSourcePos
@@ -111,7 +111,7 @@ Array
                 ]
             ]
         )
-    , EscapeURI
+    , Function
         ( Span
             { start = AlexSourcePos
                 { line = 3
@@ -119,10 +119,10 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 3
-                , col = 24
+                , col = 15
                 }
             }
-        )
+        ) "escapeUri"
         ( Path
             ( Span
                 { start = AlexSourcePos
@@ -161,7 +161,7 @@ Array
                 ) NotOptional 0
             ]
         )
-    , EscapeURI
+    , Function
         ( Span
             { start = AlexSourcePos
                 { line = 4
@@ -169,10 +169,10 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 4
-                , col = 30
+                , col = 15
                 }
             }
-        )
+        ) "escapeUri"
         ( StringTem
             ( Span
                 { start = AlexSourcePos
@@ -223,7 +223,7 @@ Array
                     }
                 }
             ) "http://www.google.com"
-        , EscapeURI
+        , Function
             ( Span
                 { start = AlexSourcePos
                     { line = 5
@@ -231,10 +231,10 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 5
-                    , col = 44
+                    , col = 36
                     }
                 }
-            )
+            ) "escapeUri"
             ( Path
                 ( Span
                     { start = AlexSourcePos

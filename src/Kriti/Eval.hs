@@ -16,7 +16,6 @@ import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
 import Kriti.Parser.Spans
 import Kriti.Parser.Token
-import qualified Network.URI as URI
 import Prettyprinter as P
 
 data EvalError
@@ -118,12 +117,6 @@ evalWith funcMap = \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
       p' -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode p' <> "' is not a boolean."
-  Not sp t1 -> do
-    src <- asks fst
-    v1 <- eval t1
-    case v1 of
-      J.Bool p -> pure $ J.Bool $ not p
-      _ -> throwError $ TypeError src sp $ T.pack $ show t1 <> "is not a boolean."
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
@@ -181,14 +174,6 @@ evalWith funcMap = \case
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
          in local (\(_, bndrs) -> (src, Compat.fromList newScope <> bndrs)) (eval body)
       _ -> throwError $ RangeError src sp
-  EscapeURI sp t1 -> do
-    src <- asks fst
-    t1' <- eval t1
-    case t1' of
-      J.String str ->
-        let escapedUri = T.pack $ URI.escapeURIString URI.isUnreserved $ T.unpack str
-         in pure $ J.String escapedUri
-      _ -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode t1' <> "' is not a string."
   Function sp fName t1 -> do
     src <- asks fst
     v1 <- eval t1

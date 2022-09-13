@@ -311,7 +311,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 6
-                , col = 23
+                , col = 18
                 }
             }
         )
@@ -341,7 +341,7 @@ Array
                 ) NotOptional "$foo" Head
             ]
         )
-        ( Not
+        ( Function
             ( Span
                 { start = AlexSourcePos
                     { line = 6
@@ -349,10 +349,10 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 6
-                    , col = 23
+                    , col = 18
                     }
                 }
-            )
+            ) "not"
             ( Path
                 ( Span
                     { start = AlexSourcePos
@@ -388,7 +388,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 7
-                , col = 23
+                , col = 18
                 }
             }
         )
@@ -418,7 +418,7 @@ Array
                 ) NotOptional "$foo" Head
             ]
         )
-        ( Not
+        ( Function
             ( Span
                 { start = AlexSourcePos
                     { line = 7
@@ -426,10 +426,10 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 7
-                    , col = 23
+                    , col = 18
                     }
                 }
-            )
+            ) "not"
             ( Boolean
                 ( Span
                     { start = AlexSourcePos
@@ -452,7 +452,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 8
-                , col = 23
+                , col = 18
                 }
             }
         )
@@ -482,7 +482,7 @@ Array
                 ) NotOptional "$foo" Head
             ]
         )
-        ( Not
+        ( Function
             ( Span
                 { start = AlexSourcePos
                     { line = 8
@@ -490,10 +490,10 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 8
-                    , col = 23
+                    , col = 18
                     }
                 }
-            )
+            ) "not"
             ( Boolean
                 ( Span
                     { start = AlexSourcePos
@@ -671,7 +671,7 @@ Array
                 }
             }
         )
-        ( Not
+        ( Function
             ( Span
                 { start = AlexSourcePos
                     { line = 11
@@ -679,10 +679,10 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 11
-                    , col = 14
+                    , col = 9
                     }
                 }
-            )
+            ) "not"
             ( Boolean
                 ( Span
                     { start = AlexSourcePos
@@ -722,7 +722,7 @@ Array
                 }
             }
         )
-        ( Not
+        ( Function
             ( Span
                 { start = AlexSourcePos
                     { line = 12
@@ -730,10 +730,10 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 12
-                    , col = 14
+                    , col = 9
                     }
                 }
-            )
+            ) "not"
             ( Boolean
                 ( Span
                     { start = AlexSourcePos

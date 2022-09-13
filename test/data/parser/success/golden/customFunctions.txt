@@ -48,7 +48,7 @@ Array
                 ) "foo"
             ]
         )
-    , Not
+    , Function
         ( Span
             { start = AlexSourcePos
                 { line = 2
@@ -56,10 +56,10 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 2
-                , col = 16
+                , col = 9
                 }
             }
-        )
+        ) "not"
         ( Function
             ( Span
                 { start = AlexSourcePos
