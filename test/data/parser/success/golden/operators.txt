@@ -311,7 +311,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 6
-                , col = 18
+                , col = 23
                 }
             }
         )
@@ -349,7 +349,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 6
-                    , col = 18
+                    , col = 23
                     }
                 }
             ) "not"
@@ -388,7 +388,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 7
-                , col = 18
+                , col = 23
                 }
             }
         )
@@ -426,7 +426,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 7
-                    , col = 18
+                    , col = 23
                     }
                 }
             ) "not"
@@ -452,7 +452,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 8
-                , col = 18
+                , col = 23
                 }
             }
         )
@@ -490,7 +490,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 8
-                    , col = 18
+                    , col = 23
                     }
                 }
             ) "not"
@@ -667,7 +667,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 11
-                , col = 23
+                , col = 24
                 }
             }
         )
@@ -679,7 +679,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 11
-                    , col = 9
+                    , col = 14
                     }
                 }
             ) "not"
@@ -701,11 +701,11 @@ Array
             ( Span
                 { start = AlexSourcePos
                     { line = 11
-                    , col = 18
+                    , col = 19
                     }
                 , end = AlexSourcePos
                     { line = 11
-                    , col = 23
+                    , col = 24
                     }
                 }
             ) False
@@ -718,7 +718,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 12
-                , col = 23
+                , col = 24
                 }
             }
         )
@@ -730,7 +730,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 12
-                    , col = 9
+                    , col = 14
                     }
                 }
             ) "not"
@@ -752,11 +752,11 @@ Array
             ( Span
                 { start = AlexSourcePos
                     { line = 12
-                    , col = 18
+                    , col = 19
                     }
                 , end = AlexSourcePos
                     { line = 12
-                    , col = 23
+                    , col = 24
                     }
                 }
             ) False

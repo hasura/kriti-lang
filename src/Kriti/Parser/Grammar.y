@@ -42,6 +42,7 @@ string      { TokStringLit $$ }
 'null'      { TokIdentifier (Loc $$ "null" ) }
 'range'     { TokIdentifier (Loc $$ "range") }
 'in'        { TokIdentifier (Loc $$ "in") }
+'not'       { TokIdentifier (Loc $$ "not") }
 ident       { TokIdentifier $$ }
 
 '\''        { TokSymbol (Loc $$ SymSingleQuote) }
@@ -76,7 +77,7 @@ ident       { TokIdentifier $$ }
 %nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
 
 %left '??' 
-%left ident 
+%left ident 'not'
 
 %%
 
@@ -145,7 +146,8 @@ operator
 
 function :: { ValueExt }
 function
-  : ident kritiValue { Function (locate $1) (unLoc $1) $2 }
+  : ident '(' kritiValue ')' { Function (locate $1 <> locate $4) (unLoc $1) $3 }
+  | 'not' kritiValue { Function (locate $1 <> locate $2) "not" $2 }
 
 range :: { ValueExt }
 range

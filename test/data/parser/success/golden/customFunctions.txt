@@ -18,7 +18,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 1
-                , col = 10
+                , col = 17
                 }
             }
         ) "head"
@@ -56,7 +56,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 2
-                , col = 9
+                , col = 27
                 }
             }
         ) "not"
@@ -68,7 +68,7 @@ Array
                     }
                 , end = AlexSourcePos
                     { line = 2
-                    , col = 16
+                    , col = 27
                     }
                 }
             ) "empty"
@@ -76,11 +76,11 @@ Array
                 ( Span
                     { start = AlexSourcePos
                         { line = 2
-                        , col = 18
+                        , col = 17
                         }
                     , end = AlexSourcePos
                         { line = 2
-                        , col = 22
+                        , col = 26
                         }
                     }
                 ) "tail"
@@ -88,11 +88,11 @@ Array
                     ( Span
                         { start = AlexSourcePos
                             { line = 2
-                            , col = 23
+                            , col = 22
                             }
                         , end = AlexSourcePos
                             { line = 2
-                            , col = 26
+                            , col = 25
                             }
                         }
                     )
@@ -100,11 +100,11 @@ Array
                         ( Span
                             { start = AlexSourcePos
                                 { line = 2
-                                , col = 24
+                                , col = 23
                                 }
                             , end = AlexSourcePos
                                 { line = 2
-                                , col = 25
+                                , col = 24
                                 }
                             }
                         ) "f"
@@ -120,7 +120,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 3
-                , col = 10
+                , col = 20
                 }
             }
         ) "size"
@@ -170,7 +170,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 4
-                , col = 13
+                , col = 34
                 }
             }
         ) "inverse"
@@ -304,7 +304,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 5
-                , col = 13
+                , col = 28
                 }
             }
         ) "toUpper"
@@ -342,7 +342,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 6
-                , col = 13
+                , col = 28
                 }
             }
         ) "toTitle"
@@ -380,7 +380,7 @@ Array
                 }
             , end = AlexSourcePos
                 { line = 7
-                , col = 13
+                , col = 28
                 }
             }
         ) "toLower"

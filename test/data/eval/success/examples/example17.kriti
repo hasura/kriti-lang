@@ -1,1 +1,1 @@
-"{{ escapeUri $[0].email }}"
+"{{ escapeUri($[0].email) }}"
