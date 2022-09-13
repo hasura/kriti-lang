@@ -8,7 +8,7 @@ import qualified Data.ByteString.UTF8 as B
 import Data.Foldable (foldlM)
 import Data.Function
 import Data.HashMap.Internal as Map
-import Data.Maybe (fromMaybe, maybeToList)
+import Data.Maybe (maybeToList)
 import qualified Data.Scientific as Scientific
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -52,6 +52,7 @@ instance SerializeError EvalError where
   serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
   serialize (FunctionError _ term msg) = SerializedError {_code = FunctionErrorCode, _message = msg, _span = locate term}
 
+-- | The original source (for error messages) and the binding context.
 type Ctxt = (B.ByteString, Compat.Object J.Value)
 
 getSourcePos :: EvalError -> Span
@@ -60,24 +61,15 @@ getSourcePos (TypeError _ term _) = locate term
 getSourcePos (RangeError _ pos) = locate pos
 getSourcePos (FunctionError _ term _) = locate term
 
-evalFieldChain :: (ValueExt -> ExceptT EvalError (Reader Ctxt) J.Value) -> Span -> J.Object -> [Either T.Text ValueExt] -> ExceptT EvalError (Reader Ctxt) J.Value
-evalFieldChain eval sp ctx path = do
-  src <- asks fst
-  let step :: Maybe J.Value -> Either T.Text ValueExt -> ExceptT EvalError (Reader Ctxt) (Maybe J.Value)
-      step (Just (J.Object o)) (Left bndr) = pure $ Compat.lookup bndr o
-      step (Just (J.Object o)) (Right trm) =
-        eval trm >>= \case
-          J.String bndr -> pure $ Compat.lookup bndr o
-          _json -> pure Nothing
-      step (Just (J.Array xs)) (Right trm) =
-        eval trm >>= \case
-          J.Number n -> case Scientific.toBoundedInteger @Int n of
-            Just i -> pure $ xs V.!? i
-            Nothing -> pure Nothing
-          _json -> pure Nothing
-      step (Just json) _ = throwError $ TypeError src sp $ renderBL $ "'" <> J.encode json <> "' is not an Object."
-      step Nothing _ = pure Nothing
-  fmap (fromMaybe (J.Null)) $ foldlM step (Just $ J.Object ctx) path
+-- | Step through a chain of optional lookups.
+evalFieldChain :: J.Value -> [J.Value] -> Maybe J.Value
+evalFieldChain ctx path = do
+  let step :: J.Value -> J.Value -> (Maybe J.Value)
+      step (J.String bndr) ((J.Object o)) = Compat.lookup bndr o
+      step (J.Number n) ((J.Array xs)) =
+        Scientific.toBoundedInteger @Int n >>= \i -> xs V.!? i
+      step _ _ = Nothing
+  Prelude.foldr (\c -> (>>= step c) (Just ctx) path
 
 isString :: J.Value -> Bool
 isString J.String {} = True
@@ -140,11 +132,14 @@ evalWith funcMap = \case
             Nothing -> throwError $ TypeError src sp $ "Unexpected Float '" <> T.pack (show n) <> "', expected an integer."
           json -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode json <> "' is not a Number."
       json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'Object'."
-  OptionalFieldAccess sp t1 fields -> do
+  OptionalFieldAccess _ t1 fields -> do
     src <- asks fst
-    eval t1 >>= \case
-      J.Object km -> evalFieldChain eval sp km fields
-      --J.Array arr -> evalFieldChain eval sp arr fields
+    v1 <- eval t1 `catchError` \_err -> pure J.Null
+    fields' <- traverse (either (pure . J.String) eval) fields
+    case v1 of
+      km@J.Object {} -> maybe (pure J.Null) pure $ evalFieldChain km fields'
+      arr@J.Array {} -> maybe (pure J.Null) pure $ evalFieldChain arr fields'
+      J.Null -> pure J.Null
       json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'Object'."
   Iff sp p t1 t2 -> do
     src <- asks fst

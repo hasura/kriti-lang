@@ -120,9 +120,9 @@ atom :: { ValueExt }
 
 ------------------------------------------------------------------------
 
-some(prod)
-  : prod            { [$1] }
-  | some(prod) prod { $2 : $1 }
+many(prod)
+  : { [] } 
+  | many(prod) prod { $2 : $1 }
 
 var :: { ValueExt }
 var
@@ -136,7 +136,7 @@ requiredField
 
 optionalFields :: { ValueExt }
 optionalFields
-  : atom '?' some(field) %shift { OptionalFieldAccess (locate $1) $1 ($3) }
+  : atom '?' many(field) %shift { OptionalFieldAccess (locate $1) $1 ($3) }
 
 field :: { Either T.Text ValueExt }
 field
