@@ -81,31 +81,41 @@ ident       { TokIdentifier $$ }
 
 %%
 
+------------------------------------------------------------------------
+
 expr :: { ValueExt }
 expr
-  : json { $1 } 
-  | kriti { $1 }
+  : atom '>'  atom { Gt (locate $1 <> locate $3) $1 $3 }
+  | atom '<'  atom { Lt (locate $1 <> locate $3) $1 $3 }
+  | atom '>=' atom { Gte (locate $1 <> locate $3) $1 $3 }
+  | atom '<=' atom { Lte (locate $1 <> locate $3) $1 $3 }
+  | atom '!=' atom { NotEq (locate $1 <> locate $3) $1 $3 }
+  | atom '==' atom { Eq (locate $1 <> locate $3) $1 $3 }
+  | atom '&&' atom { And (locate $1 <> locate $3) $1 $3 }
+  | atom '||' atom { Or (locate $1 <> locate $3) $1 $3 }
+  | atom 'in' atom { In (locate $1 <> locate $3) $1 $3 }
+  | atom '??' atom { Defaulting (locate $1 <> locate $3) $1 $3 }
+  | ap { $1 }
+  | '{{' expr '}}' { $2 }
 
 ------------------------------------------------------------------------
--- KRITI
 
-kriti :: { ValueExt }
-kriti
-  : '{{' path '}}' { $2 }
-  | '{{' operator '}}' { $2 }
-  | '{{' function '}}' { $2 }
-  | '(' kriti ')' { $2 }
-  | range { $1 }
-  | iff { $1 }
+ap :: { ValueExt }
+ap
+  : ident '(' expr ')' { Function (locate $1 <> locate $4) (unLoc $1) $3 }
+  | 'not' expr { Function (locate $1 <> locate $2) "not" $2 }
+  | atom { $1 }
 
-kritiValue :: { ValueExt }
+------------------------------------------------------------------------
+
+atom :: { ValueExt }
   : path { $1 }
-  | operator { $1 } 
-  | function { $1 }
   | range { $1 }
   | iff { $1 }
   | json { $1 }
-  | '(' kritiValue ')' { $2 }
+  | '(' expr ')' { $2 }
+
+------------------------------------------------------------------------
 
 path :: { ValueExt }
 path
@@ -131,24 +141,6 @@ path_element
   | '[' int ']' { Arr (locate $1 <> locate $3) NotOptional (unLoc $2) }
   | '?' '[' int ']' { Arr (locate $1 <> locate $4) Optional (unLoc $3) }
 
-operator :: { ValueExt }
-operator
-  : kritiValue '>'  kritiValue { Gt (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '<'  kritiValue { Lt (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '>=' kritiValue { Gte (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '<=' kritiValue { Lte (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '!=' kritiValue { NotEq (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '==' kritiValue { Eq (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '&&' kritiValue { And (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '||' kritiValue { Or (locate $1 <> locate $3) $1 $3 }
-  | kritiValue 'in' kritiValue { In (locate $1 <> locate $3) $1 $3 }
-  | kritiValue '??' kritiValue { Defaulting (locate $1 <> locate $3) $1 $3 }
-
-function :: { ValueExt }
-function
-  : ident '(' kritiValue ')' { Function (locate $1 <> locate $4) (unLoc $1) $3 }
-  | 'not' kritiValue { Function (locate $1 <> locate $2) "not" $2 }
-
 range :: { ValueExt }
 range
   : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}' { Range (locate $1 <> locate $12) (fmap unLoc $3) (unLoc $5) (snd $7) $9 }
@@ -160,10 +152,9 @@ mident
 
 iff :: { ValueExt }
 iff
-  : '{{' 'if' kritiValue '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
+  : '{{' 'if' expr '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
 
 ------------------------------------------------------------------------
--- JSON
 
 json :: { ValueExt }
 json
@@ -182,21 +173,13 @@ string_lit
 string_template :: { V.Vector ValueExt }
 string_template
   -- Template to the right
-  : string_template '{{' template '}}' { V.snoc $1 $3 }
+  : string_template '{{' expr '}}' { V.snoc $1 $3 }
   -- String Lit to the right
   | string_template string { V.snoc $1 (String (locate $2) (unLoc $2)) }
   -- Template Base Case
-  | '{{' template '}}' { V.singleton $2 }
+  | '{{' expr '}}' { V.singleton $2 }
   -- String Base Case
   | string { V.singleton (String (locate $1) (unLoc $1))}
-
-template :: { ValueExt }
-template
-  : path { $1 }
-  | function { $1 }
-  | boolean { $1 }
-  | num_lit { $1 }
-  | operator { $1 }
 
 num_lit :: { ValueExt }
 num_lit
