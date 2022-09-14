@@ -20,7 +20,8 @@ expr
   | '{{' expr '}}'
 
 ap
-  : function
+  : ident '(' expr ')'
+  | 'not' expr
   | atom
 
 atom
@@ -50,12 +51,8 @@ path_element
   | '[' int ']'
   | '?' '[' int ']'
 
-function
-  : ident '(' expr ')'
-  | 'not' expr
-
 range
-  : '{{' 'range' mident ',' ident ':=' path_vector '}}' expr '{{' 'end' '}}'
+  : '{{' 'range' mident ',' ident ':=' expr '}}' expr '{{' 'end' '}}'
 
 mident
   : '_'

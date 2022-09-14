@@ -129,7 +129,7 @@ Object
                                         }
                                     }
                                 ) Nothing "x"
-                                [ Obj
+                                ( Path
                                     ( Span
                                         { start = AlexSourcePos
                                             { line = 6
@@ -137,47 +137,60 @@ Object
                                             }
                                         , end = AlexSourcePos
                                             { line = 6
-                                            , col = 19
-                                            }
-                                        }
-                                    ) NotOptional "$" Head
-                                , Obj
-                                    ( Span
-                                        { start = AlexSourcePos
-                                            { line = 6
-                                            , col = 19
-                                            }
-                                        , end = AlexSourcePos
-                                            { line = 6
-                                            , col = 25
-                                            }
-                                        }
-                                    ) NotOptional "event" DotAccess
-                                , Obj
-                                    ( Span
-                                        { start = AlexSourcePos
-                                            { line = 6
-                                            , col = 25
-                                            }
-                                        , end = AlexSourcePos
-                                            { line = 6
-                                            , col = 32
-                                            }
-                                        }
-                                    ) NotOptional "author" DotAccess
-                                , Obj
-                                    ( Span
-                                        { start = AlexSourcePos
-                                            { line = 6
-                                            , col = 32
-                                            }
-                                        , end = AlexSourcePos
-                                            { line = 6
                                             , col = 41
                                             }
                                         }
-                                    ) NotOptional "articles" DotAccess
-                                ]
+                                    )
+                                    [ Obj
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 6
+                                                , col = 18
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 6
+                                                , col = 19
+                                                }
+                                            }
+                                        ) NotOptional "$" Head
+                                    , Obj
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 6
+                                                , col = 19
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 6
+                                                , col = 25
+                                                }
+                                            }
+                                        ) NotOptional "event" DotAccess
+                                    , Obj
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 6
+                                                , col = 25
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 6
+                                                , col = 32
+                                                }
+                                            }
+                                        ) NotOptional "author" DotAccess
+                                    , Obj
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 6
+                                                , col = 32
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 6
+                                                , col = 41
+                                                }
+                                            }
+                                        ) NotOptional "articles" DotAccess
+                                    ]
+                                )
                                 ( Object
                                     ( Span
                                         { start = AlexSourcePos
@@ -286,7 +299,7 @@ Object
                                         }
                                     }
                                 ) Nothing "x"
-                                [ Obj
+                                ( Path
                                     ( Span
                                         { start = AlexSourcePos
                                             { line = 13
@@ -294,47 +307,60 @@ Object
                                             }
                                         , end = AlexSourcePos
                                             { line = 13
-                                            , col = 19
-                                            }
-                                        }
-                                    ) NotOptional "$" Head
-                                , Obj
-                                    ( Span
-                                        { start = AlexSourcePos
-                                            { line = 13
-                                            , col = 19
-                                            }
-                                        , end = AlexSourcePos
-                                            { line = 13
-                                            , col = 25
-                                            }
-                                        }
-                                    ) NotOptional "event" DotAccess
-                                , Obj
-                                    ( Span
-                                        { start = AlexSourcePos
-                                            { line = 13
-                                            , col = 25
-                                            }
-                                        , end = AlexSourcePos
-                                            { line = 13
-                                            , col = 32
-                                            }
-                                        }
-                                    ) NotOptional "author" DotAccess
-                                , Obj
-                                    ( Span
-                                        { start = AlexSourcePos
-                                            { line = 13
-                                            , col = 32
-                                            }
-                                        , end = AlexSourcePos
-                                            { line = 13
                                             , col = 41
                                             }
                                         }
-                                    ) NotOptional "articles" DotAccess
-                                ]
+                                    )
+                                    [ Obj
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 13
+                                                , col = 18
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 13
+                                                , col = 19
+                                                }
+                                            }
+                                        ) NotOptional "$" Head
+                                    , Obj
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 13
+                                                , col = 19
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 13
+                                                , col = 25
+                                                }
+                                            }
+                                        ) NotOptional "event" DotAccess
+                                    , Obj
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 13
+                                                , col = 25
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 13
+                                                , col = 32
+                                                }
+                                            }
+                                        ) NotOptional "author" DotAccess
+                                    , Obj
+                                        ( Span
+                                            { start = AlexSourcePos
+                                                { line = 13
+                                                , col = 32
+                                                }
+                                            , end = AlexSourcePos
+                                                { line = 13
+                                                , col = 41
+                                                }
+                                            }
+                                        ) NotOptional "articles" DotAccess
+                                    ]
+                                )
                                 ( Object
                                     ( Span
                                         { start = AlexSourcePos

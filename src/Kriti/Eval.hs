@@ -166,14 +166,13 @@ evalWith funcMap = \case
       (json, J.Object _) -> throwError $ TypeError src sp $ T.pack $ show json <> " is not a String."
       (_, J.Array vals) -> pure $ J.Bool $ v1 `V.elem` vals
       (_, json) -> throwError $ TypeError src sp $ T.pack $ show json <> " is not an Object or Array."
-  Range sp idx binder path body -> do
-    (src, ctx) <- ask
-    pathResult <- evalPath sp (J.Object ctx) path
-    case pathResult of
+  Range _ idx binder t1 body -> do
+    src <- asks fst
+    eval t1 >>= \case
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
          in local (\(_, bndrs) -> (src, Compat.fromList newScope <> bndrs)) (eval body)
-      _ -> throwError $ RangeError src sp
+      v1 -> throwError $ TypeError src (locate t1) $ "'" <> typoOfJSON v1 <> "' is not an Array."
   Function sp fName t1 -> do
     src <- asks fst
     v1 <- eval t1
