@@ -2,6 +2,7 @@
 
 ## Upcoming
 
+  - Improved error messaging and error codes.
   - Allow arbitrary expressions as `range` iteratee.
   - Adds `Kriti.CustomFunctions.basicFuncMap` functions to the kriti executable.
   - Adds `KritiError` type to exports from `Kriti`.

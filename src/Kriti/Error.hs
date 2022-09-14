@@ -8,8 +8,10 @@ import Prettyprinter (Pretty (..))
 
 data ErrorCode
   = InvalidPathCode
+  | AttributeErrorCode
+  | NameErrorCode
   | TypeErrorCode
-  | RangeErrorCode
+  | IndexErrorCode
   | ParseErrorCode
   | LexErrorCode
   | FunctionErrorCode
@@ -20,8 +22,10 @@ newtype CustomFunctionError = CustomFunctionError {unwrapError :: T.Text}
 instance Pretty ErrorCode where
   pretty = \case
     InvalidPathCode -> "Invalid Path"
+    AttributeErrorCode -> "Attribute Error"
+    NameErrorCode -> "Name Error"
     TypeErrorCode -> "Type Error"
-    RangeErrorCode -> "Out of Range Error"
+    IndexErrorCode -> "Index Error"
     ParseErrorCode -> "Parse Error"
     LexErrorCode -> "Lex Error"
     FunctionErrorCode -> "Function Error"

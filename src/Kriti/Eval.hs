@@ -20,22 +20,24 @@ import Kriti.Parser.Token
 import Prettyprinter as P
 
 data EvalError
-  = InvalidPath B.ByteString Span (V.Vector Accessor)
-  | TypeError B.ByteString Span T.Text
-  | RangeError B.ByteString Span
+  = AttributeError B.ByteString Span T.Text
+  | NameError B.ByteString Span T.Text
+  | TypeError B.ByteString Span J.Value T.Text
+  | IndexError B.ByteString Span
   | FunctionError B.ByteString Span T.Text
   deriving (Show)
 
 instance Pretty EvalError where
   pretty = \case
-    InvalidPath src term _ -> mkPretty src "Invalid path lookup" term
-    TypeError src term msg -> mkPretty src msg term
-    RangeError src term -> mkPretty src "Index out of range" term
-    FunctionError src term msg -> mkPretty src msg term
+    AttributeError src sp bndr -> mkPretty src ("'Object' has no attribute '" <> bndr <> "'") sp
+    NameError src sp var -> mkPretty src ("Variable '" <> var <> "' not in scope") sp
+    TypeError src sp val expected -> mkPretty src ("Couldn't matche expected type '" <> expected <> "' with actual type '" <> typeOfJSON val <> "'") sp
+    IndexError src sp -> mkPretty src "Index out of range" sp
+    FunctionError src sp msg -> mkPretty src msg sp
     where
-      mkPretty source msg term =
-        let AlexSourcePos {line = startLine, col = startCol} = start $ locate term
-            AlexSourcePos {col = endCol} = end $ locate term
+      mkPretty source msg sp =
+        let AlexSourcePos {line = startLine, col = startCol} = start sp
+            AlexSourcePos {col = endCol} = end sp
             sourceLine = B.lines source !! startLine
          in vsep
               [ "Runtime Error:",
@@ -47,18 +49,20 @@ instance Pretty EvalError where
 
 instance SerializeError EvalError where
   serialize :: EvalError -> SerializedError
-  serialize (InvalidPath _ term path) = SerializedError {_code = InvalidPathCode, _message = "\"" <> renderVect path <> "\"", _span = locate term}
-  serialize (TypeError _ term msg) = SerializedError {_code = TypeErrorCode, _message = msg, _span = locate term}
-  serialize (RangeError _ term) = SerializedError {_code = RangeErrorCode, _message = "Can only range over an array", _span = locate term}
+  serialize (AttributeError _ sp var) = SerializedError {_code = AttributeErrorCode, _message = "'Object' has no attritubte \'" <> var <> "\'.", _span = sp}
+  serialize (NameError _ sp var) = SerializedError {_code = NameErrorCode, _message = "Variable \'" <> var <> "\' not in scope", _span = sp}
+  serialize (TypeError _ term val expected) = SerializedError {_code = TypeErrorCode, _message = ("Couldn't matche expected type '" <> expected <> "' with actual type '" <> typeOfJSON val <> "'"), _span = locate term}
+  serialize (IndexError _ term) = SerializedError {_code = IndexErrorCode, _message = "Can only range over an array", _span = locate term}
   serialize (FunctionError _ term msg) = SerializedError {_code = FunctionErrorCode, _message = msg, _span = locate term}
 
 -- | The original source (for error messages) and the binding context.
 type Ctxt = (B.ByteString, Compat.Object J.Value)
 
 getSourcePos :: EvalError -> Span
-getSourcePos (InvalidPath _ pos _) = locate pos
-getSourcePos (TypeError _ term _) = locate term
-getSourcePos (RangeError _ pos) = locate pos
+getSourcePos (AttributeError _ pos _) = locate pos
+getSourcePos (NameError _ pos _) = locate pos
+getSourcePos (TypeError _ pos _ _) = locate pos
+getSourcePos (IndexError _ pos) = locate pos
 getSourcePos (FunctionError _ term _) = locate term
 
 -- | Step through a chain of optional lookups.
@@ -69,7 +73,7 @@ evalFieldChain ctx path = do
       step (J.Number n) ((J.Array xs)) =
         Scientific.toBoundedInteger @Int n >>= \i -> xs V.!? i
       step _ _ = Nothing
-  Prelude.foldr (\c -> (>>= step c) (Just ctx) path
+  Prelude.foldr (\c -> (>>= step c)) (Just ctx) path
 
 isString :: J.Value -> Bool
 isString J.String {} = True
@@ -110,28 +114,28 @@ evalWith funcMap = \case
   Array _ xs -> J.Array <$> traverse eval xs
   Var sp bndr -> do
     (src, ctx) <- ask
-    maybe (throwError $ TypeError src sp "Key not found TODO IMPROVE THIS ERROR MSG") pure $ Compat.lookup bndr ctx
+    maybe (throwError $ NameError src sp bndr) pure $ Compat.lookup bndr ctx
   RequiredFieldAccess sp t1 (Left bndr) -> do
     src <- asks fst
     eval t1 >>= \case
       J.Object km ->
-        maybe (throwError $ TypeError src sp "Key not found TODO IMPROVE THIS ERROR MSG") pure $ Compat.lookup bndr km
-      json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'Object'."
+        maybe (throwError $ AttributeError src sp bndr) pure $ Compat.lookup bndr km
+      json -> throwError $ TypeError src (locate t1) json "Object"
   RequiredFieldAccess sp t1 (Right t2) -> do
     src <- asks fst
     eval t1 >>= \case
       J.Object km -> do
         eval t2 >>= \case
           J.String bndr ->
-            maybe (throwError $ TypeError src sp "Key not found TODO IMPROVE THIS ERROR MSG") pure $ Compat.lookup bndr km
-          json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'String'."
+            maybe (throwError $ AttributeError src sp bndr) pure $ Compat.lookup bndr km
+          json -> throwError $ TypeError src (locate t1) json "String"
       J.Array xs -> do
         eval t2 >>= \case
-          J.Number n -> case Scientific.toBoundedInteger @Int n of
-            Just i -> maybe (throwError $ RangeError src sp) pure $ xs V.!? i
-            Nothing -> throwError $ TypeError src sp $ "Unexpected Float '" <> T.pack (show n) <> "', expected an integer."
-          json -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode json <> "' is not a Number."
-      json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'Object'."
+          json@(J.Number n) -> case Scientific.toBoundedInteger @Int n of
+            Just i -> maybe (throwError $ IndexError src sp) pure $ xs V.!? i
+            Nothing -> throwError $ TypeError src sp json "Integer"
+          json -> throwError $ TypeError src sp json "Integer"
+      json -> throwError $ TypeError src (locate t1) json "Object"
   OptionalFieldAccess _ t1 fields -> do
     src <- asks fst
     v1 <- eval t1 `catchError` \_err -> pure J.Null
@@ -140,13 +144,13 @@ evalWith funcMap = \case
       km@J.Object {} -> maybe (pure J.Null) pure $ evalFieldChain km fields'
       arr@J.Array {} -> maybe (pure J.Null) pure $ evalFieldChain arr fields'
       J.Null -> pure J.Null
-      json -> throwError $ TypeError src (locate t1) $ "Couldn't match '" <> typeOfJSON json <> "' with 'Object'."
+      json -> throwError $ TypeError src (locate t1) json "Object"
   Iff sp p t1 t2 -> do
     src <- asks fst
     eval p >>= \case
       J.Bool True -> eval t1
       J.Bool False -> eval t2
-      p' -> throwError $ TypeError src sp $ renderBL $ "'" <> J.encode p' <> "' is not a Boolean."
+      json -> throwError $ TypeError src sp json "Boolean"
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res
@@ -175,16 +179,16 @@ evalWith funcMap = \case
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p && q
-      (json, J.Bool _) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Boolean'."
-      (_, json) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Boolean'."
+      (json, J.Bool _) -> throwError $ TypeError src sp json "Boolean"
+      (_, json) -> throwError $ TypeError src sp json "Boolean"
   Or sp t1 t2 -> do
     src <- asks fst
     t1' <- eval t1
     t2' <- eval t2
     case (t1', t2') of
       (J.Bool p, J.Bool q) -> pure $ J.Bool $ p || q
-      (json, J.Bool _) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Boolean'."
-      (_, json) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Boolean'."
+      (json, J.Bool _) -> throwError $ TypeError src sp json "Boolean"
+      (_, json) -> throwError $ TypeError src sp json "Boolean"
   In sp t1 t2 -> do
     src <- asks fst
     v1 <- eval t1
@@ -193,22 +197,23 @@ evalWith funcMap = \case
       (J.String key, J.Object fields) -> do
         let fields' = fmap fst $ Compat.toList fields
         pure $ J.Bool $ key `elem` fields'
-      (json, J.Object _) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'String'."
+      (json, J.Object _) -> throwError $ TypeError src sp json "String"
       (_, J.Array vals) -> pure $ J.Bool $ v1 `V.elem` vals
-      (_, json) -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Array'."
+      (_, json) -> throwError $ TypeError src sp json "Array"
   Range sp idx binder t1 body -> do
     src <- asks fst
     eval t1 >>= \case
       J.Array arr -> fmap J.Array . flip V.imapM arr $ \i val ->
         let newScope = [(binder, val)] <> [(idxBinder, J.Number $ fromIntegral i) | idxBinder <- maybeToList idx]
          in local (\(_, bndrs) -> (src, Compat.fromList newScope <> bndrs)) (eval body)
-      json -> throwError $ TypeError src sp $ "Couldn't match '" <> typeOfJSON json <> "' with 'Array'."
+      json -> throwError $ TypeError src sp json "Array"
   Function sp fName t1 -> do
     src <- asks fst
     v1 <- eval t1
     case Map.lookup fName funcMap of
-      Nothing -> throwError $ FunctionError src sp $ "Function " <> fName <> " is not defined."
+      Nothing -> throwError $ NameError src sp fName
       Just f -> case f v1 of
+        -- TODO: Bring Custom Errors Into the fold
         Left ee -> throwError $ FunctionError src (locate t1) $ unwrapError ee
         Right va -> pure va
   Defaulting _ t1 t2 -> do
