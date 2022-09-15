@@ -43,7 +43,7 @@ main =
 options' :: [(String, String -> HaskelineT (StateT (Map Text J.Value) IO) ())]
 options' =
   [ ("?", \_ -> helpCommand),
-    ("let", \args -> letCommand args),
+    ("let", letCommand),
     ("dump", \_ -> dumpCommand)
   ]
 
@@ -67,7 +67,18 @@ defaultCompleter n = do
 ----------------------------------------------------------------------
 
 helpCommand :: HaskelineT (StateT (Map Text J.Value) IO) ()
-helpCommand = liftIO $ putStrLn "Help **TODO**"
+helpCommand =
+  liftIO $
+    print $
+      vsep
+        [ "Commands available from the prompt:",
+          indent 2 $
+            vsep
+              [ ":?" <> indent 6 "display this help message",
+                ":let" <> indent 4 "bind a json expression to a variable. You can also use filepaths to json files here.",
+                ":dump" <> indent 3 "inspect all variables bound in this Kriti session"
+              ]
+        ]
 
 ----------------------------------------------------------------------
 
