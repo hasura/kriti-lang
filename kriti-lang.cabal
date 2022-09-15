@@ -50,6 +50,7 @@ common common-libraries
     , containers
     , text
     , utf8-string
+    , vector
     , optparse-applicative
     , prettyprinter
 
@@ -77,6 +78,7 @@ library
   exposed-modules:
     Kriti
     Kriti.Aeson.Compat
+    Kriti.Aeson.Pretty
     Kriti.Error
     Kriti.Parser
     Kriti.Parser.Grammar
@@ -147,7 +149,6 @@ executable kriti-repl
   main-is: Main.hs
   build-depends:
     , kriti-lang
-    , aeson-pretty
     , mtl
     , repline
     , process
