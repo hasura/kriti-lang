@@ -65,18 +65,18 @@ helpMessage = liftIO $ putStrLn "Help"
 letCommand :: String -> HaskelineT (StateT (Map Text J.Value) IO) ()
 letCommand args = do
   case parseArgs args of
-    Nothing -> liftIO $ putStrLn "parse error **TODO**"
+    Nothing -> liftIO $ print $ prettyParseError "Unexpected Token" args
     Just (bndr, arg) -> do
       jsonM <- liftIO $ loadFile arg <|> loadJSON arg
       case jsonM of
-        Nothing -> liftIO $ putStrLn "Invalid JSON Expression **TODO**"
-        Just json -> modify $ Map.insert (Text.pack bndr) json
+        Left err -> liftIO $ print $ prettyParseError err arg
+        Right json -> modify $ Map.insert (Text.pack bndr) json
 
-loadFile :: String -> IO (Maybe J.Value)
-loadFile path = J.decode @J.Value <$> BL.readFile path
+loadFile :: String -> IO (Either String J.Value)
+loadFile path = J.eitherDecode @J.Value <$> BL.readFile path
 
-loadJSON :: String -> IO (Maybe J.Value)
-loadJSON bs = pure $ J.decode @J.Value (Char8.pack bs)
+loadJSON :: String -> IO (Either String J.Value)
+loadJSON bs = pure $ J.eitherDecode @J.Value (Char8.pack bs)
 
 printState :: HaskelineT (StateT (Map Text J.Value) IO) ()
 printState = do
@@ -89,6 +89,8 @@ printState = do
 parseArgs :: String -> Maybe (String, String)
 parseArgs = listToMaybe . fmap fst . ReadP.readP_to_S argParser
 
+-- TODO: Replace with a parsing library so we can get spans for error
+-- messages.
 argParser :: ReadP (String, String)
 argParser = do
   bndr <- ReadP.many1 $ ReadP.satisfy (/= ' ')
@@ -98,3 +100,13 @@ argParser = do
   val <- ReadP.munch (const True)
   ReadP.eof
   pure (bndr, val)
+
+prettyParseError :: String -> String -> Doc ann
+prettyParseError msg src =
+  vsep
+    [ "Parse Error:",
+      indent 2 $ pretty msg,
+      indent 4 $ "|",
+      indent 4 $ "|" <+> pretty src,
+      indent 4 $ "|"
+    ]
