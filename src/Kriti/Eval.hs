@@ -31,7 +31,7 @@ instance Pretty EvalError where
   pretty = \case
     AttributeError src sp bndr -> mkPretty src ("'Object' has no attribute '" <> bndr <> "'") sp
     NameError src sp var -> mkPretty src ("Variable '" <> var <> "' not in scope") sp
-    TypeError src sp val expected -> mkPretty src ("Couldn't matche expected type '" <> expected <> "' with actual type '" <> typeOfJSON val <> "'") sp
+    TypeError src sp val expected -> mkPretty src ("Couldn't match expected type '" <> expected <> "' with actual type '" <> typeOfJSON val <> "'") sp
     IndexError src sp -> mkPretty src "Index out of range" sp
     FunctionError src sp msg -> mkPretty src msg sp
     where
@@ -51,7 +51,7 @@ instance SerializeError EvalError where
   serialize :: EvalError -> SerializedError
   serialize (AttributeError _ sp var) = SerializedError {_code = AttributeErrorCode, _message = "'Object' has no attritubte \'" <> var <> "\'.", _span = sp}
   serialize (NameError _ sp var) = SerializedError {_code = NameErrorCode, _message = "Variable \'" <> var <> "\' not in scope", _span = sp}
-  serialize (TypeError _ term val expected) = SerializedError {_code = TypeErrorCode, _message = ("Couldn't matche expected type '" <> expected <> "' with actual type '" <> typeOfJSON val <> "'"), _span = locate term}
+  serialize (TypeError _ term val expected) = SerializedError {_code = TypeErrorCode, _message = ("Couldn't match expected type '" <> expected <> "' with actual type '" <> typeOfJSON val <> "'"), _span = locate term}
   serialize (IndexError _ term) = SerializedError {_code = IndexErrorCode, _message = "Can only range over an array", _span = locate term}
   serialize (FunctionError _ term msg) = SerializedError {_code = FunctionErrorCode, _message = msg, _span = locate term}
 
@@ -68,7 +68,7 @@ getSourcePos (FunctionError _ term _) = locate term
 -- | Step through a chain of optional lookups.
 evalFieldChain :: J.Value -> [J.Value] -> Maybe J.Value
 evalFieldChain ctx path = do
-  let step :: J.Value -> J.Value -> (Maybe J.Value)
+  let step :: J.Value -> J.Value -> Maybe J.Value
       step (J.String bndr) ((J.Object o)) = Compat.lookup bndr o
       step (J.Number n) ((J.Array xs)) =
         Scientific.toBoundedInteger @Int n >>= \i -> xs V.!? i
