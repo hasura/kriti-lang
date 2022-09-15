@@ -146,9 +146,9 @@ instance Pretty ParseError where
          in vsep
               [ "Parse Error:",
                 indent 2 $ msg,
-                indent (line + 1) "|",
-                pretty line <+> "|" <+> pretty sourceLine,
-                indent (line + 1) $ "|" <> indent (col - 1) (pretty (replicate len '^'))
+                indent 4 "|",
+                indent 2 $ pretty line <+> "|" <+> pretty sourceLine,
+                indent 4 $ "|" <> indent (col - 1) (pretty (replicate len '^'))
               ]
 
 parseError :: ParseError -> Parser a
