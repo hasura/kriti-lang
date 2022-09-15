@@ -1,9 +1,13 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Main where
 
 ----------------------------------------------------------------------
 
 import Control.Applicative
+import Control.Exception
 import Control.Monad.State
+import Control.Monad.Trans.Maybe
 import qualified Data.Aeson as J
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as Char8
@@ -18,6 +22,8 @@ import qualified Data.Text as Text
 import Kriti
 import Kriti.Aeson.Pretty ()
 import Kriti.CustomFunctions (basicFuncMap)
+import qualified Network.HTTP.Client as HTTP
+import qualified Network.HTTP.Types.Status as HTTP
 import Prettyprinter
 import System.Console.Repline
 import Text.ParserCombinators.ReadP (ReadP)
@@ -75,7 +81,7 @@ helpCommand =
           indent 2 $
             vsep
               [ ":?" <> indent 6 "display this help message",
-                ":let" <> indent 4 "bind a json expression to a variable. You can also use filepaths to json files here.",
+                ":let" <> indent 4 "bind a json expression to a variable. You can also use filepaths and urls here.",
                 ":dump" <> indent 3 "inspect all variables bound in this Kriti session"
               ]
         ]
@@ -95,17 +101,44 @@ dumpCommand = do
 letCommand :: String -> HaskelineT (StateT (Map Text J.Value) IO) ()
 letCommand args = do
   case parseArgs args of
-    Nothing -> liftIO $ print $ prettyParseError "Unexpected Token" args
+    Nothing -> liftIO $ print $ prettyParseError "Parser Error" "Unexpected Token" args
     Just (bndr, arg) -> do
-      jsonM <- liftIO $ loadFile arg <|> loadJSON arg
+      jsonM <- liftIO $ runMaybeT $ loadHttpRequestM arg <|> loadFileM arg <|> loadJSONM arg
       case jsonM of
-        Left err -> liftIO $ print $ prettyParseError err arg
-        Right json -> modify $ Map.insert (Text.pack bndr) json
+        Just (Left err) -> liftIO $ print $ prettyParseError "Parser Error" err arg
+        Just (Right json) -> modify $ Map.insert (Text.pack bndr) json
+        Nothing -> liftIO $ print $ prettyParseError "Runtime Error" "Failed to parse :let command" arg
+
+loadHttpRequestM :: String -> MaybeT IO (Either String J.Value)
+loadHttpRequestM uri =
+  MaybeT $
+    fmap Just (loadHttpRequest uri) `catch` \(_ :: HTTP.HttpException) -> pure Nothing
+
+loadHttpRequest :: String -> IO (Either String J.Value)
+loadHttpRequest uri = do
+  response <- liftIO $ do
+    manager <- HTTP.newManager HTTP.defaultManagerSettings
+    request <- HTTP.parseRequest uri
+    HTTP.httpLbs request manager
+
+  case HTTP.statusCode $ HTTP.responseStatus response of
+    200 -> pure $ J.eitherDecode @J.Value $ HTTP.responseBody response
+    _ -> pure $ Left $ show $ HTTP.statusMessage $ HTTP.responseStatus response
+
+loadFileM :: String -> MaybeT IO (Either String J.Value)
+loadFileM path =
+  MaybeT $
+    fmap Just (loadFile path) `catch` \(_ :: SomeException) -> pure Nothing
 
 loadFile :: String -> IO (Either String J.Value)
 loadFile path =
   let trim = List.dropWhileEnd Char.isSpace . List.dropWhile Char.isSpace
    in J.eitherDecode @J.Value <$> BL.readFile (trim path)
+
+loadJSONM :: String -> MaybeT IO (Either String J.Value)
+loadJSONM bs =
+  MaybeT $
+    fmap Just (loadJSON bs) `catch` \(_ :: SomeException) -> pure Nothing
 
 loadJSON :: String -> IO (Either String J.Value)
 loadJSON bs = pure $ J.eitherDecode @J.Value (Char8.pack bs)
@@ -125,10 +158,10 @@ argParser = do
   ReadP.eof
   pure (bndr, val)
 
-prettyParseError :: String -> String -> Doc ann
-prettyParseError msg src =
+prettyParseError :: String -> String -> String -> Doc ann
+prettyParseError errorCode msg src =
   vsep
-    [ "Parse Error:",
+    [ pretty errorCode <> colon,
       indent 2 $ pretty msg,
       indent 4 $ "|",
       indent 4 $ "|" <+> pretty src,

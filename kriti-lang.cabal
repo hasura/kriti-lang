@@ -149,6 +149,9 @@ executable kriti-repl
   main-is: Main.hs
   build-depends:
     , kriti-lang
+    , http-client
+    , http-types
     , mtl
     , repline
     , process
+    , transformers

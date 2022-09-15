@@ -34,7 +34,6 @@
         buildInputs = [
             pkgs.cabal2nix
             pkgs.cabal-install
-            pkgs.hlint
             pkgs.ormolu
             pkgs.haskell.compiler."${compilerVersion}"
             hsPkgs.ghcid
@@ -42,6 +41,7 @@
             hsPkgs.alex
             hsPkgs.happy
             hsPkgs.hspec-discover
+            pkgs.zlib
           ]
           ++ (builtins.attrValues (import ./scripts.nix {s = pkgs.writeShellScriptBin;}));
       };
