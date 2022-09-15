@@ -8,6 +8,7 @@ import Control.Applicative
 import Control.Exception
 import Control.Monad.State
 import Control.Monad.Trans.Maybe
+import Data.Aeson.Encode.Pretty
 import qualified Data.Aeson as J
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as Char8
@@ -19,8 +20,8 @@ import qualified Data.Map.Strict as Map
 import Data.Maybe (listToMaybe)
 import Data.Text (Text)
 import qualified Data.Text as Text
+import qualified Data.Text.Encoding as TE
 import Kriti
-import Kriti.Aeson.Pretty ()
 import Kriti.CustomFunctions (basicFuncMap)
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Types.Status as HTTP
@@ -60,7 +61,7 @@ command' input = do
   ctx <- gets Map.toList
   case runKritiWith (Text.pack input) ctx basicFuncMap of
     Left err -> liftIO $ print $ pretty err
-    Right json -> liftIO $ print $ pretty json
+    Right json -> liftIO $ Char8.putStrLn $ encodePretty json
 
 prefixCompleters :: MonadIO m => [(String, CompletionFunc m)]
 prefixCompleters = [(":let", fileCompleter)]
@@ -94,7 +95,7 @@ dumpCommand = do
   void $
     liftIO $
       flip Map.traverseWithKey ctx $ \bndr json -> do
-        print $ pretty bndr <+> "=" <+> pretty json
+        Char8.putStrLn $ Char8.fromStrict (TE.encodeUtf8 bndr) <> " = " <> encodePretty json
 
 ----------------------------------------------------------------------
 

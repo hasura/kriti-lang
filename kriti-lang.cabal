@@ -78,7 +78,6 @@ library
   exposed-modules:
     Kriti
     Kriti.Aeson.Compat
-    Kriti.Aeson.Pretty
     Kriti.Error
     Kriti.Parser
     Kriti.Parser.Grammar
@@ -149,6 +148,7 @@ executable kriti-repl
   main-is: Main.hs
   build-depends:
     , kriti-lang
+    , aeson-pretty
     , http-client
     , http-types
     , mtl
