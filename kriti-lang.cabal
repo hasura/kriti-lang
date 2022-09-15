@@ -115,6 +115,7 @@ test-suite kriti-lang-test
     , parsec
     , pretty-simple
     , prettyprinter
+    , profunctors
     , raw-strings-qq
     , QuickCheck
     , safe-exceptions

@@ -175,8 +175,8 @@ fuzzyIndexing :: Spec
 fuzzyIndexing = describe "Object/Array lookups should behave as expected regardless of level of nesting" $ do
   it "{x: y}.x == y" $ do
     property $ do
-      (json, objectIndex) <- genFuzzedObjectIndex (J.Number 420) (Number P.emptySpan 420)
-      pure $ first show (runEval mempty objectIndex []) `shouldBe` Right json
+      objectIndex <- genFuzzedObjectIndex (Number P.emptySpan 420)
+      pure $ first show (runEval mempty objectIndex []) `shouldBe` Right (J.Number 420)
 
 -- | Embed 'ValueExt' @x@ in an object with a required field lookup
 -- such that @{ y: x, ...}.y == x@.
@@ -209,15 +209,16 @@ fuzzFieldAccessOpt term = do
   pure $ OptionalFieldAccess P.emptySpan obj (fmap (fmap (Number P.emptySpan . fromIntegral)) keys)
 
 -- | Recursively build up a tree of fuzzed Array/Object lookups which
--- much evaluate successfully.
-genFuzzedObjectIndex :: J.Value -> ValueExt -> Gen (J.Value, ValueExt)
-genFuzzedObjectIndex json trm =
-  oneof
-    [ fmap (json,) $ fuzzObjectR trm,
-      fmap (json,) (fuzzObjectR trm) >>= uncurry genFuzzedObjectIndex,
-      fmap (json,) (fuzzArrayR trm) >>= uncurry genFuzzedObjectIndex,
-      fmap (json,) (fuzzFieldAccessOpt trm) >>= uncurry genFuzzedObjectIndex
-    ]
+-- must evaluate successfully.
+genFuzzedObjectIndex :: ValueExt -> Gen ValueExt
+genFuzzedObjectIndex input = do
+  oneof $
+    fmap ($ input) $
+      [ fuzzObjectR,
+        fuzzObjectR >=> genFuzzedObjectIndex,
+        fuzzArrayR >=> genFuzzedObjectIndex,
+        fuzzFieldAccessOpt >=> genFuzzedObjectIndex
+      ]
 
 --------------------------------------------------------------------------------
 -- Parsing tests.
