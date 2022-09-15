@@ -7,7 +7,9 @@ import Control.Monad.State
 import qualified Data.Aeson as J
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as Char8
+import qualified Data.Char as Char
 import Data.List (isPrefixOf)
+import qualified Data.List as List
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Maybe (listToMaybe)
@@ -29,38 +31,55 @@ main =
     evalReplOpts $
       ReplOpts
         { banner = const $ pure "> ",
-          command = cmd,
-          options = opts,
+          command = command',
+          options = options',
           prefix = Just ':',
           multilineCommand = Just "paste",
-          tabComplete = (Word0 completer),
+          tabComplete = Prefix (wordCompleter defaultCompleter) prefixCompleters,
           initialiser = liftIO $ putStrLn "Kriti Lang, version 0.3.2: github.com/hasura/kriti-lang/ :? for help",
           finaliser = liftIO $ putStrLn "Goodbye!" >> pure Exit
         }
 
+options' :: [(String, String -> HaskelineT (StateT (Map Text J.Value) IO) ())]
+options' =
+  [ ("?", \_ -> helpCommand),
+    ("let", \args -> letCommand args),
+    ("dump", \_ -> dumpCommand)
+  ]
+
 ----------------------------------------------------------------------
 
-cmd :: String -> HaskelineT (StateT (Map Text J.Value) IO) ()
-cmd input = do
+command' :: String -> HaskelineT (StateT (Map Text J.Value) IO) ()
+command' input = do
   ctx <- gets Map.toList
   case runKritiWith (Text.pack input) ctx basicFuncMap of
     Left err -> liftIO $ print $ pretty err
     Right json -> liftIO $ print $ pretty json
 
-completer :: MonadState (Map Text J.Value) m => WordCompleter m
-completer n = do
+prefixCompleters :: MonadIO m => [(String, CompletionFunc m)]
+prefixCompleters = [(":let", fileCompleter)]
+
+defaultCompleter :: MonadState (Map Text J.Value) m => WordCompleter m
+defaultCompleter n = do
   ctx <- gets (fmap (Text.unpack . fst) . Map.toList)
   return $ filter (isPrefixOf n) ctx
 
-opts :: [(String, String -> HaskelineT (StateT (Map Text J.Value) IO) ())]
-opts =
-  [ ("?", \_ -> helpMessage),
-    ("let", \args -> letCommand args),
-    ("dump", \_ -> printState)
-  ]
+----------------------------------------------------------------------
 
-helpMessage :: HaskelineT (StateT (Map Text J.Value) IO) ()
-helpMessage = liftIO $ putStrLn "Help"
+helpCommand :: HaskelineT (StateT (Map Text J.Value) IO) ()
+helpCommand = liftIO $ putStrLn "Help **TODO**"
+
+----------------------------------------------------------------------
+
+dumpCommand :: HaskelineT (StateT (Map Text J.Value) IO) ()
+dumpCommand = do
+  ctx <- get
+  void $
+    liftIO $
+      flip Map.traverseWithKey ctx $ \bndr json -> do
+        print $ pretty bndr <+> "=" <+> pretty json
+
+----------------------------------------------------------------------
 
 letCommand :: String -> HaskelineT (StateT (Map Text J.Value) IO) ()
 letCommand args = do
@@ -73,18 +92,12 @@ letCommand args = do
         Right json -> modify $ Map.insert (Text.pack bndr) json
 
 loadFile :: String -> IO (Either String J.Value)
-loadFile path = J.eitherDecode @J.Value <$> BL.readFile path
+loadFile path =
+  let trim = List.dropWhileEnd Char.isSpace . List.dropWhile Char.isSpace
+   in J.eitherDecode @J.Value <$> BL.readFile (trim path)
 
 loadJSON :: String -> IO (Either String J.Value)
 loadJSON bs = pure $ J.eitherDecode @J.Value (Char8.pack bs)
-
-printState :: HaskelineT (StateT (Map Text J.Value) IO) ()
-printState = do
-  ctx <- get
-  void $
-    liftIO $
-      flip Map.traverseWithKey ctx $ \bndr json -> do
-        print $ pretty bndr <+> "=" <+> pretty json
 
 parseArgs :: String -> Maybe (String, String)
 parseArgs = listToMaybe . fmap fst . ReadP.readP_to_S argParser
