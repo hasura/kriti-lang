@@ -135,3 +135,19 @@ executable kriti
   build-depends:
     , kriti-lang
     , mtl
+
+-------------------------------------------------------------------------------
+
+executable kriti-repl
+  import:
+    , common-libraries
+    , common-settings
+
+  hs-source-dirs: repl
+  main-is: Main.hs
+  build-depends:
+    , kriti-lang
+    , aeson-pretty
+    , mtl
+    , repline
+    , process

@@ -4,3 +4,4 @@ cabal.project.local
 /result
 /.envrc.local
 /.direnv/
+/.history
