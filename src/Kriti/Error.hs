@@ -1,8 +1,8 @@
 module Kriti.Error where
 
-import qualified Data.Aeson as J
-import qualified Data.Text as T
-import qualified Kriti.Parser.Spans as S
+import Data.Aeson qualified as J
+import Data.Text qualified as T
+import Kriti.Parser.Spans qualified as S
 import Kriti.Parser.Token (renderPretty)
 import Prettyprinter (Pretty (..))
 

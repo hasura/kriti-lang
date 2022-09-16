@@ -8,27 +8,27 @@ import Control.Applicative
 import Control.Exception
 import Control.Monad.State
 import Control.Monad.Trans.Maybe
+import Data.Aeson qualified as J
 import Data.Aeson.Encode.Pretty
-import qualified Data.Aeson as J
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.Lazy.Char8 as Char8
-import qualified Data.Char as Char
+import Data.ByteString.Lazy qualified as BL
+import Data.ByteString.Lazy.Char8 qualified as Char8
+import Data.Char qualified as Char
 import Data.List (isPrefixOf)
-import qualified Data.List as List
+import Data.List qualified as List
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
+import Data.Map.Strict qualified as Map
 import Data.Maybe (listToMaybe)
 import Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.Encoding as TE
+import Data.Text qualified as Text
+import Data.Text.Encoding qualified as TE
 import Kriti
 import Kriti.CustomFunctions (basicFuncMap)
-import qualified Network.HTTP.Client as HTTP
-import qualified Network.HTTP.Types.Status as HTTP
+import Network.HTTP.Client qualified as HTTP
+import Network.HTTP.Types.Status qualified as HTTP
 import Prettyprinter
 import System.Console.Repline
 import Text.ParserCombinators.ReadP (ReadP)
-import qualified Text.ParserCombinators.ReadP as ReadP
+import Text.ParserCombinators.ReadP qualified as ReadP
 
 ----------------------------------------------------------------------
 

@@ -3,12 +3,12 @@ module Main where
 ----------------------------------------------------------------------
 
 import Control.Monad.Except
-import qualified Data.Aeson as J
+import Data.Aeson qualified as J
 import Data.Bifunctor (first)
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as C8
-import qualified Data.Text as T
+import Data.ByteString qualified as B
+import Data.ByteString.Lazy qualified as LBS
+import Data.ByteString.Lazy.Char8 qualified as C8
+import Data.Text qualified as T
 import Kriti (KritiError (..), runKritiBSWith)
 import Kriti.CustomFunctions (basicFuncMap)
 import Options.Applicative

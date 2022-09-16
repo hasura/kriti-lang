@@ -12,12 +12,12 @@ module Kriti
   )
 where
 
-import qualified Data.Aeson as J
+import Data.Aeson qualified as J
 import Data.Bifunctor (first)
-import qualified Data.ByteString as B
-import qualified Data.HashMap.Internal as Map
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import Data.ByteString qualified as B
+import Data.HashMap.Internal qualified as Map
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as T
 import Kriti.Error
 import Kriti.Eval
 import Kriti.Parser

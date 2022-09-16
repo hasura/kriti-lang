@@ -3,14 +3,14 @@
 
 module Kriti.Parser.Token where
 
-import qualified Data.ByteString.Lazy as BL
+import Data.ByteString.Lazy qualified as BL
 import Data.Function ((&))
 import Data.Scientific (Scientific)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
-import qualified Data.Vector as V
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
+import Data.Vector qualified as V
 import GHC.Generics
-import qualified Kriti.Aeson.Compat as Compat
+import Kriti.Aeson.Compat qualified as Compat
 import Kriti.Parser.Spans
 import Prettyprinter
 import Prettyprinter.Render.Text (renderStrict)

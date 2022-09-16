@@ -9,11 +9,11 @@ module Kriti.Parser
   )
 where
 
-import qualified Data.ByteString as B
+import Data.ByteString qualified as B
 import Kriti.Parser.Grammar as G hiding (parser)
-import qualified Kriti.Parser.Grammar as GG
+import Kriti.Parser.Grammar qualified as GG
 import Kriti.Parser.Lexer as L hiding (lexer)
-import qualified Kriti.Parser.Lexer as LL
+import Kriti.Parser.Lexer qualified as LL
 import Kriti.Parser.Monad as M
 import Kriti.Parser.Spans as S
 import Kriti.Parser.Token as T
