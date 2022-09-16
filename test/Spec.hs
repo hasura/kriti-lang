@@ -1,7 +1,12 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -Wno-unused-local-binds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+
+#if !MIN_VERSION_aeson(2,0,3)
+import qualified Data.Vector as V
+#endif
 
 import Control.Exception.Safe (throwString)
 import Control.Lens hiding ((<.>))
@@ -15,16 +20,14 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.UTF8 as UTF8
 import Data.Either (isRight)
 import Data.Foldable (for_)
+import Data.Monoid
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TEL
 import qualified Data.Text.Lazy.IO as TLIO
-#if !MIN_VERSION_aeson(2,0,3)
 import qualified Data.Vector as V
-#endif
-import Data.Monoid
 import Kriti
 import qualified Kriti.Aeson.Compat as Compat
 import Kriti.CustomFunctions
@@ -35,6 +38,7 @@ import System.Directory (listDirectory)
 import System.FilePath
 import Test.Hspec
 import Test.Hspec.Golden
+import Test.QuickCheck
 import qualified Test.QuickCheck as Q
 import qualified Test.QuickCheck.Arbitrary.Generic as QAG
 import Text.Pretty.Simple (pShowNoColor)
@@ -48,6 +52,7 @@ main = hspec $ do
   jsonRoundTrip
   parserSpec
   evalSpec
+  evalSemantics
 
 --------------------------------------------------------------------------------
 -- JSON Roundtripping test.
@@ -140,6 +145,80 @@ jsonRoundTrip = describe "JSON Roundtripping" $ do
           case result of
             Left err -> expectationFailure $ T.unpack err
             Right _ -> pure ()
+
+--------------------------------------------------------------------------------
+-- Evaluation Semantics
+
+instance Arbitrary ValueExt where
+  arbitrary =
+    oneof
+      [ genString,
+        genNumber,
+        genBoolean,
+        genNull,
+        genArray,
+        genObject
+      ]
+    where
+      genString = fmap (String P.emptySpan) arbitrary
+      genNumber = fmap (Number P.emptySpan) arbitrary
+      genBoolean = fmap (Boolean P.emptySpan) arbitrary
+      genArray = resize 6 $ fmap (Array P.emptySpan . V.fromList) $ listOf arbitrary
+      genObject = resize 5 $ fmap (Object P.emptySpan . Compat.fromList) $ listOf arbitrary
+      genNull = pure $ Null P.emptySpan
+
+evalSemantics :: Spec
+evalSemantics = do
+  fuzzyIndexing
+
+fuzzyIndexing :: Spec
+fuzzyIndexing = describe "Object/Array lookups should behave as expected regardless of level of nesting" $ do
+  it "{x: y}.x == y" $ do
+    property $ do
+      objectIndex <- genFuzzedObjectIndex (Number P.emptySpan 420)
+      pure $ first show (runEval mempty objectIndex []) `shouldBe` Right (J.Number 420)
+
+-- | Embed 'ValueExt' @x@ in an object with a required field lookup
+-- such that @{ y: x, ...}.y == x@.
+fuzzObjectR :: ValueExt -> Gen ValueExt
+fuzzObjectR trm = do
+  key <- arbitrary
+  pairs <- arbitrary @[(T.Text, ValueExt)]
+  pure $ RequiredFieldAccess P.emptySpan (Object P.emptySpan $ Compat.fromList $ pairs <> [(key, trm)]) (Left key)
+
+-- | Embed 'ValueExt' @x@ in an array with a required index lookup
+-- such that @[..., x][i] == x@
+fuzzArrayR :: ValueExt -> Gen ValueExt
+fuzzArrayR trm = do
+  vals <- arbitrary @[ValueExt]
+  let idx = Right $ Number P.emptySpan (fromIntegral $ length vals)
+  pure $ RequiredFieldAccess P.emptySpan (Array P.emptySpan $ V.fromList $ vals <> [trm]) idx
+
+-- | Embed 'ValueExt' @x@ in an optional lookup such that @[..., { y: x}?.x]?[i] == x@
+fuzzFieldAccessOpt :: ValueExt -> Gen ValueExt
+fuzzFieldAccessOpt term = do
+  keys <- listOf1 $ oneof [fmap Left (arbitrary @T.Text), fmap Right arbitrarySizedNatural]
+  let obj =
+        foldl
+          ( \term' -> \case
+              Left key -> Object P.emptySpan (Compat.fromList [(key, term')])
+              Right idx -> Array P.emptySpan $ V.replicate idx (String P.emptySpan "a") <> pure term'
+          )
+          term
+          keys
+  pure $ OptionalFieldAccess P.emptySpan obj (fmap (fmap (Number P.emptySpan . fromIntegral)) keys)
+
+-- | Recursively build up a tree of fuzzed Array/Object lookups which
+-- must evaluate successfully.
+genFuzzedObjectIndex :: ValueExt -> Gen ValueExt
+genFuzzedObjectIndex input = do
+  oneof $
+    fmap ($ input) $
+      [ fuzzObjectR,
+        fuzzObjectR >=> genFuzzedObjectIndex,
+        fuzzArrayR >=> genFuzzedObjectIndex,
+        fuzzFieldAccessOpt >=> genFuzzedObjectIndex
+      ]
 
 --------------------------------------------------------------------------------
 -- Parsing tests.

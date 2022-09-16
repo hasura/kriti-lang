@@ -124,7 +124,7 @@ Array
                 }
             }
         ) "size"
-        ( Path
+        ( RequiredFieldAccess
             ( Span
                 { start = AlexSourcePos
                     { line = 3
@@ -136,7 +136,7 @@ Array
                     }
                 }
             )
-            [ Obj
+            ( Var
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
@@ -147,20 +147,23 @@ Array
                         , col = 16
                         }
                     }
-                ) NotOptional "$path" Head
-            , Arr
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 3
-                        , col = 16
+                ) "$path"
+            )
+            ( Right
+                ( Number
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 3
+                            , col = 17
+                            }
+                        , end = AlexSourcePos
+                            { line = 3
+                            , col = 18
+                            }
                         }
-                    , end = AlexSourcePos
-                        { line = 3
-                        , col = 19
-                        }
-                    }
-                ) NotOptional 0
-            ]
+                    ) 0.0
+                )
+            )
         )
     , Function
         ( Span

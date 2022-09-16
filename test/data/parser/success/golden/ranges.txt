@@ -23,7 +23,7 @@ Array
             }
         )
         ( Just "i" ) "x"
-        ( Path
+        ( RequiredFieldAccess
             ( Span
                 { start = AlexSourcePos
                     { line = 1
@@ -35,7 +35,7 @@ Array
                     }
                 }
             )
-            [ Obj
+            ( RequiredFieldAccess
                 ( Span
                     { start = AlexSourcePos
                         { line = 1
@@ -43,35 +43,40 @@ Array
                         }
                     , end = AlexSourcePos
                         { line = 1
-                        , col = 24
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            , Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 1
-                        , col = 24
-                        }
-                    , end = AlexSourcePos
-                        { line = 1
                         , col = 28
                         }
                     }
-                ) NotOptional "bar" DotAccess
-            , Arr
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 1
-                        , col = 28
+                )
+                ( Var
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 1
+                            , col = 20
+                            }
+                        , end = AlexSourcePos
+                            { line = 1
+                            , col = 24
+                            }
                         }
-                    , end = AlexSourcePos
-                        { line = 1
-                        , col = 31
+                    ) "$foo"
+                )
+                ( Left "bar" )
+            )
+            ( Right
+                ( Number
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 1
+                            , col = 29
+                            }
+                        , end = AlexSourcePos
+                            { line = 1
+                            , col = 30
+                            }
                         }
-                    }
-                ) NotOptional 0
-            ]
+                    ) 0.0
+                )
+            )
         )
         ( Object
             ( Span
@@ -129,7 +134,7 @@ Array
                 }
             }
         ) Nothing "x"
-        ( Path
+        ( RequiredFieldAccess
             ( Span
                 { start = AlexSourcePos
                     { line = 2
@@ -141,7 +146,7 @@ Array
                     }
                 }
             )
-            [ Obj
+            ( RequiredFieldAccess
                 ( Span
                     { start = AlexSourcePos
                         { line = 2
@@ -149,35 +154,40 @@ Array
                         }
                     , end = AlexSourcePos
                         { line = 2
-                        , col = 24
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            , Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 2
-                        , col = 24
-                        }
-                    , end = AlexSourcePos
-                        { line = 2
                         , col = 28
                         }
                     }
-                ) NotOptional "bar" DotAccess
-            , Arr
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 2
-                        , col = 28
+                )
+                ( Var
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 2
+                            , col = 20
+                            }
+                        , end = AlexSourcePos
+                            { line = 2
+                            , col = 24
+                            }
                         }
-                    , end = AlexSourcePos
-                        { line = 2
-                        , col = 31
+                    ) "$foo"
+                )
+                ( Left "bar" )
+            )
+            ( Right
+                ( Number
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 2
+                            , col = 29
+                            }
+                        , end = AlexSourcePos
+                            { line = 2
+                            , col = 30
+                            }
                         }
-                    }
-                ) NotOptional 0
-            ]
+                    ) 0.0
+                )
+            )
         )
         ( Object
             ( Span
@@ -235,7 +245,7 @@ Array
                 }
             }
         ) Nothing "x"
-        ( Path
+        ( RequiredFieldAccess
             ( Span
                 { start = AlexSourcePos
                     { line = 3
@@ -247,7 +257,7 @@ Array
                     }
                 }
             )
-            [ Obj
+            ( RequiredFieldAccess
                 ( Span
                     { start = AlexSourcePos
                         { line = 3
@@ -255,35 +265,40 @@ Array
                         }
                     , end = AlexSourcePos
                         { line = 3
-                        , col = 24
-                        }
-                    }
-                ) NotOptional "$foo" Head
-            , Obj
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 3
-                        , col = 24
-                        }
-                    , end = AlexSourcePos
-                        { line = 3
                         , col = 28
                         }
                     }
-                ) NotOptional "bar" DotAccess
-            , Arr
-                ( Span
-                    { start = AlexSourcePos
-                        { line = 3
-                        , col = 28
+                )
+                ( Var
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 3
+                            , col = 20
+                            }
+                        , end = AlexSourcePos
+                            { line = 3
+                            , col = 24
+                            }
                         }
-                    , end = AlexSourcePos
-                        { line = 3
-                        , col = 31
+                    ) "$foo"
+                )
+                ( Left "bar" )
+            )
+            ( Right
+                ( Number
+                    ( Span
+                        { start = AlexSourcePos
+                            { line = 3
+                            , col = 29
+                            }
+                        , end = AlexSourcePos
+                            { line = 3
+                            , col = 30
+                            }
                         }
-                    }
-                ) NotOptional 0
-            ]
+                    ) 0.0
+                )
+            )
         )
         ( Object
             ( Span
@@ -300,7 +315,7 @@ Array
             ( fromList
                 [
                     ( "hello"
-                    , Path
+                    , RequiredFieldAccess
                         ( Span
                             { start = AlexSourcePos
                                 { line = 4
@@ -312,7 +327,7 @@ Array
                                 }
                             }
                         )
-                        [ Obj
+                        ( Var
                             ( Span
                                 { start = AlexSourcePos
                                     { line = 4
@@ -323,20 +338,9 @@ Array
                                     , col = 21
                                     }
                                 }
-                            ) NotOptional "$foo" Head
-                        , Obj
-                            ( Span
-                                { start = AlexSourcePos
-                                    { line = 4
-                                    , col = 21
-                                    }
-                                , end = AlexSourcePos
-                                    { line = 4
-                                    , col = 25
-                                    }
-                                }
-                            ) NotOptional "bar" DotAccess
-                        ]
+                            ) "$foo"
+                        )
+                        ( Left "bar" )
                     )
                 ]
             )
@@ -391,7 +395,7 @@ Array
                         }
                     ) True
                 )
-                ( Path
+                ( RequiredFieldAccess
                     ( Span
                         { start = AlexSourcePos
                             { line = 7
@@ -403,7 +407,7 @@ Array
                             }
                         }
                     )
-                    [ Obj
+                    ( Var
                         ( Span
                             { start = AlexSourcePos
                                 { line = 7
@@ -414,20 +418,9 @@ Array
                                 , col = 36
                                 }
                             }
-                        ) NotOptional "$" Head
-                    , Obj
-                        ( Span
-                            { start = AlexSourcePos
-                                { line = 7
-                                , col = 36
-                                }
-                            , end = AlexSourcePos
-                                { line = 7
-                                , col = 43
-                                }
-                            }
-                        ) NotOptional "events" DotAccess
-                    ]
+                        ) "$"
+                    )
+                    ( Left "events" )
                 )
                 ( Array
                     ( Span
@@ -458,7 +451,7 @@ Array
                 ( fromList
                     [
                         ( "name"
-                        , Path
+                        , RequiredFieldAccess
                             ( Span
                                 { start = AlexSourcePos
                                     { line = 7
@@ -470,7 +463,7 @@ Array
                                     }
                                 }
                             )
-                            [ Obj
+                            ( Var
                                 ( Span
                                     { start = AlexSourcePos
                                         { line = 7
@@ -481,20 +474,9 @@ Array
                                         , col = 85
                                         }
                                     }
-                                ) NotOptional "x" Head
-                            , Obj
-                                ( Span
-                                    { start = AlexSourcePos
-                                        { line = 7
-                                        , col = 85
-                                        }
-                                    , end = AlexSourcePos
-                                        { line = 7
-                                        , col = 90
-                                        }
-                                    }
-                                ) NotOptional "name" DotAccess
-                            ]
+                                ) "x"
+                            )
+                            ( Left "name" )
                         )
                     ]
                 )
@@ -525,7 +507,7 @@ Array
                 }
             )
             ( Just "i" ) "x"
-            ( Path
+            ( RequiredFieldAccess
                 ( Span
                     { start = AlexSourcePos
                         { line = 8
@@ -537,7 +519,7 @@ Array
                         }
                     }
                 )
-                [ Obj
+                ( Var
                     ( Span
                         { start = AlexSourcePos
                             { line = 8
@@ -548,20 +530,9 @@ Array
                             , col = 22
                             }
                         }
-                    ) NotOptional "$" Head
-                , Obj
-                    ( Span
-                        { start = AlexSourcePos
-                            { line = 8
-                            , col = 22
-                            }
-                        , end = AlexSourcePos
-                            { line = 8
-                            , col = 29
-                            }
-                        }
-                    ) NotOptional "events" DotAccess
-                ]
+                    ) "$"
+                )
+                ( Left "events" )
             )
             ( Object
                 ( Span
@@ -578,7 +549,7 @@ Array
                 ( fromList
                     [
                         ( "name"
-                        , Path
+                        , RequiredFieldAccess
                             ( Span
                                 { start = AlexSourcePos
                                     { line = 8
@@ -590,7 +561,7 @@ Array
                                     }
                                 }
                             )
-                            [ Obj
+                            ( Var
                                 ( Span
                                     { start = AlexSourcePos
                                         { line = 8
@@ -601,20 +572,9 @@ Array
                                         , col = 47
                                         }
                                     }
-                                ) NotOptional "x" Head
-                            , Obj
-                                ( Span
-                                    { start = AlexSourcePos
-                                        { line = 8
-                                        , col = 47
-                                        }
-                                    , end = AlexSourcePos
-                                        { line = 8
-                                        , col = 52
-                                        }
-                                    }
-                                ) NotOptional "name" DotAccess
-                            ]
+                                ) "x"
+                            )
+                            ( Left "name" )
                         )
                     ]
                 )

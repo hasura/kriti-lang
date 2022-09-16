@@ -1,0 +1,6 @@
+import Data.Bifunctor
+import qualified Data.Aeson as J
+import qualified Data.Aeson.KeyMap as KM
+import qualified Data.Vector as V
+
+let e x = first pretty $ runKriti x  [("foo", J.Object (KM.fromList [("bar", J.Object (KM.fromList [("qux", J.Number 420)]))]))]

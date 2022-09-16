@@ -27,6 +27,9 @@ alexStartPos = AlexSourcePos 1 1
 data Span = Span {start :: AlexSourcePos, end :: AlexSourcePos}
   deriving (Show, Read, Eq, Ord, Generic)
 
+emptySpan :: Span
+emptySpan = Span (AlexSourcePos 0 0) (AlexSourcePos 0 0)
+
 instance Semigroup Span where
   (Span s1 e1) <> (Span s2 e2) = Span (min s1 s2) (max e1 e2)
 
