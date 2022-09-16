@@ -15,6 +15,7 @@ data ErrorCode
   | ParseErrorCode
   | LexErrorCode
   | FunctionErrorCode
+  | JsonDecodeErrorCode
   deriving (Show)
 
 newtype CustomFunctionError = CustomFunctionError {unwrapError :: T.Text}
@@ -29,6 +30,7 @@ instance Pretty ErrorCode where
     ParseErrorCode -> "Parse Error"
     LexErrorCode -> "Lex Error"
     FunctionErrorCode -> "Function Error"
+    JsonDecodeErrorCode -> "JSON Decode Error"
 
 data SerializedError = SerializedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
   deriving (Show)

@@ -1,6 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Main where
+module Repl (repl) where
 
 ----------------------------------------------------------------------
 
@@ -32,8 +32,8 @@ import qualified Text.ParserCombinators.ReadP as ReadP
 
 ----------------------------------------------------------------------
 
-main :: IO ()
-main =
+repl :: IO ()
+repl =
   flip evalStateT mempty $
     evalReplOpts $
       ReplOpts

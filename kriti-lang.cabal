@@ -132,19 +132,7 @@ executable kriti
     , common-libraries
     , common-settings
 
-  main-is: Main.hs
-  build-depends:
-    , kriti-lang
-    , mtl
-
--------------------------------------------------------------------------------
-
-executable kriti-repl
-  import:
-    , common-libraries
-    , common-settings
-
-  hs-source-dirs: repl
+  hs-source-dirs: app
   main-is: Main.hs
   build-depends:
     , kriti-lang
@@ -155,3 +143,5 @@ executable kriti-repl
     , repline
     , process
     , transformers
+  other-modules:
+    Repl
