@@ -37,15 +37,20 @@ repl =
   flip evalStateT mempty $
     evalReplOpts $
       ReplOpts
-        { banner = const $ pure "> ",
+        { banner = customBanner,
           command = command',
           options = options',
           prefix = Just ':',
-          multilineCommand = Just "paste",
+          multilineCommand = Just "|",
           tabComplete = Prefix (wordCompleter defaultCompleter) prefixCompleters,
           initialiser = liftIO $ putStrLn "Kriti Lang, version 0.3.2: github.com/hasura/kriti-lang/ :? for help",
           finaliser = liftIO $ putStrLn "Goodbye!" >> pure Exit
         }
+
+customBanner :: MultiLine -> HaskelineT (StateT (Map Text Aeson.Value) IO) String
+customBanner SingleLine = pure "> "
+customBanner MultiLine = pure "| "
+
 
 options' :: [(String, String -> HaskelineT (StateT (Map Text Aeson.Value) IO) ())]
 options' =
