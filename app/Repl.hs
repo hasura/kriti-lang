@@ -8,7 +8,7 @@ import Control.Applicative
 import Control.Exception
 import Control.Monad.State
 import Control.Monad.Trans.Maybe
-import Data.Aeson qualified as J
+import Data.Aeson qualified as Aeson
 import Data.Aeson.Encode.Pretty
 import Data.ByteString.Lazy qualified as BL
 import Data.ByteString.Lazy.Char8 qualified as Char8
@@ -47,7 +47,7 @@ repl =
           finaliser = liftIO $ putStrLn "Goodbye!" >> pure Exit
         }
 
-options' :: [(String, String -> HaskelineT (StateT (Map Text J.Value) IO) ())]
+options' :: [(String, String -> HaskelineT (StateT (Map Text Aeson.Value) IO) ())]
 options' =
   [ ("?", \_ -> helpCommand),
     ("let", letCommand),
@@ -56,7 +56,7 @@ options' =
 
 ----------------------------------------------------------------------
 
-command' :: String -> HaskelineT (StateT (Map Text J.Value) IO) ()
+command' :: String -> HaskelineT (StateT (Map Text Aeson.Value) IO) ()
 command' input = do
   ctx <- gets Map.toList
   case runKritiWith (Text.pack input) ctx basicFuncMap of
@@ -66,14 +66,14 @@ command' input = do
 prefixCompleters :: MonadIO m => [(String, CompletionFunc m)]
 prefixCompleters = [(":let", fileCompleter)]
 
-defaultCompleter :: MonadState (Map Text J.Value) m => WordCompleter m
+defaultCompleter :: MonadState (Map Text Aeson.Value) m => WordCompleter m
 defaultCompleter n = do
   ctx <- gets (fmap (Text.unpack . fst) . Map.toList)
   return $ filter (isPrefixOf n) ctx
 
 ----------------------------------------------------------------------
 
-helpCommand :: HaskelineT (StateT (Map Text J.Value) IO) ()
+helpCommand :: HaskelineT (StateT (Map Text Aeson.Value) IO) ()
 helpCommand =
   liftIO $
     print $
@@ -89,7 +89,7 @@ helpCommand =
 
 ----------------------------------------------------------------------
 
-dumpCommand :: HaskelineT (StateT (Map Text J.Value) IO) ()
+dumpCommand :: HaskelineT (StateT (Map Text Aeson.Value) IO) ()
 dumpCommand = do
   ctx <- get
   void $
@@ -99,7 +99,7 @@ dumpCommand = do
 
 ----------------------------------------------------------------------
 
-letCommand :: String -> HaskelineT (StateT (Map Text J.Value) IO) ()
+letCommand :: String -> HaskelineT (StateT (Map Text Aeson.Value) IO) ()
 letCommand args = do
   case parseArgs args of
     Nothing -> liftIO $ print $ prettyParseError "Parser Error" "Unexpected Token" args
@@ -110,12 +110,12 @@ letCommand args = do
         Just (Right json) -> modify $ Map.insert (Text.pack bndr) json
         Nothing -> liftIO $ print $ prettyParseError "Runtime Error" "Failed to parse :let command" arg
 
-loadHttpRequestM :: String -> MaybeT IO (Either String J.Value)
+loadHttpRequestM :: String -> MaybeT IO (Either String Aeson.Value)
 loadHttpRequestM uri =
   MaybeT $
     fmap Just (loadHttpRequest uri) `catch` \(_ :: HTTP.HttpException) -> pure Nothing
 
-loadHttpRequest :: String -> IO (Either String J.Value)
+loadHttpRequest :: String -> IO (Either String Aeson.Value)
 loadHttpRequest uri = do
   response <- liftIO $ do
     manager <- HTTP.newManager HTTP.defaultManagerSettings
@@ -123,26 +123,26 @@ loadHttpRequest uri = do
     HTTP.httpLbs request manager
 
   case HTTP.statusCode $ HTTP.responseStatus response of
-    200 -> pure $ J.eitherDecode @J.Value $ HTTP.responseBody response
+    200 -> pure $ Aeson.eitherDecode @Aeson.Value $ HTTP.responseBody response
     _ -> pure $ Left $ show $ HTTP.statusMessage $ HTTP.responseStatus response
 
-loadFileM :: String -> MaybeT IO (Either String J.Value)
+loadFileM :: String -> MaybeT IO (Either String Aeson.Value)
 loadFileM path =
   MaybeT $
     fmap Just (loadFile path) `catch` \(_ :: SomeException) -> pure Nothing
 
-loadFile :: String -> IO (Either String J.Value)
+loadFile :: String -> IO (Either String Aeson.Value)
 loadFile path =
   let trim = List.dropWhileEnd Char.isSpace . List.dropWhile Char.isSpace
-   in J.eitherDecode @J.Value <$> BL.readFile (trim path)
+   in Aeson.eitherDecode @Aeson.Value <$> BL.readFile (trim path)
 
-loadJSONM :: String -> MaybeT IO (Either String J.Value)
+loadJSONM :: String -> MaybeT IO (Either String Aeson.Value)
 loadJSONM bs =
   MaybeT $
     fmap Just (loadJSON bs) `catch` \(_ :: SomeException) -> pure Nothing
 
-loadJSON :: String -> IO (Either String J.Value)
-loadJSON bs = pure $ J.eitherDecode @J.Value (Char8.pack bs)
+loadJSON :: String -> IO (Either String Aeson.Value)
+loadJSON bs = pure $ Aeson.eitherDecode @Aeson.Value (Char8.pack bs)
 
 parseArgs :: String -> Maybe (String, String)
 parseArgs = listToMaybe . fmap fst . ReadP.readP_to_S argParser
