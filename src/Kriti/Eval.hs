@@ -154,7 +154,7 @@ evalWith funcMap = \case
             json -> throwError $ TypeError src s json "Boolean"
         evalElifs = \case
           [] -> eval elseExpr -- Further no elif expression found, evaluate else expression
-          ((Elif s cond expr):restElifs) -> evalCond s cond expr (evalElifs restElifs)
+          ((Elif s cond expr) : restElifs) -> evalCond s cond expr (evalElifs restElifs)
     evalCond sp ifCond ifExpr (evalElifs (V.toList elifs))
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2

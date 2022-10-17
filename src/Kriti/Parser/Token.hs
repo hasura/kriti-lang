@@ -133,9 +133,9 @@ data Elif = Elif Span ValueExt ValueExt
 instance Pretty Elif where
   pretty (Elif _ c t) =
     vsep
-    [ "{{" <+> "elif" <+> pretty c <+> "}}",
-      indent 2 $ pretty t
-    ]
+      [ "{{" <+> "elif" <+> pretty c <+> "}}",
+        indent 2 $ pretty t
+      ]
 
 -- | The Kriti AST type. Kriti templates are parsed into `ValueExt`
 -- terms which are then evaluated and converted into Aeson `Value`
@@ -221,12 +221,12 @@ instance Pretty ValueExt where
         [ "{{" <+> "if" <+> pretty p <+> "}}",
           indent 2 $ pretty t1
         ]
-        <> map pretty (V.toList elifs)
-        <> [ indent 2 $ pretty t1,
-             "{{" <+> "else" <+> "}}",
-             indent 2 $ pretty t2,
-             "{{" <+> "end" <+> "}}"
-           ]
+          <> map pretty (V.toList elifs)
+          <> [ indent 2 $ pretty t1,
+               "{{" <+> "else" <+> "}}",
+               indent 2 $ pretty t2,
+               "{{" <+> "end" <+> "}}"
+             ]
     Eq _ t1 t2 -> pretty t1 <+> equals <+> pretty t2
     NotEq _ t1 t2 -> pretty t1 <+> "!=" <+> pretty t2
     Gt _ t1 t2 -> pretty t1 <+> ">" <+> pretty t2
