@@ -47,7 +47,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -98,7 +98,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -175,7 +175,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -252,7 +252,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -355,7 +355,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -432,7 +432,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -537,7 +537,7 @@ Array
                     ) "lookup"
                 )
             )
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -656,7 +656,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -749,7 +749,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -826,7 +826,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -903,7 +903,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -980,7 +980,7 @@ Array
                     }
                 }
             ) True
-        )
+        ) []
         ( Boolean
             ( Span
                 { start = AlexSourcePos
@@ -1096,7 +1096,7 @@ Array
                     }
                 }
             ) 1.0
-        )
+        ) []
         ( Number
             ( Span
                 { start = AlexSourcePos
@@ -1204,7 +1204,7 @@ Array
                     }
                 }
             ) 1.0
-        )
+        ) []
         ( Number
             ( Span
                 { start = AlexSourcePos
@@ -1312,7 +1312,7 @@ Array
                     }
                 }
             ) 1.0
-        )
+        ) []
         ( Number
             ( Span
                 { start = AlexSourcePos
