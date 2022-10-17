@@ -67,6 +67,24 @@ Kriti supports if statements and `>` `<` `==` `||` and `&&` operators.
 {{ end }}
 ```
 
+Use `elif` for multiple conditionals.
+```
+{{ if x.published && (x.post_id > 100) }}
+    {
+      "id": {{x.id}},
+      "title": {{x.title}}
+    }
+{{ elif x.published && (x.post_id <= 100) }}
+    {
+      "id": {{x.id}},
+      "title": {{x.title}},
+      "content": {{x.content}}
+    }
+{{ else }}
+    null
+{{ end }}
+```
+
 #### String Interpolation
 Bound variables, booleans, integers, object/array lookups, and functions can be interpolated:
 ```
@@ -240,4 +258,3 @@ Thank you for considering to contribute to `kriti-lang`!
 - We use `ormolu` for formatting. The minimum version of ormolu required is `0.3.0.0`.
 - Use `GHC` version `8.10.4` or above.
 - Use `cabal` version `3.2.0.0` or above.
-
