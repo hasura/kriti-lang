@@ -14,5 +14,6 @@
   {{ if "foo" in ["foo"] }} 1 {{ else }} 0 {{ end }},
   {{ if "foo" in { "foo": true } }} 1 {{ else }} 0 {{ end }},
   {{ if ("foo" in { "foo": true }) }} 1 {{ else }} 0 {{ end }},
-  {{ if ("foo" in { "foo": false }) }} 1 {{ elif ("foo" in { "foo": true }) }} 0 {{ else }} 0 {{ end }}
+  {{ if ("foo" in { "foo": false }) }} 1 {{ elif ("foo" in { "foo": true }) }} 0 {{ else }} 0 {{ end }},
+  {{ if ("foo" in { "foo": false }) }} 1 {{ elif ("bar" in { "bar": true }) }} 0 {{ elif true }} "text" {{ else }} 0 {{ end }}
 ]
