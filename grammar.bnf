@@ -59,7 +59,14 @@ mident
   | ident
 
 iff
-  : '{{' 'if' expr '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}'
+  : '{{' 'if' expr '}}' expr elif_exprs '{{' 'else' '}}' expr '{{' 'end' '}}'
+
+elif_exprs
+  : {- empty -}
+  | elif_exprs elif_expr
+
+elif_exp
+  : '{{' 'elif' expr '}}' expr
 
 json
   : string_lit
