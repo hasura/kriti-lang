@@ -37,6 +37,7 @@ int         { TokIntLit _ $$ }
 string      { TokStringLit $$ }
 
 'if'        { TokIdentifier (Loc $$ "if") }
+'elif'      { TokIdentifier (Loc $$ "elif") }
 'else'      { TokIdentifier (Loc $$ "else") }
 'end'       { TokIdentifier (Loc $$ "end") }
 'null'      { TokIdentifier (Loc $$ "null" ) }
@@ -70,14 +71,14 @@ ident       { TokIdentifier $$ }
 '('         { TokSymbol (Loc $$ SymParenOpen) }
 ')'         { TokSymbol (Loc $$ SymParenClose) }
 
-%right 'in' 
+%right 'in'
 %right LOW
 %right ']'
 
-%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||' 
+%nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||'
 
 %left '.'
-%left '??' 
+%left '??'
 %left ident 'not'
 
 %%
@@ -121,7 +122,7 @@ atom :: { ValueExt }
 ------------------------------------------------------------------------
 
 many(prod)
-  : { [] } 
+  : { [] }
   | many(prod) prod { $2 : $1 }
 
 var :: { ValueExt }
@@ -155,7 +156,16 @@ mident
 
 iff :: { ValueExt }
 iff
-  : '{{' 'if' expr '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}' { Iff (locate $1 <> locate $12) $3 $5 $9 }
+  : '{{' 'if' expr '}}' expr elif_exprs '{{' 'else' '}}' expr '{{' 'end' '}}' { Iff (locate $1 <> locate $13) $3 $5 $6 $10 }
+
+elif_exprs :: { V.Vector Elif }
+elif_exprs
+  : {- empty -} { V.empty }
+  | elif_exprs elif_expr  { V.snoc $1 $2}
+
+elif_expr :: { Elif }
+elif_expr
+  : '{{' 'elif' expr '}}' expr { Elif (locate $2 <> locate $3) $3 $5 }
 
 ------------------------------------------------------------------------
 
@@ -172,7 +182,7 @@ string_lit :: { ValueExt }
 string_lit
   : 's"' string_template '"e' { StringTem (locate $1 <> $3) $2 }
   | 's"' '"e' { StringTem (locate $1 <> locate $2) mempty }
-  
+
 string_template :: { V.Vector ValueExt }
 string_template
   -- Template to the right

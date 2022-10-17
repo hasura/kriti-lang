@@ -145,12 +145,17 @@ evalWith funcMap = \case
       arr@J.Array {} -> maybe (pure J.Null) pure $ evalFieldChain arr fields'
       J.Null -> pure J.Null
       json -> throwError $ TypeError src (locate t1) json "Object"
-  Iff sp p t1 t2 -> do
+  Iff sp ifCond ifExpr elifs elseExpr -> do
     src <- asks fst
-    eval p >>= \case
-      J.Bool True -> eval t1
-      J.Bool False -> eval t2
-      json -> throwError $ TypeError src sp json "Boolean"
+    let evalCond s cond expr whenFalse =
+          eval cond >>= \case
+            J.Bool True -> eval expr
+            J.Bool False -> whenFalse
+            json -> throwError $ TypeError src s json "Boolean"
+        evalElifs = \case
+          [] -> eval elseExpr -- Further no elif expression found, evaluate else expression
+          ((Elif s cond expr) : restElifs) -> evalCond s cond expr (evalElifs restElifs)
+    evalCond sp ifCond ifExpr (evalElifs (V.toList elifs))
   Eq _ t1 t2 -> do
     res <- (==) <$> eval t1 <*> eval t2
     pure $ J.Bool res

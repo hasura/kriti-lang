@@ -262,7 +262,7 @@ Object
                                                 )
                                             ]
                                         )
-                                    )
+                                    ) []
                                     ( Null
                                         ( Span
                                             { start = AlexSourcePos

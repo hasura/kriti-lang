@@ -421,7 +421,7 @@ Array
                         ) "$"
                     )
                     ( Left "events" )
-                )
+                ) []
                 ( Array
                     ( Span
                         { start = AlexSourcePos

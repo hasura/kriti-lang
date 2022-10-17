@@ -2,6 +2,7 @@
 %right LOW
 %right ']'
 %nonassoc '>' '<' '<=' '>=' '==' '!=' '&&' '||'
+%left '.'
 %left '??'
 %left ident 'not'
 
@@ -25,31 +26,33 @@ ap
   | atom
 
 atom
-  : path
+  : var
+  | requiredField
+  | optionalFields
   | range
   | iff
   | json
   | '(' expr ')'
 
-path
-  : path_vector
+many
+  : {- empty -}
+  | many(prod) prod
 
-path_vector
-  : ident path_tail
-  | ident
-  | ident '?'
+var
+  : ident
 
-path_tail
-  : path_element
-  | path_tail path_element
+requiredField
+  : atom '.' ident
+  | atom '[' '\'' string '\'' ']'
+  | atom '[' atom ']'
 
-path_element
+optionalFields
+  : atom '?' many(field) %shift
+
+field
   : '.' ident
-  | '?' '.' ident
   | '[' '\'' string '\'' ']'
-  | '?' '[' '\'' string '\'' ']'
-  | '[' int ']'
-  | '?' '[' int ']'
+  | '[' atom ']'
 
 range
   : '{{' 'range' mident ',' ident ':=' expr '}}' expr '{{' 'end' '}}'
@@ -59,7 +62,14 @@ mident
   | ident
 
 iff
-  : '{{' 'if' expr '}}' expr '{{' 'else' '}}' expr '{{' 'end' '}}'
+  : '{{' 'if' expr '}}' expr elif_exprs '{{' 'else' '}}' expr '{{' 'end' '}}'
+
+elif_exprs
+  : {- empty -}
+  | elif_exprs elif_expr
+
+elif_expr
+  : '{{' 'elif' expr '}}' expr
 
 json
   : string_lit
