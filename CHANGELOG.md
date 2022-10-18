@@ -1,7 +1,10 @@
 # Revision history for Kriti-Lang
 
 ## Upcoming
+  
+## 0.3.3 -- 2022-10-18
 
+  - Adds `elif` syntax to `if` expressions.
   - Improved error messaging and error codes.
   - Allow arbitrary expressions as `range` iteratee.
   - Adds `Kriti.CustomFunctions.basicFuncMap` functions to the kriti executable.
