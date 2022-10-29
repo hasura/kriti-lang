@@ -1,5 +1,6 @@
 module Kriti.Eval where
 
+import Control.DeepSeq
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Aeson as J
@@ -13,6 +14,7 @@ import qualified Data.Scientific as Scientific
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Vector as V
+import GHC.Generics
 import qualified Kriti.Aeson.Compat as Compat
 import Kriti.Error
 import Kriti.Parser.Spans
@@ -25,7 +27,9 @@ data EvalError
   | TypeError B.ByteString Span J.Value T.Text
   | IndexError B.ByteString Span
   | FunctionError B.ByteString Span T.Text
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance NFData EvalError
 
 instance Pretty EvalError where
   pretty = \case

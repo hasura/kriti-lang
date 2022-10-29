@@ -12,18 +12,23 @@ module Kriti
   )
 where
 
+import Control.DeepSeq
 import qualified Data.Aeson as J
 import Data.Bifunctor (first)
 import qualified Data.ByteString as B
 import qualified Data.HashMap.Internal as Map
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import GHC.Generics (Generic)
 import Kriti.Error
 import Kriti.Eval
 import Kriti.Parser
 import Prettyprinter (Pretty (..))
 
 data KritiError = KritiParseError ParseError | KritiEvalError EvalError
+  deriving (Generic)
+
+instance NFData KritiError
 
 instance Pretty KritiError where
   pretty = \case

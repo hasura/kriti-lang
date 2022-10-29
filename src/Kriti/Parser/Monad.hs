@@ -1,6 +1,7 @@
 module Kriti.Parser.Monad where
 
 import qualified Codec.Binary.UTF8.String as UTF8
+import Control.DeepSeq (NFData)
 import Control.Monad.Except
 import Control.Monad.State
 import qualified Data.ByteString as B
@@ -10,6 +11,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import GHC.Char (chr)
+import GHC.Generics (Generic)
 import GHC.Word
 import qualified Kriti.Error as E
 import Kriti.Parser.Spans
@@ -105,7 +107,9 @@ data ParseError
   = EmptyTokenStream Span B.ByteString
   | UnexpectedToken (Loc Token) B.ByteString
   | InvalidLexeme AlexSourcePos B.ByteString
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance NFData ParseError
 
 instance E.SerializeError ParseError where
   serialize (EmptyTokenStream s _) =

@@ -3,6 +3,7 @@
 
 module Kriti.Parser.Token where
 
+import Control.DeepSeq
 import qualified Data.ByteString.Lazy as BL
 import Data.Function ((&))
 import Data.Scientific (Scientific)
@@ -47,6 +48,8 @@ data Symbol
   | SymStringEnd
   deriving (Show, Eq, Ord, Generic)
 
+instance NFData Symbol
+
 -- | The type of Lexeme Tokens. Lexemes can either be Symbols, identifiers or literals.
 data Token
   = TokSymbol (Loc Symbol)
@@ -57,6 +60,8 @@ data Token
   | TokBoolLit (Loc Bool)
   | EOF
   deriving (Show, Eq, Ord, Generic)
+
+instance NFData Token
 
 overLoc :: (forall a. Loc a -> Loc a) -> Token -> Token
 overLoc f (TokSymbol loc) = TokSymbol $ f loc

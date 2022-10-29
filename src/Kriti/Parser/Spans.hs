@@ -2,6 +2,7 @@
 
 module Kriti.Parser.Spans where
 
+import Control.DeepSeq
 import GHC.Generics
 
 ------------------------
@@ -10,6 +11,8 @@ import GHC.Generics
 
 data AlexSourcePos = AlexSourcePos {line :: !Int, col :: !Int}
   deriving (Show, Read, Eq, Ord, Generic)
+
+instance NFData AlexSourcePos
 
 overCol :: (Int -> Int) -> AlexSourcePos -> AlexSourcePos
 overCol f (AlexSourcePos line col) = AlexSourcePos line (f col)
@@ -26,6 +29,8 @@ alexStartPos = AlexSourcePos 1 1
 
 data Span = Span {start :: AlexSourcePos, end :: AlexSourcePos}
   deriving (Show, Read, Eq, Ord, Generic)
+
+instance NFData Span
 
 emptySpan :: Span
 emptySpan = Span (AlexSourcePos 0 0) (AlexSourcePos 0 0)
@@ -52,6 +57,8 @@ setEnd sp (Span start _) = Span start sp
 -- | The product of `a` and a `Span` representing `a`'s source position.
 data Loc a = Loc {getSpan :: Span, unLoc :: a}
   deriving (Show, Eq, Ord, Functor, Generic)
+
+instance (NFData a) => NFData (Loc a)
 
 instance Semigroup a => Semigroup (Loc a) where
   Loc s1 a1 <> Loc s2 a2 = Loc (s1 <> s2) (a1 <> a2)
