@@ -135,6 +135,8 @@ instance Pretty Accessor where
 data Elif = Elif Span ValueExt ValueExt
   deriving (Show, Eq, Read, Generic)
 
+instance NFData Elif
+
 instance Pretty Elif where
   pretty (Elif _ c t) =
     vsep
@@ -170,6 +172,8 @@ data ValueExt
   | Range Span (Maybe T.Text) T.Text ValueExt ValueExt
   | Function Span T.Text ValueExt
   deriving (Show, Eq, Read, Generic)
+
+instance NFData ValueExt
 
 instance Located ValueExt where
   locate = \case
