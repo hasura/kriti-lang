@@ -11,36 +11,36 @@ import qualified Data.Vector as V
 import Control.Exception.Safe (throwString)
 import Control.Lens hiding ((<.>))
 import Control.Monad.Except
-import qualified Data.Aeson as J
-import qualified Data.Aeson.Encode.Pretty as JEP (encodePretty)
+import Data.Aeson qualified as J
+import Data.Aeson.Encode.Pretty qualified as JEP (encodePretty)
 import Data.Aeson.Lens ()
 import Data.Bifunctor (first)
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.UTF8 as UTF8
+import Data.ByteString qualified as BS
+import Data.ByteString.Lazy qualified as BL
+import Data.ByteString.UTF8 qualified as UTF8
 import Data.Either (isRight)
 import Data.Foldable (for_)
 import Data.Monoid
 import Data.Scientific (Scientific)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Encoding as TEL
-import qualified Data.Text.Lazy.IO as TLIO
-import qualified Data.Vector as V
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Encoding qualified as TEL
+import Data.Text.Lazy.IO qualified as TLIO
+import Data.Vector qualified as V
 import Kriti
-import qualified Kriti.Aeson.Compat as Compat
+import Kriti.Aeson.Compat qualified as Compat
 import Kriti.CustomFunctions
 import Kriti.Error
 import Kriti.Eval
-import qualified Kriti.Parser as P
+import Kriti.Parser qualified as P
 import System.Directory (listDirectory)
 import System.FilePath
 import Test.Hspec
 import Test.Hspec.Golden
 import Test.QuickCheck
-import qualified Test.QuickCheck as Q
-import qualified Test.QuickCheck.Arbitrary.Generic as QAG
+import Test.QuickCheck qualified as Q
+import Test.QuickCheck.Arbitrary.Generic qualified as QAG
 import Text.Pretty.Simple (pShowNoColor)
 import Text.Read (readEither)
 

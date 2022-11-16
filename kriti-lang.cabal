@@ -22,6 +22,7 @@ common common-settings
     FlexibleContexts
     FlexibleInstances
     GeneralizedNewtypeDeriving
+    ImportQualifiedPost
     InstanceSigs
     LambdaCase
     NamedFieldPuns
@@ -50,6 +51,7 @@ common common-libraries
     , containers
     , text
     , utf8-string
+    , vector
     , optparse-applicative
     , prettyprinter
 
@@ -131,7 +133,16 @@ executable kriti
     , common-libraries
     , common-settings
 
+  hs-source-dirs: app
   main-is: Main.hs
   build-depends:
     , kriti-lang
+    , aeson-pretty
+    , http-client
+    , http-types
     , mtl
+    , repline
+    , process
+    , transformers
+  other-modules:
+    Repl

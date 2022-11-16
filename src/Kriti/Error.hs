@@ -1,8 +1,8 @@
 module Kriti.Error where
 
-import qualified Data.Aeson as J
-import qualified Data.Text as T
-import qualified Kriti.Parser.Spans as S
+import Data.Aeson qualified as J
+import Data.Text qualified as T
+import Kriti.Parser.Spans qualified as S
 import Kriti.Parser.Token (renderPretty)
 import Prettyprinter (Pretty (..))
 
@@ -15,6 +15,7 @@ data ErrorCode
   | ParseErrorCode
   | LexErrorCode
   | FunctionErrorCode
+  | JsonDecodeErrorCode
   deriving (Show)
 
 newtype CustomFunctionError = CustomFunctionError {unwrapError :: T.Text}
@@ -29,6 +30,7 @@ instance Pretty ErrorCode where
     ParseErrorCode -> "Parse Error"
     LexErrorCode -> "Lex Error"
     FunctionErrorCode -> "Function Error"
+    JsonDecodeErrorCode -> "JSON Decode Error"
 
 data SerializedError = SerializedError {_code :: ErrorCode, _message :: T.Text, _span :: S.Span}
   deriving (Show)

@@ -12,28 +12,35 @@ module Kriti
   )
 where
 
-import qualified Data.Aeson as J
+import Data.Aeson qualified as J
 import Data.Bifunctor (first)
-import qualified Data.ByteString as B
-import qualified Data.HashMap.Internal as Map
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import Data.ByteString qualified as B
+import Data.HashMap.Internal qualified as Map
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as T
 import Kriti.Error
 import Kriti.Eval
 import Kriti.Parser
 import Prettyprinter (Pretty (..))
 
-data KritiError = KritiParseError ParseError | KritiEvalError EvalError
+data KritiError = KritiParseError ParseError | KritiEvalError EvalError | JsonDecodeError T.Text
 
 instance Pretty KritiError where
   pretty = \case
     KritiParseError err -> pretty err
     KritiEvalError err -> pretty err
+    JsonDecodeError err -> pretty err
 
 instance SerializeError KritiError where
   serialize = \case
     KritiParseError err -> serialize err
     KritiEvalError err -> serialize err
+    JsonDecodeError err ->
+      SerializedError
+        { _code = JsonDecodeErrorCode,
+          _message = err,
+          _span = Span (AlexSourcePos 0 0) (AlexSourcePos 0 (T.length err))
+        }
 
 -- | Entry point for Kriti when given a template as 'Text'.
 runKriti :: T.Text -> [(T.Text, J.Value)] -> Either KritiError J.Value
