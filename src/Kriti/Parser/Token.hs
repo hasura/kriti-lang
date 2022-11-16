@@ -104,28 +104,6 @@ serializeToken = \case
   TokSymbol (Loc _ SymStringEnd) -> "\""
   EOF -> ""
 
--- | Annotates whether the object lookup used '.' or brace syntax for pretty printing.
-data ObjAccType = Head | DotAccess | BracketAccess
-  deriving (Show, Eq, Read)
-
-data Optionality = Optional | NotOptional
-  deriving (Show, Eq, Read)
-
--- | Path lookups are represented as a stack of object and array lookups. eg., `Vector Accessor`.
-data Accessor = Obj Span Optionality T.Text ObjAccType | Arr Span Optionality Int
-  deriving (Show, Eq, Read)
-
-instance Pretty Accessor where
-  pretty = \case
-    Obj _ optional txt DotAccess -> q optional <> dot <> pretty txt
-    Obj _ optional txt BracketAccess -> q optional <> dot <> brackets (squotes $ pretty txt)
-    Obj _ _ txt Head -> pretty txt
-    Arr _ optional i -> q optional <> brackets (pretty i)
-    where
-      q :: Optionality -> Doc ann
-      q Optional = "?"
-      q NotOptional = ""
-
 -- | The elif conditional expression
 data Elif = Elif Span ValueExt ValueExt
   deriving (Show, Eq, Read, Generic)
@@ -191,11 +169,6 @@ instance Located ValueExt where
     Defaulting s _ _ -> s
     Range s _ _ _ _ -> s
     Function s _ _ -> s
-
-instance Located Accessor where
-  locate = \case
-    Obj s _ _ _ -> s
-    Arr s _ _ -> s
 
 instance Pretty ValueExt where
   pretty = \case
