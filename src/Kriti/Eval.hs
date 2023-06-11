@@ -226,5 +226,12 @@ evalWith funcMap = \case
     case v1 of
       J.Null -> eval t2
       json -> pure json
+  Ternary _ t1 t2 t3 -> do
+    src <- asks fst
+    v1 <- eval t1
+    case v1 of
+      J.Bool True -> eval t2
+      J.Bool False -> eval t3
+      json -> throwError $ TypeError src (locate t1) json "Boolean"
   where
     eval = evalWith funcMap
