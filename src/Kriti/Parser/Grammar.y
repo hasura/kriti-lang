@@ -97,6 +97,7 @@ expr
   | atom '||' atom { Or (locate $1 <> locate $3) $1 $3 }
   | atom 'in' atom { In (locate $1 <> locate $3) $1 $3 }
   | atom '??' atom { Defaulting (locate $1 <> locate $3) $1 $3 }
+  | atom '?'  atom ':' atom { Ternary (locate $1 <> locate $5) $1 $3 $5 }
   | ap { $1 }
   | '{{' expr '}}' { $2 }
 

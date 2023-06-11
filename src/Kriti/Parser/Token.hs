@@ -140,6 +140,7 @@ data ValueExt
   | Or Span ValueExt ValueExt
   | In Span ValueExt ValueExt
   | Defaulting Span ValueExt ValueExt
+  | Ternary Span ValueExt ValueExt ValueExt
   | Range Span (Maybe T.Text) T.Text ValueExt ValueExt
   | Function Span T.Text ValueExt
   deriving (Show, Eq, Read, Generic)
@@ -167,6 +168,7 @@ instance Located ValueExt where
     Or s _ _ -> s
     In s _ _ -> s
     Defaulting s _ _ -> s
+    Ternary s _ _ _ -> s
     Range s _ _ _ _ -> s
     Function s _ _ -> s
 
@@ -210,6 +212,7 @@ instance Pretty ValueExt where
     Or _ t1 t2 -> pretty t1 <+> "||" <+> pretty t2
     In _ t1 t2 -> pretty t1 <+> "in" <+> pretty t2
     Defaulting _ t1 t2 -> pretty t1 <+> "??" <+> pretty t2
+    Ternary _ p t1 t2 -> pretty p <+> "?" <+> pretty t1 <+> ":" <+> pretty t2
     Range _ i bndr xs t1 ->
       vsep
         [ "{{" <+> "range" <+> pretty i <> comma <+> pretty bndr <+> colon <> equals <+> pretty xs <+> "}}",
@@ -221,10 +224,10 @@ instance Pretty ValueExt where
 renderDoc :: Doc ann -> T.Text
 renderDoc = renderStrict . layoutPretty defaultLayoutOptions
 
-renderPretty :: Pretty a => a -> T.Text
+renderPretty :: (Pretty a) => a -> T.Text
 renderPretty = renderDoc . pretty
 
-renderVect :: Pretty a => V.Vector a -> T.Text
+renderVect :: (Pretty a) => V.Vector a -> T.Text
 renderVect = renderDoc . foldMap pretty
 
 renderBL :: BL.ByteString -> T.Text
